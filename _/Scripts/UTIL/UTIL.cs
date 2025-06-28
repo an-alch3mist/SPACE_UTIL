@@ -9,6 +9,7 @@ using System.Text.RegularExpressions;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
+using System.Threading.Tasks;
 
 namespace SPACE_UTIL
 {
@@ -36,6 +37,22 @@ namespace SPACE_UTIL
 
 		// Allow implicit conversion from tuple
 		public static implicit operator v2((int, int) tuple) => new v2(tuple.Item1, tuple.Item2);
+
+		#region ad vec3, vec2 conversion
+		public static char axisY = 'y';
+		public static implicit operator v2(Vector3 vec3)
+		{
+			if(v2.axisY == 'y')
+				return new v2(C.round(vec3.x), C.round(vec3.y));	// depend on C
+			return new v2(C.round(vec3.x), C.round(vec3.z));		// depend on C
+		}
+		public static implicit operator Vector3(v2 @this)
+		{
+			if (v2.axisY == 'y')
+				return new Vector3(@this.x, @this.y, 0);
+			return new Vector3(@this.x, 0, @this.y);
+		}
+		#endregion
 	}
 
 	#endregion
@@ -121,7 +138,7 @@ namespace SPACE_UTIL
 		public static class M
 		{
 			public static Camera MainCam;
-			// up = new vec3(0, 0, +1)
+			// default up = new vec3(0, 0, +1)
 			public static Vector3 up = new Vector3(0, 0, +1);
 			public static Vector3 getPos3D
 			{
@@ -254,6 +271,16 @@ namespace SPACE_UTIL
 			if (x < min) return min;
 			return x;
 		}
+		public static Vector3 clamp(Vector3 v, Vector3 min, Vector3 max)
+		{
+			return new Vector3()
+			{
+				x = C.clamp(v.x, min.x, max.x),
+				y = C.clamp(v.y, min.y, max.y),
+				z = C.clamp(v.z, min.z, max.z),
+			};
+		}
+
 		public static int round(float x)
 		{
 			if (x > 0f)
@@ -292,7 +319,6 @@ namespace SPACE_UTIL
 			return Mathf.CeilToInt(x);
 		}
 
-
 		// less than 0.01f considered as zero
 		public static bool zero(float x, float e = 1f / 100)
 		{
@@ -301,6 +327,22 @@ namespace SPACE_UTIL
 		public static bool zero(Vector3 v, float e = 1f / 100)
 		{
 			return zero(v.x, e) && zero(v.y, e) && zero(v.z, e);
+		}
+		
+		public static bool inrange(float x, float m, float M)
+		{
+			return x >= m && x <= M;
+		}
+		public static bool inrange(this Vector3 v, Vector3 m, Vector3 M)
+		{
+			return	C.inrange(v.x, m.x, M.x) && 
+					C.inrange(v.y, m.y, M.y) &&
+					C.inrange(v.z, m.z, M.z);
+		}
+		public static bool inrange(this v2 v, v2 m, v2 M)
+		{
+			return	C.inrange(v.x, m.x, M.x) &&
+					C.inrange(v.y, m.y, M.y);
 		}
 		#endregion
 
@@ -344,7 +386,29 @@ namespace SPACE_UTIL
 			float new_val = (int)(val * Mathf.Pow(10, digits)) / (Mathf.Pow(10, digits));
 			return new_val.ToString();
 		}
-
+		public static char toChar(this string str)
+		{
+			if (str.Length < 1)
+				Debug.LogError("string length < 1, for .toChar conversion");
+			return str[0];
+		}
+		public static int parseInt(this string str)
+		{
+			try
+			{
+				return int.Parse(str);
+			}
+			catch (Exception e)
+			{
+				Debug.LogError($"{str} not in integer format");
+				return (int)1e8;
+			}
+		}
+		public static int parseInt(this char _char)
+		{
+			return C.parseInt(_char.ToString());
+		}
+		
 		// ad essential >>
 		public static RegexOptions str_to_flags(string flags)
 		{
@@ -401,6 +465,7 @@ namespace SPACE_UTIL
 		/// Splits <paramref name="str"/> on the regex <paramref name="re"/>
 		/// Example: "A -> B\n\nC".split(@"\n\n", "gm") ⇒ ["A -> B", "C"]
 		/// </summary>
+		/// regular expression explicit match approach
 		public static string[] split(this string str, string re, string flags = "gx")
 		{
 			if (str == null) return null;
@@ -427,7 +492,6 @@ namespace SPACE_UTIL
 				.Select(m => m.Value)
 				.ToArray();
 		}
-
 		/// <summary>
 		/// Returns weather there is a pattern somewhere in <paramref name="str"/> that match the regex <paramref name="re"/> entirely.
 		/// Eg: 'A'.match(@"^[a-g]$", "gi") ⇒ true,
@@ -442,9 +506,6 @@ namespace SPACE_UTIL
 			return Regex.IsMatch(str, re, str_to_flags(flags));
 		}
 
-
-
-
 		/// <summary>
 		/// Replaces all occurrences of the regex pattern <paramref name="re"/> with <paramref name="replace_with"/>
 		/// Example: "Hello world123 test456".replace(@"\d+", "X", "gm") ⇒ "Hello worldX testX"
@@ -457,7 +518,6 @@ namespace SPACE_UTIL
 			// default flags: "gm"
 			return Regex.Replace(str.clean(), re, replace_with, str_to_flags(flags));
 		}
-
 
 		/// <summary>
 		/// shows the raw string in a single line with \r\n \t appeanded as chars, ad: \f, \v
@@ -480,7 +540,27 @@ namespace SPACE_UTIL
 			return string.Join(separator, STRING);
 		}
 		#endregion
-		
+
+		#region Anim
+		public static async Task delay(int ms = 1000)
+		{
+			await Task.Delay(ms);
+		}
+		public static IEnumerator wait(int ms = 1000)
+		{
+			yield return new WaitForSeconds(ms * 1f / 1000);
+		}
+		/*
+		// animation approach for a given duration >>
+		for(float time = 0f; time <= duration; time += dt)
+		{
+			float t = 1f/duration
+			// do somthng with C.ease(t, "in_out");
+			yield return null
+		}
+		// << animation approach for a given duration
+		*/
+		#endregion
 		/*
 			[System.Serializable]object.ToJson() -> string
 			str.FromJson<T>() -> T

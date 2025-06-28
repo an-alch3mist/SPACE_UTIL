@@ -34,6 +34,12 @@ namespace SPACE_UISystem
 			Debug.Log("Awake(): " + this);
 		}
 
+		// unity editor mode
+		private void OnValidate()
+		{
+			this.Show(this.show_by_default);
+		}
+
 		/* >> check
 		<< check */
 
@@ -55,23 +61,24 @@ namespace SPACE_UISystem
 
 		public void Show(bool Active = true)
 		{
-			this.gameObject.SetActive(Active);
+			this.gameObject.NameStartsWith("back").SetActive(Active);
 		}
 
 		public void SetPos(Vector2 pos) // its INPUT.UI.pos
 		{
 			Vector2 target_pos = pos;
+			if (this.BoundRect != null) // if there is bound specified by main_canvas/a_panel
+			{
+				// clamp >>
+				Rect PanelBounds = INPUT.UI.getBounds(this.BoundRect);
+				Rect ToolTipBounds = INPUT.UI.getBounds(this.ToolTipRect);
+				int border = this.border;
 
-			// clamp >>
-			Rect PanelBounds = INPUT.UI.getBounds(this.BoundRect);
-			Rect ToolTipBounds = INPUT.UI.getBounds(this.ToolTipRect);
-			int border = this.border;
-
-			// for origin/anchor at center-bottom
-			target_pos.x = C.clamp(target_pos.x, PanelBounds.min.x + (border + ToolTipBounds.width / 2), PanelBounds.max.x - (border + ToolTipBounds.width / 2));
-			target_pos.y = C.clamp(target_pos.y, PanelBounds.min.y + (border + 0), PanelBounds.max.y - (border + ToolTipBounds.height));
-			// << clamp
-
+				// for origin/anchor at center-bottom
+				target_pos.x = C.clamp(target_pos.x, PanelBounds.min.x + (border + ToolTipBounds.width / 2), PanelBounds.max.x - (border + ToolTipBounds.width / 2));
+				target_pos.y = C.clamp(target_pos.y, PanelBounds.min.y + (border + 0), PanelBounds.max.y - (border + ToolTipBounds.height));
+				// << clamp			
+			}
 			this.ToolTipRect.anchoredPosition = target_pos;
 		}
 	}
