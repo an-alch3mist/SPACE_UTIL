@@ -30,6 +30,8 @@ namespace SPACE_UTIL
 
 		public static v2 operator +(v2 a, v2 b) { return new v2(a.x + b.x, a.y + b.y); }
 		public static v2 operator -(v2 a, v2 b) { return new v2(a.x - b.x, a.y - b.y); }
+		public static v2 operator *(v2 v, int m) { return new v2(v.x * m, v.y * m); }
+		public static v2 operator *(int m, v2 v) { return new v2(v.x * m, v.y * m); }
 		public static bool operator ==(v2 a, v2 b) { return a.x == b.x && a.y == b.y; }
 		public static bool operator !=(v2 a, v2 b) { return a.x != b.x || a.y != b.y; }
 		public static float dot(v2 a, v2 b) { return a.x * b.x + a.y * b.y; }
@@ -37,6 +39,41 @@ namespace SPACE_UTIL
 
 		// Allow implicit conversion from tuple
 		public static implicit operator v2((int, int) tuple) => new v2(tuple.Item1, tuple.Item2);
+
+		#region getDIR(bool)
+		public static List<v2> getDIR(bool diagonal = false)
+		{
+			List<v2> DIR = new List<v2>();
+
+			DIR.Add((+1,  0));
+			if (diagonal == true) DIR.Add((+1, +1));
+			DIR.Add(( 0, +1));
+			if (diagonal == true) DIR.Add((-1, +1));
+			DIR.Add((-1,  0));
+			if (diagonal == true) DIR.Add((-1, -1));
+			DIR.Add(( 0, -1));
+			if (diagonal == true) DIR.Add((+1, -1));
+
+			return DIR;
+		}
+
+		/// <summary>
+		/// get dir based on <paramref name="dir_str"/> name,
+		/// example: "r" = (+1, 0), "ru" or "ur" = (+1, +1) 
+		/// </summary>
+		public static v2 getdir(string dir_str = "r")
+		{
+			v2 dir = (0, 0);
+			foreach(char _char in dir_str)
+			{
+				if (_char == 'r') dir += (+1,  0);
+				if (_char == 'u') dir += ( 0, +1);
+				if (_char == 'l') dir += (-1,  0);
+				if (_char == 'd') dir += ( 0, -1);
+			}
+			return dir;
+		}
+		#endregion
 
 		#region ad vec3, vec2 conversion
 		public static char axisY = 'y';
@@ -51,6 +88,11 @@ namespace SPACE_UTIL
 			if (v2.axisY == 'y')
 				return new Vector3(@this.x, @this.y, 0);
 			return new Vector3(@this.x, 0, @this.y);
+		}
+
+		public static implicit operator v2(Vector2 vec2)
+		{
+			return new v2(C.round(vec2.x), C.round(vec2.y));        // depend on C
 		}
 		#endregion
 	}
@@ -391,6 +433,10 @@ namespace SPACE_UTIL
 			if (str.Length < 1)
 				Debug.LogError("string length < 1, for .toChar conversion");
 			return str[0];
+		}
+		public static List<char> toCHAR(this string str)
+		{
+			return str.ToCharArray().ToList();
 		}
 		public static int parseInt(this string str)
 		{
@@ -1234,6 +1280,27 @@ namespace SPACE_UTIL
 		}
 
 		#endregion
+		
+		// To Board 
+		public static string ToBoard<T>(this IEnumerable<IEnumerable<T>> B, char emptyChar = '.')
+		{
+			string str = "";
+			for(int y = B.Count() - 1; y >= 0; y -=1)
+			{
+				string line = "";
+				for(int x =0; x < B.ElementAt(y).Count(); x += 1)
+				{
+					T elem = B.ElementAt(y).ElementAt(x);
+					if (elem.ToString().fmatch(@"^ *$", "g"))
+						line += emptyChar.repeat(elem.ToString().Length);
+					else
+						line += elem.ToString();
+					line += ' '; // gap between neighbours
+				}
+				str += line + '\n';
+			}
+			return str;
+		}
 	}
 	#endregion
 
