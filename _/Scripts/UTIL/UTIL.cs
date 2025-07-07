@@ -83,21 +83,94 @@ namespace SPACE_UTIL
 				return new v2(C.round(vec3.x), C.round(vec3.y));	// depend on C
 			return new v2(C.round(vec3.x), C.round(vec3.z));		// depend on C
 		}
+		public static implicit operator v2(Vector2 vec2)
+		{
+			return new v2(C.round(vec2.x), C.round(vec2.y));        // depend on C
+		}
+
 		public static implicit operator Vector3(v2 @this)
 		{
 			if (v2.axisY == 'y')
 				return new Vector3(@this.x, @this.y, 0);
 			return new Vector3(@this.x, 0, @this.y);
 		}
-
-		public static implicit operator v2(Vector2 vec2)
-		{
-			return new v2(C.round(vec2.x), C.round(vec2.y));        // depend on C
-		}
 		#endregion
 	}
-
 	#endregion
+
+	#region Board
+	/*
+		- depends on v2
+	*/
+	public class Board<T>
+	{
+		public int w, h;
+		public v2 m, M;
+		public T[][] B;
+
+		#region for clone
+		T default_val;
+		#endregion
+
+		public Board(v2 size, T default_val)
+		{
+			this.w = size.x; this.h = size.y;
+			this.m = (0, 0); this.M = (size.x - 1, size.y - 1);
+
+			#region for clone
+			this.default_val = default_val;
+			#endregion
+
+			B = new T[this.h][];
+			for (int y = 0; y < this.h; y += 1)
+			{
+				B[y] = new T[w];
+				for (int x = 0; x < this.w; x += 1)
+					B[y][x] = default_val;
+			}
+		}
+
+		public T GT(v2 coord)
+		{
+			if (coord.in_range((0, 0), (w - 1, h - 1)) == true)
+				Debug.LogError($"{coord} not in range of Board range (0, 0) to ({w - 1}, {h - 1})");
+			return B[coord.y][coord.x];
+		}
+		public void ST(v2 coord, T val)
+		{
+			if (coord.in_range((0, 0), (w - 1, h - 1)) == true)
+				Debug.LogError($"{coord} not in range of Board range (0, 0) to ({w - 1}, {h - 1})");
+			B[coord.y][coord.x] = val;
+		}
+		public override string ToString()
+		{
+			string str = "";
+			for (int y = h - 1; y >= 0; y -= 1)
+			{
+				for (int x = 0; x < w; x += 1)
+					str += B.GT((x, y));
+				str += '\n';
+			}
+			return str;
+			//return base.ToString();
+		}
+
+		#region clone
+		public Board<T> clone
+		{
+			get
+			{
+				Board<T> new_B = new Board<T>((this.w, this.h), this.default_val);
+				for (int y = 0; y < this.h; y += 1)
+					for (int x = 0; x < this.w; x += 1)
+						new_B.B[y][x] = this.B[y][x];
+				return new_B;
+			}
+		} 
+		#endregion
+	}
+	#endregion
+
 
 	public static class Z
 	{
@@ -167,6 +240,7 @@ namespace SPACE_UTIL
 		}
 		#endregion
 	}
+
 
 	public class INPUT
 	{
@@ -298,6 +372,7 @@ namespace SPACE_UTIL
 		#endregion
 	}
 
+
 	public static class C
 	{
 		public static void Init()
@@ -371,20 +446,20 @@ namespace SPACE_UTIL
 			return zero(v.x, e) && zero(v.y, e) && zero(v.z, e);
 		}
 		
-		public static bool inrange(float x, float m, float M)
+		public static bool in_range(float x, float m, float M)
 		{
 			return x >= m && x <= M;
 		}
-		public static bool inrange(this Vector3 v, Vector3 m, Vector3 M)
+		public static bool in_range(this Vector3 v, Vector3 m, Vector3 M)
 		{
-			return	C.inrange(v.x, m.x, M.x) && 
-					C.inrange(v.y, m.y, M.y) &&
-					C.inrange(v.z, m.z, M.z);
+			return	C.in_range(v.x, m.x, M.x) && 
+					C.in_range(v.y, m.y, M.y) &&
+					C.in_range(v.z, m.z, M.z);
 		}
-		public static bool inrange(this v2 v, v2 m, v2 M)
+		public static bool in_range(this v2 v, v2 m, v2 M)
 		{
-			return	C.inrange(v.x, m.x, M.x) &&
-					C.inrange(v.y, m.y, M.y);
+			return	C.in_range(v.x, m.x, M.x) &&
+					C.in_range(v.y, m.y, M.y);
 		}
 		#endregion
 
@@ -611,7 +686,7 @@ namespace SPACE_UTIL
 			[System.Serializable]object.ToJson() -> string
 			str.FromJson<T>() -> T
 		*/
-		#region json operations
+		#region json, byte operations
 		/// <summary>
 		/// Convert A Serielizable (object) To JSON (string).
 		/// called as string Json = object.ToJson(true);
@@ -642,6 +717,9 @@ namespace SPACE_UTIL
 			}
 		}
 
+		/// <summary>
+		/// string to byte[]
+		/// </summary>
 		public static byte[] ToBytes(this string json)
 		{
 			return System.Text.Encoding.UTF8.GetBytes(json);
@@ -662,6 +740,7 @@ namespace SPACE_UTIL
 		}
 		#endregion
 	}
+
 
 	public static class U
 	{
@@ -972,6 +1051,7 @@ namespace SPACE_UTIL
 		#endregion
 	}
 
+
 	#region ITER
 	// ITER.iter_inc(1e4) => true when limit exeed
 	// ITER.reset()
@@ -992,6 +1072,7 @@ namespace SPACE_UTIL
 		}
 	}
 	#endregion
+
 
 	#region LOG
 	/*
@@ -1280,29 +1361,9 @@ namespace SPACE_UTIL
 		}
 
 		#endregion
-		
-		// To Board 
-		public static string ToBoard<T>(this IEnumerable<IEnumerable<T>> B, char emptyChar = '.')
-		{
-			string str = "";
-			for(int y = B.Count() - 1; y >= 0; y -=1)
-			{
-				string line = "";
-				for(int x =0; x < B.ElementAt(y).Count(); x += 1)
-				{
-					T elem = B.ElementAt(y).ElementAt(x);
-					if (elem.ToString().fmatch(@"^ *$", "g"))
-						line += emptyChar.repeat(elem.ToString().Length);
-					else
-						line += elem.ToString();
-					line += ' '; // gap between neighbours
-				}
-				str += line + '\n';
-			}
-			return str;
-		}
 	}
 	#endregion
+
 
 	#region DRAW
 	public static class DRAW
