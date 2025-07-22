@@ -148,7 +148,7 @@ namespace SPACE_UTIL
 			for (int y = h - 1; y >= 0; y -= 1)
 			{
 				for (int x = 0; x < w; x += 1)
-					str += B.GT((x, y));
+					str += this.GT((x, y));
 				str += '\n';
 			}
 			return str;
