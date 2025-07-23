@@ -741,7 +741,11 @@ namespace SPACE_UTIL
 		#endregion
 	}
 
+	/*
+		- GameOnjectt/Transform Search
+		- Find Non Collision Spot 2D, 3D
 
+	*/
 	public static class U
 	{
 		#region Transform/GameObject Leaf Search
@@ -955,7 +959,7 @@ namespace SPACE_UTIL
 		#endregion
 
 		// Extension
-		#region minMax(func, splice), find(func), findIndex(func)
+		#region minMax(func, bool), find(func), findIndex(func), forEach(func), map()
 		public static T minMax<T>(this T[] T_1D, Func<T, T, float> cmp_func)
 		{
 			T min = T_1D[0];
@@ -1003,16 +1007,29 @@ namespace SPACE_UTIL
 			foreach (var e in collection)
 				action(e);
 		}
+	
+		#region map(func(elem)), map(func(elem, index))
 		public static IEnumerable<TResult> map<TSource, TResult>(this IEnumerable<TSource> source, Func<TSource, TResult> selector)
 		{
 			return source.Select(selector);
 		}
-		public static IEnumerable<TSource> refine<TSource>(this IEnumerable<TSource> source, Func<TSource, bool> cmp_func)
+		public static IEnumerable<TResult> map<TSource, TResult>(this IEnumerable<TSource> source, Func<TSource, int, TResult> selector)
 		{
-			return source.Where(cmp_func);
+			return source.Select((item, index) => selector(item, index));
 		}
+		#endregion
+		
+		#region refine(func(elem)), refine(func(elem, index))
+		public static IEnumerable<TSource> refine<TSource>(this IEnumerable<TSource> source, Func<TSource, bool> predicate)
+		{
+			return source.Where(predicate);
+		}
+		public static IEnumerable<TSource> refine<TSource>(this IEnumerable<TSource> source, Func<TSource, int, bool> predicate)
+		{
+			return source.Where((item, index) => predicate(item, index));
+		}
+		#endregion
 
-		// checked
 		public static T gl<T>(this IEnumerable<T> collection, int index_from_last)
 		{
 			if (collection == null) throw new ArgumentNullException(nameof(collection)); // nameof(collection) = "collection"
@@ -1224,11 +1241,15 @@ namespace SPACE_UTIL
 				return val.ToString();
 			}
 
+			// pri~ for private field
+			// sta~ for static field
+			//  ~  for otherwise which also include public field
 			string GetPrefixedFieldName(FieldInfo fieldInfo)
 			{
 				string rawName = fieldInfo.Name;
-				if (fieldInfo.IsPrivate) rawName = "pri-" + rawName;
+				if (fieldInfo.IsPrivate) rawName = "pri~" + rawName;
 				else if (fieldInfo.IsStatic) rawName = "sta~" + rawName;
+				else						 rawName = "~" + rawName;
 				return rawName;
 			}
 
@@ -1236,22 +1257,18 @@ namespace SPACE_UTIL
 			var columnWidths = new int[fields.Length];
 			for (int i = 0; i < fields.Length; i += 1)
 			{
-				// start with the length of the (possibly‐prefixed) field‐name
-				string rawName = GetPrefixedFieldName(fields[i]);
-				
 				// base width = field name length
-				columnWidths[i] = rawName.Length;
+				columnWidths[i] = GetPrefixedFieldName(fields[i]).Length;
 
 				// check each item’s value in that field
 				foreach (var item in items)
 				{
 					var rawValue = fields[i].GetValue(item);
 					string disp = RenderElemValue(rawValue);
-					columnWidths[i] = Math.Max(columnWidths[i], disp.Length);
+					columnWidths[i] = Math.Max(columnWidths[i], disp.Length); // alter columnWidth when heigher width string is found in the column val
 				}
 
-				// add some padding
-				columnWidths[i] += 2;
+				columnWidths[i] += 2; // add some padding
 			}
 
 			// 2) Build the header row (“field names”)
