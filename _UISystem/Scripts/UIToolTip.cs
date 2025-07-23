@@ -8,8 +8,23 @@ using SPACE_UTIL;
 
 namespace SPACE_UISystem
 {
+	/*
+		Used As: 
+		using SPACE_UISystem;
+			UIToolTip.Ins.Show(bool);
+			UIToolTip.Ins.SetText(string);
+			UIToolTip.Ins.SetPos(vec2 UICoord UI MousePos is used as practice );
+	*/
 	public class UIToolTip : MonoBehaviour
 	{
+		[Header("README")]
+		[TextArea(minLines: 5, maxLines: 10)]
+		[SerializeField] string README = @"Used As: 
+using SPACE_UISystem;
+	Call UIToolTip.Ins.Show(bool);
+	Call UIToolTip.Ins.SetText(string);
+	Call UIToolTip.Ins.SetPos(vec2 UICoord UI MousePos is used as practice );";
+
 		[SerializeField] bool show_by_default = false;
 		[SerializeField] RectTransform BoundRect;
 		public static UIToolTip Ins;
