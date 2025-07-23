@@ -531,7 +531,7 @@ namespace SPACE_UTIL
 		}
 		
 		// ad essential >>
-		public static RegexOptions str_to_flags(string flags)
+		static RegexOptions str_to_flags(string flags)
 		{
 			RegexOptions options = RegexOptions.None;
 			if (!string.IsNullOrEmpty(flags))
@@ -772,22 +772,26 @@ namespace SPACE_UTIL
 			return null;
 		}
 
+		#region Query location: b > c > d > e
 		/// <summary>
-		/// (To Check)
-		/// Get Transform at Gen query.split(@"\s*>\s*").Length
+		/// if transform @"a" = anscestor, than transform @"a".Query("b > c > d > e") =  transform @"d".NameStartsWith("e")
 		/// </summary>
-		public static Transform Query(this Transform transform, string query) // query: leaf > leaflet
+		public static Transform Query(this Transform transform, string query, char sep = '>') // query: leaf > leaflet
 		{
-			string[] QUERY = query.split(@"(\s)*(\>)(\s)*");
+			string[] QUERY = query.split($@"(\s)*(\{sep})(\s)*"); // clean(prior) by default than split
 			Transform leaf = transform;
 			foreach (string name in QUERY)
 				leaf = leaf.NameStartsWith(name); // error pause(name not found) handled by .NameStartsWith(name)
 			return leaf;
 		}
-		public static GameObject Query(this GameObject gameObject, string query) // query: leaf > leaflet
+		/// <summary>
+		/// if gameObject @"a" = anscestor, than gameObject @"a".Query("b > c > d > e") = gameObject @"d".NameStartsWith("e")
+		/// </summary>
+		public static GameObject Query(this GameObject gameObject, string query, char sep = '>') // query: leaf > leaflet
 		{
-			return gameObject.transform.Query(query).gameObject;
-		}
+			return gameObject.transform.Query(query, sep).gameObject;
+		} 
+		#endregion
 		#endregion
 
 		// get Leaves under a Transform/GameObject
