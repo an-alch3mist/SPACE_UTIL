@@ -435,18 +435,26 @@ namespace SPACE_UTIL
 		{
 			return Mathf.CeilToInt(x);
 		}
+		public static int sign(float x, float e = 1f / 100)
+		{
+			if (x <= e && x >= -e)
+				return 0;
+
+			if (x > e) return +1;
+			else return -1;
+		}
 
 		// less than 0.01f considered as zero
-		public static bool zero(float x, float e = 1f / 100)
+		public static bool zero(this float x, float e = 1f / 100)
 		{
 			return Mathf.Abs(x) < e;
 		}
-		public static bool zero(Vector3 v, float e = 1f / 100)
+		public static bool zero(this Vector3 v, float e = 1f / 100)
 		{
 			return zero(v.x, e) && zero(v.y, e) && zero(v.z, e);
 		}
 		
-		public static bool in_range(float x, float m, float M)
+		public static bool in_range(this float x, float m, float M)
 		{
 			return x >= m && x <= M;
 		}
