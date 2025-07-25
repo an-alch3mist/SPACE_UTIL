@@ -868,6 +868,14 @@ namespace SPACE_UTIL
 		}
 		// << self comparision approach
 		#endregion
+
+		// Get Component Shorter format 
+		#region GetComponent -> GC
+		public static T GC<T>(this GameObject go) where T : Component
+		{
+			return go.GetComponent<T>();
+		} 
+		#endregion
 		#endregion
 
 		#region CanPlaceObject ? at a give pos, _prefab.collider, rotationY
