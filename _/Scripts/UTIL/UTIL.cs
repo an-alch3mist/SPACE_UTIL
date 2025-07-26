@@ -381,6 +381,11 @@ namespace SPACE_UTIL
 		}
 		public static Transform PrefabHolder;
 
+		#region constant
+		public static float e = 1f / 100;
+		public static float pi = Mathf.PI;
+		#endregion
+
 		#region float, vec3 operations
 		public static float clamp(float x, float min, float max)
 		{
