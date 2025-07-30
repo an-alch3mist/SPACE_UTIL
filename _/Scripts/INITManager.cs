@@ -5,7 +5,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using SPACE_UTIL;
 
-namespace SPACE_0
+namespace SPACE_UTIL
 {
 	[DefaultExecutionOrder(-1000)] // first MonoBehaviour script to run, after UnityEngine Initialization
 	public class INITManager : MonoBehaviour
@@ -17,6 +17,8 @@ namespace SPACE_0
 
 		[SerializeField] Camera MainCam;
 		[SerializeField] RectTransform CanvasRectTransform;
+		public static INITManager Ins { get; private set; }
+
 		private void Awake()
 		{
 			Debug.Log("Awake(): " + this);
@@ -26,8 +28,10 @@ namespace SPACE_0
 			);
 			C.Init(); // PrefabHolder Obj Creation
 			LOG.Init(); // Directory, .txt File SetUp
+			INITManager.Ins = this; // instance of InitManager to use MonoBehaviour features
 			//GameData.LoadGame(); // 
 		}
+
 
 		// check >>
 		#region check_gameData /**/
