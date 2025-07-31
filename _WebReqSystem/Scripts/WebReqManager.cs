@@ -5,13 +5,14 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Networking;
 using SPACE_NAME_GEN;
+using SPACE_UTIL;
 
 namespace SPACE_WebReqSystem
 {
 	/*
 		Call From External As:
-			WebReqSystemManager.Discord.SendPayLoadJson_SysSpec();					   [done]
-			WebReqSystemManager.Discord.SendPayLoadJson_Feedback(string Feedback_str); [done]
+			WebReqManager.Discord.SendPayLoadJson_SysSpec();					   [done]
+			WebReqManager.Discord.SendPayLoadJson_Feedback(string Feedback_str); [done]
 	*/
 	public class WebReqManager : MonoBehaviour
 	{
@@ -26,16 +27,20 @@ Call From External As:
 		[Header("Discord")]
 		[TextArea(minLines: 3, maxLines: 5)]
 		[SerializeField] public string webhook_url = "https://discord.com/api/webhooks/<channel-id>/<webhook-id>";
+		[SerializeField] bool use_from_secure_webhook_url = true;
 		[TextArea(minLines: 3, maxLines: 10)]
 		[SerializeField] public string webhook_profile_url = "https://media.discordapp.net/attachments/1380909082298421410/1380909111918723144/cunning-anime-hacker-modern-female-ninja-with-long-dark-brown-hair-brown-eyes-epic-b_983420-159985.png?ex=68459754&is=684445d4&hm=c0966cf03a4e4e052fbcafd9c285ca682b4d3598f3e499b805c798cf44ea1b84&=&format=webp&quality=lossless&width=814&height=814";
 		[Space(5)]
-
+		[SerializeField] bool send_sendPayLoadJson_onAwake = false;
 
 		public static WebReqManager instance;
 		private void Awake()
 		{
 			Debug.Log("Awake(): " + this);
 			instance = this;
+
+			if(this.send_sendPayLoadJson_onAwake == true)
+				WebReqManager.Discord.SendPayLoadJson_SysSpec();
 		}
 
 		// depend on WebReqSystemManager.instance serilize field config
@@ -53,7 +58,7 @@ Call From External As:
 					req.uploadHandler = new UploadHandlerRaw(data);
 					req.downloadHandler = new DownloadHandlerBuffer();
 					yield return req.SendWebRequest();
-					Debug.Log(req.responseCode + " // " + url);
+					Debug.Log(req.responseCode + " // " + "SendPayLoadJson()");
 				}
 			}
 			WebReqManager.instance.StartCoroutine(routine());
@@ -75,6 +80,10 @@ Call From External As:
 			{
 				// depends on WebReqSystemManager instance
 				string webhook_url = WebReqManager.instance.webhook_url;
+				#region _secure
+				if (WebReqManager.instance.use_from_secure_webhook_url == true)
+					webhook_url = _secure.webhook_url; // require a _secure(SPACE_UTIL) static class with webhook_url(string) variable 
+				#endregion
 				string webhook_profile_url = WebReqManager.instance.webhook_profile_url;
 
 				#region data collected
