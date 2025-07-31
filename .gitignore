@@ -1,2 +1,2 @@
-# Ignore Unity's secure directory
+# Ignore Assets/_/_secure directory when push is done via git
 /_secure/

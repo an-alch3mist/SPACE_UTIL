@@ -36,10 +36,10 @@ RectTransform:
   m_Father: {fileID: 4470771160086482292}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 171.17, y: 0}
-  m_SizeDelta: {x: 0, y: 0}
+  m_AnchorMin: {x: 0, y: 1}
+  m_AnchorMax: {x: 0, y: 1}
+  m_AnchoredPosition: {x: 171.17, y: -40.08}
+  m_SizeDelta: {x: 342.34, y: 80.16}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &4470771158760148373
 CanvasRenderer:
@@ -166,10 +166,10 @@ RectTransform:
   m_Father: {fileID: 4470771158760148371}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 0}
+  m_AnchorMin: {x: 0, y: 1}
+  m_AnchorMax: {x: 0, y: 1}
+  m_AnchoredPosition: {x: 171.17, y: -40.08}
+  m_SizeDelta: {x: 322.34, y: 60.160004}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &4470771159260068638
 CanvasRenderer:
@@ -202,8 +202,8 @@ MonoBehaviour:
   m_text: "well lets see if that works \nwell its does work thats good \nthan, =>
     great"
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 49cbef370b65f5d4888ea327cffc8d19, type: 2}
-  m_sharedMaterial: {fileID: -1729519997121678186, guid: 49cbef370b65f5d4888ea327cffc8d19, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: 947aa101c13fc74499710d10b2f05d36, type: 2}
+  m_sharedMaterial: {fileID: -3551719858685749393, guid: 947aa101c13fc74499710d10b2f05d36, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -369,6 +369,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b8bc6bfdf017c994b8108929051745ea, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  README: "Used As: \r\nusing SPACE_UISystem;\r\n\tCall UIToolTip.Ins.Show(bool);\r\n\tCall
+    UIToolTip.Ins.SetText(string);\r\n\tCall UIToolTip.Ins.SetPos(vec2 UICoord UI
+    MousePos is used as practice );"
   show_by_default: 0
   BoundRect: {fileID: 0}
   check_str: 
