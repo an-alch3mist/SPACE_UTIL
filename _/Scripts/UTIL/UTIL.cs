@@ -9,6 +9,8 @@ using System.Text.RegularExpressions;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
+using TMPro;
+
 using System.Threading.Tasks;
 
 namespace SPACE_UTIL
@@ -30,12 +32,21 @@ namespace SPACE_UTIL
 
 		public static v2 operator +(v2 a, v2 b) { return new v2(a.x + b.x, a.y + b.y); }
 		public static v2 operator -(v2 a, v2 b) { return new v2(a.x - b.x, a.y - b.y); }
+		public static v2 operator *(v2 a, v2 b) { return new v2(a.x * b.x, a.y * b.y); }
 		public static v2 operator *(v2 v, int m) { return new v2(v.x * m, v.y * m); }
 		public static v2 operator *(int m, v2 v) { return new v2(v.x * m, v.y * m); }
-		public static bool operator ==(v2 a, v2 b) { return a.x == b.x && a.y == b.y; }
-		public static bool operator !=(v2 a, v2 b) { return a.x != b.x || a.y != b.y; }
 		public static float dot(v2 a, v2 b) { return a.x * b.x + a.y * b.y; }
 		public static float area(v2 a, v2 b) { return a.x * b.y - a.y * b.x; }
+
+		#region compare
+		public static bool operator ==(v2 a, v2 b) { return a.x == b.x && a.y == b.y; }
+		public static bool operator !=(v2 a, v2 b) { return a.x != b.x || a.y != b.y; }
+
+		public static bool operator >(v2 a, v2 b) => a.x > b.x || a.y > b.y;
+		public static bool operator <(v2 a, v2 b) => a.x < b.x || a.y < b.y;
+		public static bool operator >=(v2 a, v2 b) => a.x >= b.x || a.y >= b.y;
+		public static bool operator <=(v2 a, v2 b) => a.x <= b.x || a.y <= b.y;
+		#endregion
 
 		// Allow implicit conversion from tuple
 		public static implicit operator v2((int, int) tuple) => new v2(tuple.Item1, tuple.Item2);
@@ -45,13 +56,13 @@ namespace SPACE_UTIL
 		{
 			List<v2> DIR = new List<v2>();
 
-			DIR.Add((+1,  0));
+			DIR.Add((+1, 0));
 			if (diagonal == true) DIR.Add((+1, +1));
-			DIR.Add(( 0, +1));
+			DIR.Add((0, +1));
 			if (diagonal == true) DIR.Add((-1, +1));
-			DIR.Add((-1,  0));
+			DIR.Add((-1, 0));
 			if (diagonal == true) DIR.Add((-1, -1));
-			DIR.Add(( 0, -1));
+			DIR.Add((0, -1));
 			if (diagonal == true) DIR.Add((+1, -1));
 
 			return DIR;
@@ -64,12 +75,12 @@ namespace SPACE_UTIL
 		public static v2 getdir(string dir_str = "r")
 		{
 			v2 dir = (0, 0);
-			foreach(char _char in dir_str)
+			foreach (char _char in dir_str)
 			{
-				if (_char == 'r') dir += (+1,  0);
-				if (_char == 'u') dir += ( 0, +1);
-				if (_char == 'l') dir += (-1,  0);
-				if (_char == 'd') dir += ( 0, -1);
+				if (_char == 'r') dir += (+1, 0);
+				if (_char == 'u') dir += (0, +1);
+				if (_char == 'l') dir += (-1, 0);
+				if (_char == 'd') dir += (0, -1);
 			}
 			return dir;
 		}
@@ -79,20 +90,25 @@ namespace SPACE_UTIL
 		public static char axisY = 'y';
 		public static implicit operator v2(Vector3 vec3)
 		{
-			if(v2.axisY == 'y')
-				return new v2(C.round(vec3.x), C.round(vec3.y));	// depend on C
-			return new v2(C.round(vec3.x), C.round(vec3.z));		// depend on C
+			if (v2.axisY == 'y')
+				return new v2(C.round(vec3.x), C.round(vec3.y));    // depend on C
+			return new v2(C.round(vec3.x), C.round(vec3.z));        // depend on C
 		}
 		public static implicit operator v2(Vector2 vec2)
 		{
 			return new v2(C.round(vec2.x), C.round(vec2.y));        // depend on C
 		}
 
+		// depend on v2.axisY
 		public static implicit operator Vector3(v2 @this)
 		{
 			if (v2.axisY == 'y')
 				return new Vector3(@this.x, @this.y, 0);
 			return new Vector3(@this.x, 0, @this.y);
+		}
+		public static implicit operator Vector2(v2 @this)
+		{
+			return new Vector2(@this.x, @this.y);
 		}
 		#endregion
 	}
@@ -350,6 +366,11 @@ namespace SPACE_UTIL
 				// return 1280, 720 regardless of canvas scale provided same ratio
 				return v / CanvasRectTransform.localScale.x;
 			}
+			public static Vector2 invConvert(Vector2 v)
+			{
+				// return 1280, 720 regardless of canvas scale provided same ratio
+				return v * CanvasRectTransform.localScale.x;
+			}
 
 			#region rect operations
 			// using INPUT.UI.convert(vec2)
@@ -372,6 +393,40 @@ namespace SPACE_UTIL
 		#endregion
 	}
 
+	public static class AN
+	{
+		public static IEnumerator typewriter_effect(this TextMeshProUGUI tm_gui, float waitInBetween = 0.05f)
+		{
+			string str = tm_gui.text.ToString();
+			string new_str = "";
+
+			for (int i0 = 0; i0 < str.Length; i0 += 1)
+			{
+				new_str += str[i0];
+				tm_gui.text = new_str + "_";
+
+				yield return new WaitForSeconds(waitInBetween);
+			}
+			//
+			tm_gui.text = str;
+		}
+		public static IEnumerator typewriter_effect(this TextMeshPro tm_gui, float _wait = 0.05f)
+		{
+			string str = tm_gui.text.ToString();
+			string new_str = "";
+
+			for (int i0 = 0; i0 < str.Length; i0 += 1)
+			{
+				new_str += str[i0];
+				tm_gui.text = new_str + "_";
+
+				yield return new WaitForSeconds(_wait);
+			}
+			//
+			tm_gui.text = str;
+		}
+	}
+
 
 	public static class C
 	{
@@ -387,19 +442,19 @@ namespace SPACE_UTIL
 		#endregion
 
 		#region float, vec3 operations
-		public static float clamp(float x, float min, float max)
+		public static float clamp(float x, float min, float max, float e = 0f)
 		{
-			if (x > max) return max;
-			if (x < min) return min;
+			if (x > max) return max - e;
+			if (x < min) return min + e;
 			return x;
 		}
-		public static Vector3 clamp(Vector3 v, Vector3 min, Vector3 max)
+		public static Vector3 clamp(Vector3 v, Vector3 min, Vector3 max, float e = 0f)
 		{
 			return new Vector3()
 			{
-				x = C.clamp(v.x, min.x, max.x),
-				y = C.clamp(v.y, min.y, max.y),
-				z = C.clamp(v.z, min.z, max.z),
+				x = C.clamp(v.x, min.x, max.x, e),
+				y = C.clamp(v.y, min.y, max.y, e),
+				z = C.clamp(v.z, min.z, max.z, e),
 			};
 		}
 
@@ -458,7 +513,13 @@ namespace SPACE_UTIL
 		{
 			return zero(v.x, e) && zero(v.y, e) && zero(v.z, e);
 		}
-		
+
+		public static float abs(float x) { return Mathf.Abs(x); }
+		public static int abs(int x) { return Mathf.RoundToInt(Mathf.Abs(x)); }
+		public static Vector3 abs(Vector3 vec3) { return new Vector3(Mathf.Abs(vec3.x), Mathf.Abs(vec3.y), Mathf.Abs(vec3.z)); }
+		public static Vector2 abs(Vector2 vec2) { return new Vector2(Mathf.Abs(vec2.x), Mathf.Abs(vec2.y)); }
+		public static v2 abs(v2 _v2) { return (abs(_v2.x), abs(_v2.y)); }
+
 		public static bool in_range(this float x, float m, float M)
 		{
 			return x >= m && x <= M;
@@ -468,6 +529,11 @@ namespace SPACE_UTIL
 			return	C.in_range(v.x, m.x, M.x) && 
 					C.in_range(v.y, m.y, M.y) &&
 					C.in_range(v.z, m.z, M.z);
+		}
+		public static bool in_range(this Vector2 v, Vector2 m, Vector2 M)
+		{
+			return C.in_range(v.x, m.x, M.x) &&
+					C.in_range(v.y, m.y, M.y);
 		}
 		public static bool in_range(this v2 v, v2 m, v2 M)
 		{
