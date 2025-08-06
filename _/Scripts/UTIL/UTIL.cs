@@ -361,6 +361,7 @@ namespace SPACE_UTIL
 			{
 				get { return convert(new Vector2(Screen.width, Screen.height)); }
 			}
+			// just scale the vector 2, not the cooardinate axis conversion
 			public static Vector2 convert(Vector2 v)
 			{
 				// return 1280, 720 regardless of canvas scale provided same ratio
@@ -427,7 +428,7 @@ namespace SPACE_UTIL
 		}
 	}
 
-
+	// TODO Random Int Generator based on Seed
 	public static class C
 	{
 		public static void Init()
