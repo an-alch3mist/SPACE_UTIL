@@ -92,6 +92,7 @@ Call From External As:
 				{
 					// Collect each spec into a bullet‐point line:
 					string os = SystemInfo.operatingSystem;
+					string platform = Application.platform.ToString(); // enum to string
 					string cpu = SystemInfo.processorType;
 					int cores = SystemInfo.processorCount;
 					int ramMB = SystemInfo.systemMemorySize;
@@ -107,6 +108,7 @@ Call From External As:
 					sb.AppendLine("**System Specs:**");
 					sb.AppendLine();
 					sb.AppendLine($"• **Uid:** `{id}`");
+					sb.AppendLine($"• **Platform:** `{platform.ToString()}`");
 					sb.AppendLine($"• **OS:** `{os}`");
 					sb.AppendLine($"• **Device:** `{device}`");
 					sb.AppendLine($"• **Resolution:** `{screen} {dpi}(dpi)`");
