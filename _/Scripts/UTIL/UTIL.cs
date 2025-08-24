@@ -26,7 +26,7 @@ namespace SPACE_UTIL
 		public v2(int x, int y) { this.x = x; this.y = y; }
 		public override string ToString()
 		{
-			return $"[{x}, {y}]";
+			return $"({x}, {y})";
 			//return base.ToString();
 		}
 
@@ -148,13 +148,13 @@ namespace SPACE_UTIL
 
 		public T GT(v2 coord)
 		{
-			if (coord.in_range((0, 0), (w - 1, h - 1)) == true)
+			if (coord.in_range((0, 0), (w - 1, h - 1)) == false)
 				Debug.LogError($"{coord} not in range of Board range (0, 0) to ({w - 1}, {h - 1})");
 			return B[coord.y][coord.x];
 		}
 		public void ST(v2 coord, T val)
 		{
-			if (coord.in_range((0, 0), (w - 1, h - 1)) == true)
+			if (coord.in_range((0, 0), (w - 1, h - 1)) == false)
 				Debug.LogError($"{coord} not in range of Board range (0, 0) to ({w - 1}, {h - 1})");
 			B[coord.y][coord.x] = val;
 		}
@@ -1472,7 +1472,6 @@ namespace SPACE_UTIL
 		#endregion
 	}
 	#endregion
-
 
 	#region DRAW
 	public static class DRAW
