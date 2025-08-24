@@ -187,7 +187,6 @@ namespace SPACE_UTIL
 	}
 	#endregion
 
-
 	public static class Z
 	{
 		#region dot
@@ -256,7 +255,6 @@ namespace SPACE_UTIL
 		}
 		#endregion
 	}
-
 
 	public class INPUT
 	{
