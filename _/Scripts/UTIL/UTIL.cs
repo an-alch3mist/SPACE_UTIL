@@ -1158,7 +1158,6 @@ namespace SPACE_UTIL
 		#endregion
 	}
 
-
 	#region ITER
 	// ITER.iter_inc(1e4) => true when limit exeed
 	// ITER.reset()
@@ -1180,7 +1179,6 @@ namespace SPACE_UTIL
 	}
 	#endregion
 
-
 	#region LOG
 	/*
 		.SaveLog(str)
@@ -1188,7 +1186,7 @@ namespace SPACE_UTIL
 		.LoadGame
 		.ToTable(toString(bool), "name")
 	*/
-	// file LOG.INITIALIZE() befdore
+	// file LOG.INITIALIZE() before
 	public static class LOG
 	{
 		static string LocFolder = Application.dataPath + "/LOG";
@@ -1242,9 +1240,54 @@ namespace SPACE_UTIL
 		}
 
 		/// <summary>
+		/// Sanitizes a string by converting control characters and non-printable ASCII to readable representations
+		/// </summary>
+		/// <param name="input">The input string to sanitize</param>
+		/// <returns>A sanitized string safe for text file output</returns>
+		public static string SanitizeForTextOutput(string input)
+		{
+			if (string.IsNullOrEmpty(input))
+				return input ?? "null";
+
+			var sb = new StringBuilder();
+
+			foreach (char c in input)
+			{
+				// Handle common control characters with readable names
+				switch (c)
+				{
+					case '\0': sb.Append("(ascii:0-NUL)"); break;
+					case '\a': sb.Append("(ascii:7-BEL)"); break;
+					case '\b': sb.Append("(ascii:8-BS)"); break;
+					case '\t': sb.Append("(ascii:9-TAB)"); break;
+					case '\n': sb.Append("(ascii:10-LF)"); break;
+					case '\v': sb.Append("(ascii:11-VT)"); break;
+					case '\f': sb.Append("(ascii:12-FF)"); break;
+					case '\r': sb.Append("(ascii:13-CR)"); break;
+					case '\x1B': sb.Append("(ascii:27-ESC)"); break;
+					default:
+						// Check if it's a control character or extended ASCII that might cause issues
+						if (char.IsControl(c) || (int)c > 126)
+						{
+							sb.Append($"(ascii:{(int)c})");
+						}
+						else
+						{
+							// Printable ASCII character, keep as-is
+							sb.Append(c);
+						}
+						break;
+				}
+			}
+
+			return sb.ToString();
+		}
+
+		/// <summary>
 		/// <paramref name="toString"/>: by default false, if true each row is logged based on simple value.ToString().flat()
-		/// Produces a simple ASCII “table” of all public/instance/private fields of each element in <paramref name="list"/>.
-		/// If a field’s value is any IEnumerable (but not a string), prints its item‐count instead of ToString().
+		/// Produces a simple ASCII "table" of all public/instance/private fields of each element in <paramref name="list"/>.
+		/// If a field's value is any IEnumerable (but not a string), prints its item‐count instead of ToString().
+		/// Now handles control characters and non-printable ASCII safely for text file output.
 		/// </summary>
 		// LIST<> or HASH<> or Q<> or MAP<>
 		public static string ToTable<T>(this IEnumerable<T> list, bool toString = false, string name = "LIST<>")
@@ -1257,7 +1300,7 @@ namespace SPACE_UTIL
 				return "list/hash/map/queue got no elem";
 
 			// @ - if toString enabled
-			#region toString enabled
+			#region toString enabled for Dictionary Values
 			if (toString == true)
 			{
 				string str = "";
@@ -1267,21 +1310,25 @@ namespace SPACE_UTIL
 				int cw = header.Length;
 				foreach (var e in list)
 				{
-					int width = e.ToString().flat().Length;
+					string flatValue = SanitizeForTextOutput(e.ToString().flat());
+					int width = flatValue.Length;
 					cw = Mathf.Max(cw, width);
 				}
 				// extra padding for column width
 
-				// Build the header row (“field names”)
+				// Build the header row ("field names")
 				// push right by cw and 1 beyond, add a left padding of 1 more
 				str = header.PadRight(cw + 1).PadLeft(cw + 2);
 
-				// Separator line (e.g. “------+-------+------”)
+				// Separator line (e.g. "------+-------+------")
 				str += '\n' + new string('-', cw + 2) + '\n';
 
 				// Each Row
 				foreach (var e in list)
-					str += e.ToString().flat().PadRight(cw + 1).PadLeft(cw + 2) + '\n';
+				{
+					string sanitizedValue = SanitizeForTextOutput(e.ToString().flat());
+					str += sanitizedValue.PadRight(cw + 1).PadLeft(cw + 2) + '\n';
+				}
 				return str;
 			}
 			#endregion
@@ -1296,16 +1343,16 @@ namespace SPACE_UTIL
 				BindingFlags.Public | BindingFlags.Instance | BindingFlags.NonPublic
 			);
 
-			// Helper: get a “display string” for a field‐value.
-			// If it's IEnumerable (and not a string), show “TypeName: count”; otherwise, ToString()/“null”.
+			// Helper: get a "display string" for a field‐value.
+			// If it's IEnumerable (and not a string), show "TypeName: count"; otherwise, ToString()/"null".
 			string RenderElemValue(object val)
 			{
 				if (val == null)
 					return "null";
 
-				// If it's a string, treat it as a scalar:
+				// If it's a string, treat it as a scalar and sanitize it:
 				if (val is string s)
-					return s;
+					return SanitizeForTextOutput(s);
 
 				// If it's any other IEnumerable, count its elements and prepend the collection type name:
 				if (val is IEnumerable enumerable)
@@ -1327,8 +1374,8 @@ namespace SPACE_UTIL
 					return $"{typeName}: {count}";
 				}
 
-				// Otherwise, fallback to ToString():
-				return val.ToString();
+				// Otherwise, fallback to ToString() and sanitize:
+				return SanitizeForTextOutput(val.ToString());
 			}
 
 			// pri~ for private field
@@ -1339,7 +1386,7 @@ namespace SPACE_UTIL
 				string rawName = fieldInfo.Name;
 				if (fieldInfo.IsPrivate) rawName = "pri~" + rawName;
 				else if (fieldInfo.IsStatic) rawName = "sta~" + rawName;
-				else						 rawName = "~" + rawName;
+				else rawName = "~" + rawName;
 				return rawName;
 			}
 
@@ -1350,18 +1397,18 @@ namespace SPACE_UTIL
 				// base width = field name length
 				columnWidths[i] = GetPrefixedFieldName(fields[i]).Length;
 
-				// check each item’s value in that field
+				// check each item's value in that field
 				foreach (var item in items)
 				{
 					var rawValue = fields[i].GetValue(item);
 					string disp = RenderElemValue(rawValue);
-					columnWidths[i] = Math.Max(columnWidths[i], disp.Length); // alter columnWidth when heigher width string is found in the column val
+					columnWidths[i] = Math.Max(columnWidths[i], disp.Length); // alter columnWidth when higher width string is found in the column val
 				}
 
 				columnWidths[i] += 2; // add some padding
 			}
 
-			// 2) Build the header row (“field names”)
+			// 2) Build the header row ("field names")
 			sb.AppendLine(
 				string.Join(" | ",
 					fields.Select((f, idx) =>
@@ -1371,7 +1418,7 @@ namespace SPACE_UTIL
 					})
 			));
 
-			// 3) Separator line (e.g. “------+-------+------”)
+			// 3) Separator line (e.g. "------+-------+------")
 			for (int i = 0; i < fields.Length; i += 1)
 			{
 				sb.Append(new string('-', columnWidths[i]));
@@ -1380,7 +1427,7 @@ namespace SPACE_UTIL
 			}
 			sb.AppendLine();
 
-			// 4) Rows: for each item, render each field’s value (or “count” for IEnumerable)
+			// 4) Rows: for each item, render each field's value (or "count" for IEnumerable)
 			foreach (var item in items)
 			{
 				var rowValues = fields.Select((f, idx) =>
@@ -1396,78 +1443,6 @@ namespace SPACE_UTIL
 			return $"{name}:\n" + sb.ToString();
 			#endregion
 		}
-
-		#region ToTable_prev
-		/// <summary>
-		/// make sure element class got ovverriden ToString() method
-		/// does to ToString() for each of attribute, with thier name in column
-		/// Renders a list of T into a plain string table. 
-		/// Columns are sized to fit the widest cell in each column.
-		/// </summary>
-		// LIST<> or HASH<> or Q<> or MAP<>
-		static string ToTable_prev<T>(this IEnumerable<T> list, string name = "LIST<>")
-		{
-			if (list == null)
-				return "list/hash/map/queue is null";
-			var items = list.ToList();
-			if (items.Count == 0)
-				return "list/hash/map/queue got no elem";
-
-			var sb = new StringBuilder();
-			var type = typeof(T);
-			var fields = type.GetFields(
-				BindingFlags.Public | BindingFlags.Instance | BindingFlags.NonPublic
-			);
-
-			// Calculate column widths
-			var columnWidths = new int[fields.Length];
-			for (int i = 0; i < fields.Length; i++)
-			{
-				columnWidths[i] = fields[i].Name.Length;
-				foreach (var item in items)
-				{
-					object val = fields[i].GetValue(item);
-					columnWidths[i] = Math.Max(columnWidths[i], (val?.ToString() ?? "null").Length);
-				}
-				columnWidths[i] += 2; // Add a little padding
-			}
-
-			// Header
-			sb.AppendLine(string.Join(" | ", fields.Select((f, i) =>
-			{
-				string fieldName = f.Name;
-				if (f.IsPrivate)
-					fieldName = "-" + fieldName; // prefix - for non private field
-				else if (f.IsStatic)
-					fieldName = "~" + fieldName; // prefix - for non static field
-
-				return fieldName.PadRight(columnWidths[i]);
-			})));
-
-			// Separator line(dashes + +-separators),before: sb.AppendLine(new string('-', columnWidths.Sum() + (fields.Length - 1) * 3));
-			for (int i0 = 0; i0 < fields.Length; i0 += 1)
-			{
-				sb.Append(new string('-', columnWidths[i0]));
-				if (i0 < fields.Length - 1)
-					sb.Append("-+-"); // seperator
-			}
-			sb.AppendLine();
-
-			// Rows
-			foreach (var item in items)
-			{
-				var values = fields.Select((f, i) =>
-				{
-					var val = f.GetValue(item);
-					return (val?.ToString() ?? "null").PadRight(columnWidths[i]);
-				});
-				sb.AppendLine(string.Join(" | ", values));
-			}
-
-			return $"{name}:\n" + sb.ToString();
-		}
-
-		#endregion
 	}
 	#endregion
 
