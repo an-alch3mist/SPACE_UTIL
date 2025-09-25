@@ -48,7 +48,7 @@ What the file implements and its responsibilities.
 ## Metadata
 * **Filename:** `SourceFile.cs`
 * **Primary namespace:** `...`
-* **Dependencies:** List external namespaces, Unity packages, referenced project files
+* **Cross-file dependencies:** List external namespaces, Unity packages, referenced project files
 * **Public types:** List ONLY root classes: `RootClass1 (MonoBehaviour class), RootClass2 (class), RootClass3 (static class)`
 * **Unity version:** (if detectable)
 ```

@@ -27,6 +27,7 @@ namespace SPACE_UTIL
 				CanvasRectTransform: this.CanvasRectTransform
 			);
 			C.Init(); // PrefabHolder Obj Creation
+			ITER.reset(); // reset ITER_1D
 			LOG.Init(); // Directory, .txt File SetUp
 			INITManager.Ins = this; // instance of InitManager to use MonoBehaviour features
 			//GameData.LoadGame(); // 

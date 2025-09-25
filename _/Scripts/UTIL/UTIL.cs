@@ -187,6 +187,45 @@ namespace SPACE_UTIL
 	}
 	#endregion
 
+	public static class MonoInterfaceFinder
+	{
+		/// <summary>
+		/// Find the first active MonoBehaviour in the scene that implements interface T.
+		/// Usage: var imono = UnityInterfaceFinder.FindInterface<IMono>();
+		/// </summary>
+		public static T FindInterface<T>() where T : class
+		{
+			if (!typeof(T).IsInterface)
+				throw new ArgumentException($"{typeof(T).FullName} is not an interface type.");
+
+			// FindObjectsOfType<MonoBehaviour>() returns active(eneabled GameObjects) MonoBehaviours in the scene.
+			// If your Unity version supports the includeInactive overload you can pass true to include inactive GameObjects.
+			return UnityEngine.Object.FindObjectsOfType<MonoBehaviour>()
+					.OfType<T>()
+					.FirstOrDefault();
+		}
+
+		/// <summary>
+		/// Return all active MonoBehaviours in the scene that implement interface T.
+		/// Usage: var all = UnityInterfaceFinder.FindAllInterfaces<IMono>();
+		/// </summary>
+		public static IEnumerable<T> FindAllInterfaces<T>() where T : class
+		{
+			if (!typeof(T).IsInterface)
+				throw new ArgumentException($"{typeof(T).FullName} is not an interface type.");
+
+			return UnityEngine.Object.FindObjectsOfType<MonoBehaviour>()
+				    .OfType<T>();
+		}
+
+		// if you want another interface say ITestable: 
+		/*
+			var itetrominoManager = MonoInterfaceFinder.FindInterface(ITetroMinoManager);
+			var itestable = itetrominoManager as ITestable;
+			itestable?.RunAllTests();
+		*/
+	}
+
 	public static class Z
 	{
 		#region dot
@@ -502,6 +541,12 @@ namespace SPACE_UTIL
 			if (x > e) return +1;
 			else return -1;
 		}
+		public static int mod(int i, int length, int offset = 0)
+		{
+			int new_i = (i + offset) % length;
+			if (new_i < 0) new_i += length;
+			return new_i;
+		}
 
 		// less than 0.01f considered as zero
 		public static bool zero(this float x, float e = 1f / 100)
@@ -737,6 +782,11 @@ namespace SPACE_UTIL
 		public static string join(this IEnumerable<string> STRING, string separator = ", ")
 		{
 			return string.Join(separator, STRING);
+		}
+
+		public static string colorTag(this string str, string color = "white")
+		{
+			return $"<color={color}>{str}</color>";
 		}
 		#endregion
 
@@ -1163,14 +1213,17 @@ namespace SPACE_UTIL
 	// ITER.reset()
 	public static class ITER
 	{
-		static int iter = 0;
-		public static void reset() { iter = 0; }
+		public static void reset() { ITER_1D = new List<int>() { 0 }; }
+
+		private static List<int> ITER_1D;
+		public static void create() { ITER_1D.Add(0); }
+		public static void done() { if (ITER_1D.Count != 0) ITER_1D.RemoveAt(ITER_1D.Count - 1); }
 		public static bool iter_inc(double limit = 1e4)
 		{
-			iter += 1;
-			if (iter > limit)
+			ITER_1D[ITER_1D.Count - 1] += 1;
+			if (ITER_1D[ITER_1D.Count - 1] > limit)
 			{
-				Debug.Log($"iter > {limit}");
+				Debug.Log($"iter @{ITER_1D.Count - 1} > {limit}");
 				return true;
 			}
 			else
