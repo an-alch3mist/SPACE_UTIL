@@ -40,7 +40,10 @@ namespace SPACE_DrawSystem
 
 
 	/// <summary>
-	/// Persistent line that can be updated without flickering
+	/// Create a new persistent line
+	/// order of calling: 
+	/// Line line = new Line(e: ,col: , name: ""); line.a = ; line.b = ;
+	/// line.Clear();
 	/// </summary>
 	public class Line
 	{
@@ -129,9 +132,7 @@ namespace SPACE_DrawSystem
 		}
 		*/
 
-		/// <summary>
-		/// Create a new persistent line
-		/// </summary>
+
 		public Line(Vector3 a, Vector3 b, float e = 1f / 50, Color? color = null, string name = "")
 		{
 			if (DRAW.DrawHolder == null)
@@ -177,12 +178,12 @@ namespace SPACE_DrawSystem
 		// PUBLIC METHODS
 		// ============================================================
 
-		/// <summary>
-		/// Manually update line positions (not needed if using properties)
-		/// </summary>
-		public void Update()
+		// clear line vertex positions
+		public void Clear()
 		{
-			UpdatePositions();
+			this._a = Vector3.right * (float)1e6;
+			this._b = Vector3.right * (float)1e6 - Vector3.right * 0.01f;
+			this.UpdatePositions();
 		}
 
 		/// <summary>
