@@ -58,12 +58,12 @@ namespace SPACE_GRAPH_VIEW
 			{
 				//Debug.Log($"drawn: {this.gameObject.name}");
 				// this.node to node.OUT[i0].pos
-				DRAW.col = Color.green;
+				DRAW_prev.col = Color.green;
 				foreach (GraphNode_IO node in OUT)
 				{
 					Vector3 a = this.transform.position,
 							b = node.transform.position;
-					DRAW.ARROW(Z.lerp(a, b, 0.3f), Z.lerp(a, b, 0.7f), t: 0.7f, s: s, e: e);
+					DRAW_prev.Arrow(Z.lerp(a, b, 0.3f), Z.lerp(a, b, 0.7f), t: 0.7f, s: s, e: e);
 				}
 			}
 		}

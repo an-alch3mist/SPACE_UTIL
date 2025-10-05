@@ -182,7 +182,7 @@ namespace SPACE_UTIL
 						new_B.B[y][x] = this.B[y][x];
 				return new_B;
 			}
-		} 
+		}
 		#endregion
 	}
 	#endregion
@@ -225,7 +225,7 @@ namespace SPACE_UTIL
 			var itestable = itetrominoManager as ITestable;
 			itestable?.RunAllTests();
 		*/
-	} 
+	}
 	#endregion
 
 	public static class Z
@@ -550,12 +550,12 @@ namespace SPACE_UTIL
 			return new_i;
 		}
 
-		// less than 0.01f considered as zero
-		public static bool zero(this float x, float e = 1f / 100)
+		// less than 0.001f considered as zero
+		public static bool zero(this float x, float e = 1f / 1000)
 		{
 			return Mathf.Abs(x) < e;
 		}
-		public static bool zero(this Vector3 v, float e = 1f / 100)
+		public static bool zero(this Vector3 v, float e = 1f / 1000)
 		{
 			return zero(v.x, e) && zero(v.y, e) && zero(v.z, e);
 		}
@@ -572,7 +572,7 @@ namespace SPACE_UTIL
 		}
 		public static bool in_range(this Vector3 v, Vector3 m, Vector3 M)
 		{
-			return	C.in_range(v.x, m.x, M.x) && 
+			return C.in_range(v.x, m.x, M.x) &&
 					C.in_range(v.y, m.y, M.y) &&
 					C.in_range(v.z, m.z, M.z);
 		}
@@ -583,7 +583,7 @@ namespace SPACE_UTIL
 		}
 		public static bool in_range(this v2 v, v2 m, v2 M)
 		{
-			return	C.in_range(v.x, m.x, M.x) &&
+			return C.in_range(v.x, m.x, M.x) &&
 					C.in_range(v.y, m.y, M.y);
 		}
 		#endregion
@@ -654,7 +654,7 @@ namespace SPACE_UTIL
 		{
 			return C.parseInt(_char.ToString());
 		}
-		
+
 		// ad essential >>
 		static RegexOptions str_to_flags(string flags)
 		{
@@ -771,9 +771,9 @@ namespace SPACE_UTIL
 		public static string flat(this string str, string name = "")
 		{
 			string singleLine = str
-					.Replace("\r", "\\r")	// \r
-					.Replace("\n", "\\n")	// \n
-					.Replace("\t", "\\t")	// \t
+					.Replace("\r", "\\r")   // \r
+					.Replace("\n", "\\n")   // \n
+					.Replace("\t", "\\t")   // \t
 					.Replace("\f", "\\f")
 					.Replace("\v", "\\v");
 			return name + singleLine;
@@ -920,7 +920,7 @@ namespace SPACE_UTIL
 		public static GameObject Query(this GameObject gameObject, string query, char sep = '>') // query: leaf > leaflet
 		{
 			return gameObject.transform.Query(query, sep).gameObject;
-		} 
+		}
 		#endregion
 		#endregion
 
@@ -1004,7 +1004,7 @@ namespace SPACE_UTIL
 		public static T GC<T>(this GameObject go) where T : Component
 		{
 			return go.GetComponent<T>();
-		} 
+		}
 		#endregion
 		#endregion
 
@@ -1149,7 +1149,7 @@ namespace SPACE_UTIL
 			foreach (var e in collection)
 				action(e);
 		}
-	
+
 		#region map(func(elem)), map(func(elem, index))
 		public static IEnumerable<TResult> map<TSource, TResult>(this IEnumerable<TSource> source, Func<TSource, TResult> selector)
 		{
@@ -1160,7 +1160,7 @@ namespace SPACE_UTIL
 			return source.Select((item, index) => selector(item, index));
 		}
 		#endregion
-		
+
 		#region refine(func(elem)), refine(func(elem, index))
 		public static IEnumerable<TSource> refine<TSource>(this IEnumerable<TSource> source, Func<TSource, bool> predicate)
 		{
@@ -1502,34 +1502,37 @@ namespace SPACE_UTIL
 	#endregion
 
 	#region DRAW
-	public static class DRAW
+	public static class DRAW_prev
 	{
 		public static Color col = Color.red;
 		public static float dt = 10f;
 
-		#region LINE
-		public static void LINE(Vector3 a, Vector3 b, float e = 1f / 200)
-		{
-			Vector3 nX = b - a,
-					nY = -Vector3.Cross(-Vector3.forward, nX).normalized;
+		public static Transform DebugHolder;
 
-			Debug.DrawLine(a - nY * e, b - nY * e, DRAW.col, DRAW.dt);
-			Debug.DrawLine(a + nY * e, b + nY * e, DRAW.col, DRAW.dt);
+		public static void Init()
+		{
+			if (GameObject.Find("DebugHolder") != null)
+				GameObject.Destroy(GameObject.Find("DebugHolder"));
+			DebugHolder = new GameObject("DebugHolder").transform;
 		}
+
+
+		#region Line
+		public static void Line(Vector3 a, Vector3 b, float e = 1f / 200)
+		{
+
+		} 
 		#endregion
 
 		#region ARROW
-		public static void ARROW(Vector3 a, Vector3 b, float t = 1f, float s = 1f / 15, float e = 1f / 200)
+		public static void Arrow(Vector3 a, Vector3 b, float t = 1f, float s = 1f / 15, float e = 1f / 200)
 		{
-			Vector3 nX = (b - a).normalized,
-					nY = -Vector3.Cross(-Vector3.forward, nX).normalized;
 
-			DRAW.LINE(a, b, e);
-			DRAW.LINE(Z.lerp(a, b, t) - nX * (s * 1.6f) + nY * s, Z.lerp(a, b, t), e);
-			DRAW.LINE(Z.lerp(a, b, t) - nX * (s * 1.6f) - nY * s, Z.lerp(a, b, t), e);
 		}
 		#endregion
 
 	}
 	#endregion
 }
+
+

@@ -50,7 +50,7 @@ namespace SPACE_GRAPH_VIEW
 			// Distribute every frame
 			UpdateDistribute();
 
-			DRAW.dt = Time.deltaTime;
+			DRAW_prev.dt = Time.deltaTime;
 			foreach (GraphNode_IO node in MAP_GraphNodeReg.Values)
 				node.draw();
 		}

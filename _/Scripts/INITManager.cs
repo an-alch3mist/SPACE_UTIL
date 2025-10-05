@@ -4,6 +4,8 @@ using System.Linq;
 using System.Collections.Generic;
 using UnityEngine;
 using SPACE_UTIL;
+using SPACE_DrawSystem;
+using TMPro;
 
 namespace SPACE_UTIL
 {
@@ -13,10 +15,12 @@ namespace SPACE_UTIL
 		[TextArea(minLines: 3, maxLines: 10)]
 		[SerializeField] string README = $@"0. Attach {typeof(INITManager).Name} to Empty Obj
 1. Ref Scene MainCamera(for INPUT.M purpose)
-2. Ref Scene Canvas(for INPUT.UI purpose)";
+2. Ref Scene Canvas(for INPUT.UI purpose)
+3. Ref TMFps (for fps status purpose)"; 
 
 		[SerializeField] Camera MainCam;
 		[SerializeField] RectTransform CanvasRectTransform;
+		[SerializeField] TMPro.TextMeshProUGUI TMFps;
 		public static INITManager Ins { get; private set; }
 
 		private void Awake()
@@ -26,13 +30,29 @@ namespace SPACE_UTIL
 				MainCam: MainCam,
 				CanvasRectTransform: this.CanvasRectTransform
 			);
+
 			C.Init(); // PrefabHolder Obj Creation
 			ITER.reset(); // reset ITER_1D
 			LOG.Init(); // Directory, .txt File SetUp
+			DRAW.Init();
+
 			INITManager.Ins = this; // instance of InitManager to use MonoBehaviour features
 			//GameData.LoadGame(); // 
 		}
 
+		private void Update()
+		{
+			this.UpdateFps();
+		}
+
+		int iter = 0;
+		private void UpdateFps()
+		{
+			if (iter % 10 == 0)
+				if (this.TMFps != null)
+					TMFps.text = $"fps: { C.round(1f / Time.unscaledDeltaTime) }";
+			iter += 1;
+		}
 
 		// check >>
 		#region check_gameData /**/
