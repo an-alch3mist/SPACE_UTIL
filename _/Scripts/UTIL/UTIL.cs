@@ -42,10 +42,10 @@ namespace SPACE_UTIL
 		public static bool operator ==(v2 a, v2 b) { return a.x == b.x && a.y == b.y; }
 		public static bool operator !=(v2 a, v2 b) { return a.x != b.x || a.y != b.y; }
 
-		public static bool operator >(v2 a, v2 b) => a.x > b.x || a.y > b.y;
-		public static bool operator <(v2 a, v2 b) => a.x < b.x || a.y < b.y;
-		public static bool operator >=(v2 a, v2 b) => a.x >= b.x || a.y >= b.y;
-		public static bool operator <=(v2 a, v2 b) => a.x <= b.x || a.y <= b.y;
+		public static bool operator >(v2 a, v2 b) => a.x > b.x && a.y > b.y;
+		public static bool operator <(v2 a, v2 b) => a.x < b.x && a.y < b.y;
+		public static bool operator >=(v2 a, v2 b) => a.x >= b.x && a.y >= b.y;
+		public static bool operator <=(v2 a, v2 b) => a.x <= b.x && a.y <= b.y;
 		#endregion
 
 		// Allow implicit conversion from tuple
