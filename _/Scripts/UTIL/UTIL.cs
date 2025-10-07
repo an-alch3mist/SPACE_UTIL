@@ -551,11 +551,11 @@ namespace SPACE_UTIL
 		}
 
 		// less than 0.001f considered as zero
-		public static bool zero(this float x, float e = 1f / 1000)
+		public static bool zero(this float x, float e = (float)1e-4)
 		{
 			return Mathf.Abs(x) < e;
 		}
-		public static bool zero(this Vector3 v, float e = 1f / 1000)
+		public static bool zero(this Vector3 v, float e = (float)1e-4)
 		{
 			return zero(v.x, e) && zero(v.y, e) && zero(v.z, e);
 		}
@@ -585,6 +585,13 @@ namespace SPACE_UTIL
 		{
 			return C.in_range(v.x, m.x, M.x) &&
 					C.in_range(v.y, m.y, M.y);
+		}
+
+		public static Vector3 normalizedZero(this Vector3 v, float e = (float)1E-4)
+		{
+			if (v.magnitude.zero(e: e) == true)
+				return new Vector3(0f, 0f, 0f);
+			else return v.normalized;
 		}
 		#endregion
 
