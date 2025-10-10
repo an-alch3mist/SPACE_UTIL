@@ -593,6 +593,10 @@ namespace SPACE_UTIL
 				return new Vector3(0f, 0f, 0f);
 			else return v.normalized;
 		}
+		public static Vector3 xz(this Vector3 v)
+		{
+			return new Vector3(v.x, 0f, v.z);
+		}
 		#endregion
 
 		#region string Operations
@@ -1011,6 +1015,11 @@ namespace SPACE_UTIL
 		public static T GC<T>(this GameObject go) where T : Component
 		{
 			return go.GetComponent<T>();
+		}
+
+		public static T GC_InLeaf<T>(this GameObject go) where T : Component
+		{
+			return go.GetComponentInChildren<T>();
 		}
 		#endregion
 		#endregion
