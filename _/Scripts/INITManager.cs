@@ -50,8 +50,11 @@ namespace SPACE_UTIL
 		{
 			if (iter % 10 == 0)
 				if (this.TMFps != null)
+				{
 					// fps: 75/120
-					TMFps.text = $"fps: { C.round(1f / Time.unscaledDeltaTime) }/{Application.targetFrameRate}";
+					string targetFrameRate = (Application.targetFrameRate == -1) ? "max" : Application.targetFrameRate.ToString();
+					TMFps.text = $"fps: { C.round(1f / Time.unscaledDeltaTime) }/{ targetFrameRate }";
+				}
 			iter += 1;
 		}
 
