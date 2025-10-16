@@ -803,6 +803,60 @@ namespace SPACE_UTIL
 		}
 		#endregion
 
+		#region enum operations
+		// used as: C.getEnumLength<PieceType>();
+		public static int getEnumLength<T>() where T : struct
+		{
+			Type enumType = typeof(T);
+
+			if (!enumType.IsEnum)
+			{
+				throw new ArgumentException("The type must be an enum.");
+			}
+
+			return Enum.GetValues(enumType).Length;
+		}
+		/*
+		used as: 
+			PieceType piece = PieceType.Rook;
+			int index = C.getEnumIndex(piece);
+		*/
+		public static int getEnumIndex<T>(T enumValue) where T : struct
+		{
+			Type enumType = typeof(T);
+
+			if (!enumType.IsEnum)
+			{
+				throw new ArgumentException("The type must be an enum.");
+			}
+
+			T[] enumValues = (T[])Enum.GetValues(enumType);
+			return Array.IndexOf(enumValues, enumValue);
+		}
+
+		// used as 
+		// float weight = C.getEnumWeight(PieceType.Knight); 
+		// return 0f to 1f weight
+		public static float getEnumWeight<T>(T enumValue) where T : struct
+		{
+			Type enumType = typeof(T);
+
+			if (!enumType.IsEnum)
+			{
+				throw new ArgumentException("The type must be an enum.");
+			}
+
+			T[] enumValues = (T[])Enum.GetValues(enumType);
+			return Array.IndexOf(enumValues, enumValue) * 1f / enumValues.Length;
+		}
+
+		// used as: foreach(PieceType piece in C.getEnumValues<PieceType>())
+		public static T[] getEnumValues<T>() where T : struct
+		{
+			return (T[])Enum.GetValues(typeof(T));
+		}
+		#endregion
+
 		#region Anim
 		public static async Task delay(int ms = 1000)
 		{

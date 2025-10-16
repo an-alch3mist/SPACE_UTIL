@@ -23,6 +23,11 @@ namespace SPACE_UTIL
 		[SerializeField] TMPro.TextMeshProUGUI TMFps;
 		public static INITManager Ins { get; private set; }
 
+		private void FixedUpdate()
+		{
+			
+		}
+
 		private void Awake()
 		{
 			Debug.Log("Awake(): " + this);
