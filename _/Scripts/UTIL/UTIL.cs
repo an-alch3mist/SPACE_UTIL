@@ -1071,9 +1071,9 @@ namespace SPACE_UTIL
 			return go.GetComponent<T>();
 		}
 
-		public static T GC_InLeaf<T>(this GameObject go) where T : Component
+		public static Transform GTr_Leaf<T>(this GameObject go) where T : Component
 		{
-			return go.GetComponentInChildren<T>();
+			return go.GetComponentInChildren<T>().transform;
 		}
 		#endregion
 		#endregion
