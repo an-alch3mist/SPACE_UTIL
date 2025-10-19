@@ -801,6 +801,11 @@ namespace SPACE_UTIL
 		{
 			return $"<color={color}>{str}</color>";
 		}
+
+		public static string method(string method, object obj, string color = "white")
+		{
+			return $"{method}(): {obj.ToString()}".colorTag(color);
+		}
 		#endregion
 
 		#region enum operations
@@ -876,6 +881,20 @@ namespace SPACE_UTIL
 		}
 		// << animation approach for a given duration
 		*/
+		#endregion
+
+		#region transform util
+		public static void clearLeaves(this Transform transform)
+		{
+			for (int i0 = 0; i0 < transform.childCount; i0 += 1)
+				GameObject.Destroy(transform.GetChild(i0).gameObject);
+		}
+
+		public static void disableLeaves(this Transform transform)
+		{
+			for (int i0 = 0; i0 < transform.childCount; i0 += 1)
+				transform.GetChild(i0).gameObject.SetActive(false);
+		}
 		#endregion
 		/*
 			[System.Serializable]object.ToJson() -> string
@@ -1071,10 +1090,21 @@ namespace SPACE_UTIL
 			return go.GetComponent<T>();
 		}
 
-		public static Transform GTr_Leaf<T>(this GameObject go) where T : Component
+		public static Transform GTrLeaf<T>(this GameObject go) where T : Component
 		{
 			return go.GetComponentInChildren<T>().transform;
 		}
+
+		public static T GCLeaf<T>(this GameObject go) where T : Component
+		{
+			return go.GetComponentInChildren<T>();
+		}
+
+		public static IEnumerable<T> GCLeaves<T>(this GameObject go) where T : Component
+		{
+			return go.GetComponentsInChildren<T>();
+		}
+
 		#endregion
 		#endregion
 
@@ -1315,7 +1345,7 @@ namespace SPACE_UTIL
 	public static class LOG
 	{
 		static string LocFolder = Application.dataPath + "/LOG";
-		static string LocFile_LOG = Application.dataPath + "/LOG/LOG.txt";
+		static string LocFile_LOG = Application.dataPath + "/LOG/LOG.md";
 		static string LocFile_GameData = Application.dataPath + "/LOG/GameData.txt";
 		public static void Init() // create dir LOG/LOG.txt, LOG/GameData.txt if it doesn't exist
 		{
@@ -1324,23 +1354,27 @@ namespace SPACE_UTIL
 			if (System.IO.File.Exists(LocFile_GameData) == false) System.IO.File.Create(LocFile_GameData);
 		}
 
-		public static void SaveLog(params object[] args)
+		public static void SaveLog(string str, string syntaxType = "")
 		{
-			string str = string.Join("\n\n", args);
+			if (syntaxType != "")
+				str = $"```{syntaxType}\n{str}\n```"; // format for markDown
+
+			// string str = string.Join("\n\n", args);
 			//string timestamp = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff");
 			//string logEntry = $"[{timestamp}] {str}";
-			Debug.Log($"logged into file LOG.txt: {str}");
+			Debug.Log($"logged into file LOG.txt: {str}".colorTag("lime"));
 			// File logging
 
 			try { System.IO.File.AppendAllText(LocFile_LOG, str + Environment.NewLine + Environment.NewLine); }
 			catch (Exception e) { Debug.LogError($"Failed to write to log file: {e.Message}"); }
 		}
-		public static void H(string header) { SaveLog($"// {header} >>"); }
-		public static void HEnd(string header) { SaveLog($"// << {header}"); }
+		public static void H(string header) { SaveLog($"# {header} >>\n"); }
+		public static void HEnd(string header) { SaveLog($"# << {header}"); }
 
 		// later >>
-		static void SaveGame(string str)
+		public static void SaveGame(string str)
 		{
+			Debug.Log($"SaveGame(str)".colorTag("lime"));
 			Debug.Log($"logged into file GameData.txt: {str}");
 			System.IO.File.WriteAllText(LocFile_GameData, str);
 		}
@@ -1429,7 +1463,7 @@ namespace SPACE_UTIL
 			if (toString == true)
 			{
 				string str = "";
-				string header = $"{name} Count: {list.Count()}";
+				string header = $"* {name} Count: {list.Count()}";
 
 				// Calculate column widths based on field names and all item‐values
 				int cw = header.Length;
@@ -1565,7 +1599,7 @@ namespace SPACE_UTIL
 				sb.AppendLine(string.Join(" | ", rowValues));
 			}
 
-			return $"{name}:\n" + sb.ToString();
+			return $"# {name}:\n" + sb.ToString();
 			#endregion
 		}
 	}
