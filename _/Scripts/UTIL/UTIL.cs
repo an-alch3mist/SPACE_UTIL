@@ -12,6 +12,7 @@ using UnityEngine.UI;
 using TMPro;
 
 using System.Threading.Tasks;
+using System.IO;
 
 namespace SPACE_UTIL
 {
@@ -896,49 +897,6 @@ namespace SPACE_UTIL
 				transform.GetChild(i0).gameObject.SetActive(false);
 		}
 		#endregion
-		/*
-			[System.Serializable]object.ToJson() -> string
-			str.FromJson<T>() -> T
-		*/
-		#region json, byte operations
-		/// <summary>
-		/// Convert A Serielizable (object) To JSON (string).
-		/// called as string Json = object.ToJson(true);
-		/// </summary>
-		public static string ToJson(this object obj, bool pretify = true)
-		{
-			if (obj == null)
-				return "obj is null";
-
-			return JsonUtility.ToJson(obj, pretify);
-		}
-
-		/// <summary>
-		/// Deserializes a JSON string into a new instance of T.
-		/// called as T _T = str.FromJson<T>();
-		/// </summary>
-		public static T FromJson<T>(this string json)
-		{
-			try
-			{
-				return JsonUtility.FromJson<T>(json);
-			}
-			catch (Exception e)
-			{
-				Debug.LogError("Cannot Parse Json to Type T");
-				//return default;
-				throw;
-			}
-		}
-
-		/// <summary>
-		/// string to byte[]
-		/// </summary>
-		public static byte[] ToBytes(this string json)
-		{
-			return System.Text.Encoding.UTF8.GetBytes(json);
-		}
-		#endregion
 
 		#region INFO
 		public static class SYS
@@ -1336,26 +1294,47 @@ namespace SPACE_UTIL
 
 	#region LOG
 	/*
-		.SaveLog(str)
-		.SaveGame(str)
-		.LoadGame
-		.ToTable(toString(bool), "name")
+		Used as: 
+
 	*/
-	// file LOG.INITIALIZE() before
+	// file LOG.INITIALIZE() not required, since EnsureAllDirectoryExists
 	public static class LOG
 	{
-		static string LocFolder = Application.dataPath + "/LOG";
-		static string LocFile_LOG = Application.dataPath + "/LOG/LOG.md";
-		static string LocFile_GameData = Application.dataPath + "/LOG/GameData.txt";
-		public static void Init() // create dir LOG/LOG.txt, LOG/GameData.txt if it doesn't exist
-		{
-			if (System.IO.Directory.Exists(LocFolder) == false) System.IO.Directory.CreateDirectory(LocFolder);
-			if (System.IO.File.Exists(LocFile_LOG) == false) System.IO.File.Create(LocFile_LOG);
-			if (System.IO.File.Exists(LocFile_GameData) == false) System.IO.File.Create(LocFile_GameData);
-		}
+		private static string LocRootPath => Application.dataPath;
+		private static string LocLogDirectory => Path.Combine(LocRootPath, "LOG");
+		private static string LocLogFile => Path.Combine(LocLogDirectory, "LOG.md");
+		private static string LocGameDataDirectory => Path.Combine(LocLogDirectory, "GameData");
 
+		#region private API
+		/// <summary>
+		/// Ensures the LOG directory structure exists
+		/// </summary>
+		private static void EnsureAllDirectoryExists()
+		{
+			if (!Directory.Exists(LocGameDataDirectory))
+			{
+				Directory.CreateDirectory(LocGameDataDirectory);
+			}
+
+			if (!File.Exists(LocLogFile))
+				File.WriteAllText(LocLogFile, "# LOG.md created, perform LOG.SaveLog(str, format) to append text here:\n\n");
+		}
+		/// <summary>
+		/// Gets the full file path for a given GameDataType
+		/// </summary>
+		private static string GetGameDataFilePath(string fileName)
+		{
+			return Path.Combine(LocGameDataDirectory, $"{fileName}.json");
+		}
+		#endregion
+
+		#region public API
+
+		#region SaveLog
 		public static void SaveLog(string str, string syntaxType = "")
 		{
+			LOG.EnsureAllDirectoryExists();
+
 			if (syntaxType != "")
 				str = $"```{syntaxType}\n{str}\n```"; // format for markDown
 
@@ -1365,46 +1344,123 @@ namespace SPACE_UTIL
 			Debug.Log($"logged into file LOG.txt: {str}".colorTag("lime"));
 			// File logging
 
-			try { System.IO.File.AppendAllText(LocFile_LOG, str + Environment.NewLine + Environment.NewLine); }
+			try { System.IO.File.AppendAllText(LocLogFile, str + Environment.NewLine + Environment.NewLine); }
 			catch (Exception e) { Debug.LogError($"Failed to write to log file: {e.Message}"); }
 		}
 		public static void H(string header) { SaveLog($"# {header} >>\n"); }
 		public static void HEnd(string header) { SaveLog($"# << {header}"); }
+		#endregion
 
-		public static void SaveGame(string str)
+		#region LoadGameData<T>(enum), LoadGameData(enum), SaveGameData(str), ToJson extension
+		/// <summary>
+		/// Load game data and deserialize to type T
+		/// Returns default T instance if file doesn't exist or parsing fails
+		/// </summary>
+		public static T LoadGameData<T>(object dataType) where T : new()
 		{
-			Debug.Log($"SaveGame(str)".colorTag("lime"));
-			Debug.Log($"logged into file GameData.txt: {str}");
-			System.IO.File.WriteAllText(LocFile_GameData, str);
-		}
-		public static string LoadGame
-		{
-			get
+			string filePath = GetGameDataFilePath(dataType.ToString());
+
+			// Scenario 1: File doesn't exist
+			if (!File.Exists(filePath))
 			{
-				try
+				Debug.LogWarning($"[LOG] File not found: {filePath}. Returning default instance.");
+				return new T();
+			}
+
+			// Scenario 0: File exists
+			try
+			{
+				string jsonContent = File.ReadAllText(filePath);
+
+				// Try to parse JSON
+				T data = JsonUtility.FromJson<T>(jsonContent);
+
+				// If parsing failed (returns null or default)
+				if (data == null || EqualityComparer<T>.Default.Equals(data, default(T)))
 				{
-					Debug.Log("Loaded GameData.txt");
-					// Read raw text from disk…
-					string raw = System.IO.File.ReadAllText(LocFile_GameData);
-					return raw;
+					Debug.LogWarning($"[LOG] Failed to parse JSON from: {filePath}. Returning default instance.");
+					return new T();
 				}
-				catch (Exception)
-				{
-					Debug.LogError("no file found at: " + LocFile_GameData);
-					throw;
-				}
+
+				Debug.Log($"[LOG] Successfully loaded: {filePath}");
+				return data;
+			}
+			catch (Exception e)
+			{
+				Debug.LogError($"[LOG] Error loading {filePath}: {e.Message}. Returning default instance.");
+				return new T();
 			}
 		}
 
+		/// <summary>
+		/// Load game data as raw JSON string
+		/// Returns empty string if file doesn't exist
+		/// </summary>
+		public static string LoadGameData(object dataType)
+		{
+			string filePath = GetGameDataFilePath(dataType.ToString());
+
+			if (!File.Exists(filePath))
+			{
+				Debug.LogWarning($"[LOG] File not found: {filePath}. Returning empty string.");
+				return string.Empty;
+			}
+
+			try
+			{
+				string content = File.ReadAllText(filePath);
+				Debug.Log($"[LOG] Successfully loaded raw content from: {filePath}");
+				return content;
+			}
+			catch (Exception e)
+			{
+				Debug.LogError($"[LOG] Error reading {filePath}: {e.Message}");
+				return string.Empty;
+			}
+		}
+
+		/// <summary>
+		/// Save game data from JSON string
+		/// Creates file if it doesn't exist, overwrites if it does
+		/// </summary>
+		public static void SaveGameData(object dataType, string jsonContent)
+		{
+			EnsureAllDirectoryExists();
+			string filePath = GetGameDataFilePath(dataType.ToString());
+
+			try
+			{
+				File.WriteAllText(filePath, jsonContent);
+				Debug.Log($"[LOG] Successfully saved: {filePath}");
+			}
+			catch (Exception e)
+			{
+				Debug.LogError($"[LOG] Error saving {filePath}: {e.Message}");
+			}
+		}
+		#endregion
+
+		#region extension .ToJson(), .ToTable(bool)
+		/// <summary>
+		/// Convert A Serielizable (object) To JSON (string).
+		/// called as string Json = object.ToJson(true);
+		/// </summary>
+		public static string ToJson(this object obj, bool pretify = true)
+		{
+			if (obj == null) return "{ } /* null */";
+			return JsonUtility.ToJson(obj, pretify);
+		}
+
+
 		// Used As: LOG.SaveLog(LIST.ToTable(name = "LIST<> "))
 		#region ToTable
-		#region ToTable Util
+		#region ad
 		/// <summary>
 		/// Sanitizes a string by converting control characters and non-printable ASCII to readable representations
 		/// </summary>
 		/// <param name="input">The input string to sanitize</param>
 		/// <returns>A sanitized string safe for text file output</returns>
-		public static string SanitizeForTextOutput(string input)
+		private static string SanitizeForTextOutput(string input)
 		{
 			if (string.IsNullOrEmpty(input))
 				return input ?? "null";
@@ -1603,12 +1659,15 @@ namespace SPACE_UTIL
 
 			return $"# {name}:\n" + sb.ToString();
 			#endregion
-		} 
+		}
+		#endregion
+
+		#endregion
 		#endregion
 	}
 	#endregion
 
-	#region DRAW
+	#region DRAW_prev
 	public static class DRAW_prev
 	{
 		public static Color col = Color.red;

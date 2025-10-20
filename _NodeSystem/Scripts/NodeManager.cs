@@ -89,11 +89,15 @@ namespace SPACE_NodeSystem
 		}
 
 		Dictionary<int, Node> MAP_NodeReg; // Main Node Store
+		enum GameDataType
+		{
+			GameData
+		}
 		void Gather()
 		{
 			// parse IN here >>
 			MAP_NodeReg = new Dictionary<int, Node>();
-			string IN = LOG.LoadGame;
+			string IN = LOG.LoadGameData(GameDataType.GameData);
 
 			// ad >>
 			if (IN.Length == 0)
