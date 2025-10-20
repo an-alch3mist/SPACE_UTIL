@@ -1371,14 +1371,12 @@ namespace SPACE_UTIL
 		public static void H(string header) { SaveLog($"# {header} >>\n"); }
 		public static void HEnd(string header) { SaveLog($"# << {header}"); }
 
-		// later >>
 		public static void SaveGame(string str)
 		{
 			Debug.Log($"SaveGame(str)".colorTag("lime"));
 			Debug.Log($"logged into file GameData.txt: {str}");
 			System.IO.File.WriteAllText(LocFile_GameData, str);
 		}
-		// << later
 		public static string LoadGame
 		{
 			get
@@ -1398,6 +1396,9 @@ namespace SPACE_UTIL
 			}
 		}
 
+		// Used As: LOG.SaveLog(LIST.ToTable(name = "LIST<> "))
+		#region ToTable
+		#region ToTable Util
 		/// <summary>
 		/// Sanitizes a string by converting control characters and non-printable ASCII to readable representations
 		/// </summary>
@@ -1441,6 +1442,7 @@ namespace SPACE_UTIL
 
 			return sb.ToString();
 		}
+		#endregion
 
 		/// <summary>
 		/// <paramref name="toString"/>: by default false, if true each row is logged based on simple value.ToString().flat()
@@ -1452,11 +1454,11 @@ namespace SPACE_UTIL
 		public static string ToTable<T>(this IEnumerable<T> list, bool toString = false, string name = "LIST<>")
 		{
 			if (list == null)
-				return "list/hash/map/queue is null";
+				return "_list/hash/map/queue is null_";
 
 			var items = list.ToList();
 			if (items.Count == 0)
-				return "list/hash/map/queue got no elem";
+				return "_list/hash/map/queue got no elem_";
 
 			// @ - if toString enabled
 			#region toString enabled for Dictionary Values
@@ -1601,7 +1603,8 @@ namespace SPACE_UTIL
 
 			return $"# {name}:\n" + sb.ToString();
 			#endregion
-		}
+		} 
+		#endregion
 	}
 	#endregion
 
