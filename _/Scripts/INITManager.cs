@@ -38,7 +38,6 @@ namespace SPACE_UTIL
 
 			C.Init(); // PrefabHolder Obj Creation
 			ITER.reset(); // reset ITER_1D
-			// LOG.Init(); // Directory, .txt File SetUp
 			DRAW.Init();
 
 			INITManager.Ins = this; // instance of InitManager to use MonoBehaviour features

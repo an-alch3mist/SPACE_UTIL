@@ -39,7 +39,7 @@ namespace SPACE_NodeSystem
 			LOG.H('='.repeat(100));
 			// Gather + TOPO >>
 			Gather();
-			LOG.H("GATHER"); LOG.SaveLog(MAP_NodeReg.Values.ToTable()); LOG.HEnd("GATHER");
+			LOG.H("GATHER"); LOG.AddLog(MAP_NodeReg.Values.ToTable()); LOG.HEnd("GATHER");
 
 			#region GraphNodeManager
 			/*
@@ -72,8 +72,8 @@ namespace SPACE_NodeSystem
 			LOG.H("TOPO");
 			foreach (var topology in Topology.GetAllTopology(this.MAP_NodeReg))
 			{
-				LOG.SaveLog(topology.Region.ToTable(false, "REGION<>"));
-				LOG.SaveLog(topology.Sorted.ToTable(false, "Sorted<>"));
+				LOG.AddLog(topology.Region.ToTable(false, "REGION<>"));
+				LOG.AddLog(topology.Sorted.ToTable(false, "Sorted<>"));
 			}
 			LOG.HEnd("TOPO");
 			// << Gather + TOPO

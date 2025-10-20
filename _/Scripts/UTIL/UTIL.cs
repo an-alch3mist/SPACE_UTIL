@@ -898,6 +898,13 @@ namespace SPACE_UTIL
 		}
 		#endregion
 
+		#region UI util
+		public static void setBtnTxt(this Button btn, string str)
+		{
+			btn.transform.GetChild(0).gameObject.GC<TextMeshProUGUI>().text = str;
+		}
+		#endregion
+
 		#region INFO
 		public static class SYS
 		{
@@ -1295,7 +1302,10 @@ namespace SPACE_UTIL
 	#region LOG
 	/*
 		Used as: 
-
+		LOG.AddLog(str)
+		LOG.SaveGameData(str)
+		LOG.LoadGameData<T>(json)
+		LOG.LoadGameData(str)
 	*/
 	// file LOG.INITIALIZE() not required, since EnsureAllDirectoryExists
 	public static class LOG
@@ -1329,9 +1339,8 @@ namespace SPACE_UTIL
 		#endregion
 
 		#region public API
-
-		#region SaveLog
-		public static void SaveLog(string str, string syntaxType = "")
+		#region AddLog
+		public static void AddLog(string str, string syntaxType = "")
 		{
 			LOG.EnsureAllDirectoryExists();
 
@@ -1341,14 +1350,15 @@ namespace SPACE_UTIL
 			// string str = string.Join("\n\n", args);
 			//string timestamp = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff");
 			//string logEntry = $"[{timestamp}] {str}";
-			Debug.Log($"logged into file LOG.txt: {str}".colorTag("lime"));
+			Debug.Log($"logged into file LOG.md: {str}".colorTag("lime"));
 			// File logging
 
 			try { System.IO.File.AppendAllText(LocLogFile, str + Environment.NewLine + Environment.NewLine); }
 			catch (Exception e) { Debug.Log($"[LOG.SaveLog()] Failed to write to log file: {e.Message}".colorTag("red")); }
 		}
-		public static void H(string header) { SaveLog($"# {header} >>\n"); }
-		public static void HEnd(string header) { SaveLog($"# << {header}"); }
+
+		public static void H(string header) { AddLog($"# {header} >>\n"); }
+		public static void HEnd(string header) { AddLog($"# << {header}"); }
 		#endregion
 
 		#region LoadGameData<T>(enum), LoadGameData(enum), SaveGameData(str), ToJson extension
