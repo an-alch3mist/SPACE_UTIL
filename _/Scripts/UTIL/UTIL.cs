@@ -1345,7 +1345,7 @@ namespace SPACE_UTIL
 			// File logging
 
 			try { System.IO.File.AppendAllText(LocLogFile, str + Environment.NewLine + Environment.NewLine); }
-			catch (Exception e) { Debug.LogError($"Failed to write to log file: {e.Message}"); }
+			catch (Exception e) { Debug.Log($"[LOG.SaveLog()] Failed to write to log file: {e.Message}".colorTag("red")); }
 		}
 		public static void H(string header) { SaveLog($"# {header} >>\n"); }
 		public static void HEnd(string header) { SaveLog($"# << {header}"); }
@@ -1363,7 +1363,7 @@ namespace SPACE_UTIL
 			// Scenario 1: File doesn't exist
 			if (!File.Exists(filePath))
 			{
-				Debug.LogWarning($"[LOG] File not found: {filePath}. Returning default instance.");
+				Debug.Log($"[LOG.LoadGameData()] File not found: {filePath}. Returning default instance.".colorTag("yellow"));
 				return new T();
 			}
 
@@ -1378,16 +1378,16 @@ namespace SPACE_UTIL
 				// If parsing failed (returns null or default)
 				if (data == null || EqualityComparer<T>.Default.Equals(data, default(T)))
 				{
-					Debug.LogWarning($"[LOG] Failed to parse JSON from: {filePath}. Returning default instance.");
+					Debug.Log($"[LOG] Failed to parse JSON from: {filePath}. Returning default instance.".colorTag("yellow"));
 					return new T();
 				}
 
-				Debug.Log($"[LOG] Successfully loaded: {filePath}");
+				Debug.Log($"[LOG.LoadGameData()] Successfully loaded: {filePath}");
 				return data;
 			}
 			catch (Exception e)
 			{
-				Debug.LogError($"[LOG] Error loading {filePath}: {e.Message}. Returning default instance.");
+				Debug.Log($"[LOG.LoadGameData()] Error loading {filePath}: {e.Message}. Returning default instance.".colorTag("red"));
 				return new T();
 			}
 		}
@@ -1402,19 +1402,19 @@ namespace SPACE_UTIL
 
 			if (!File.Exists(filePath))
 			{
-				Debug.LogWarning($"[LOG] File not found: {filePath}. Returning empty string.");
+				Debug.Log($"[LOG.LoadGameData()] File not found: {filePath}. Returning empty string.".colorTag("yellow"));
 				return string.Empty;
 			}
 
 			try
 			{
 				string content = File.ReadAllText(filePath);
-				Debug.Log($"[LOG] Successfully loaded raw content from: {filePath}");
+				Debug.Log($"[LOG.LoadGameData()] Successfully loaded raw content from: {filePath}");
 				return content;
 			}
 			catch (Exception e)
 			{
-				Debug.LogError($"[LOG] Error reading {filePath}: {e.Message}");
+				Debug.Log($"[LOG.LoadGameData()] Error reading {filePath}: {e.Message}".colorTag("red"));
 				return string.Empty;
 			}
 		}
@@ -1431,11 +1431,11 @@ namespace SPACE_UTIL
 			try
 			{
 				File.WriteAllText(filePath, jsonContent);
-				Debug.Log($"[LOG] Successfully saved: {filePath}");
+				Debug.Log($"[LOG.SaveGameData()] Successfully saved: {filePath}");
 			}
 			catch (Exception e)
 			{
-				Debug.LogError($"[LOG] Error saving {filePath}: {e.Message}");
+				Debug.Log($"[LOG.SaveGameData()] Error saving {filePath}: {e.Message}".colorTag("red"));
 			}
 		}
 		#endregion
