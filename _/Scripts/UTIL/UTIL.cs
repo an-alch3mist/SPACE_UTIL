@@ -600,7 +600,7 @@ namespace SPACE_UTIL
 		}
 		#endregion
 
-		#region string Operations
+		#region string operations
 		public static string AbrrevatedNumber(int value)
 		{
 			// Define scales
