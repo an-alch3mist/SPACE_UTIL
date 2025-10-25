@@ -1,2 +1,2 @@
-# Ignore Assets/_/_Secure directory when push is done via git
-/_Secure/
+# Ignore /_Secure situated directory situated anywhere, when push is done via git
+**/_Secure/
