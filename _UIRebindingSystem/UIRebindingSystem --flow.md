@@ -81,8 +81,7 @@ with:
   ## Result:
   Now when you rebind a key that's already assigned elsewhere in the same action map, you'll instantly see the duplicate binding's button change to "Not Bound" without any UI flickering or full refresh!
 
-
- ```cs
+```cs
 using System;
 using System.IO;
 using System.Linq;
