@@ -413,7 +413,6 @@ UIRebindingSystem( -> Attach {typeof(UIRebindingSystem).Name}.cs to UIRebindingS
 		{
 			// Method 1: Reset the entire asset
 			IA.RemoveAllBindingOverrides();
-
 			Debug.Log("All input bindings reset to defaults! (note: not saved yet)".colorTag("green"));
 
 			// Do not Save override until save was pressed
