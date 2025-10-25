@@ -1332,7 +1332,7 @@ namespace SPACE_UTIL
 		/// <summary>
 		/// Gets the full file path for a given GameDataType
 		/// </summary>
-		private static string GetGameDataFilePath(string fileName)
+		public static string GetGameDataFilePath(string fileName)
 		{
 			return Path.Combine(LocGameDataDirectory, $"{fileName}.json");
 		}

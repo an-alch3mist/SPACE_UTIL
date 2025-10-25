@@ -18,7 +18,7 @@ namespace SPACE_WebReqSystem
 	{
 		[TextArea(minLines: 3, maxLines: 10)]
 		[SerializeField] string README = $@"0. Attach {typeof(WebReqManager).Name} to Empty Obj in Scene
-1. Set The webhook_url @(loaded from {typeof(_secure).Name}.webhook_url), webhook_profile_url[SerilizeField]
+1. Set The webhook_url @(loaded from {typeof(_Secure).Name}.webhook_url), webhook_profile_url[SerilizeField]
 Call From External As:
 	2. {typeof(WebReqManager).Name}.Discord.SendPayLoadJson_SysSpec();
 	2. {typeof(WebReqManager).Name}.Discord.SendPayLoadJson_Feedback(string Feedback_str);";
@@ -82,7 +82,7 @@ Call From External As:
 				string webhook_url = WebReqManager.instance.webhook_url;
 				#region _secure
 				if (WebReqManager.instance.use_from_secure_webhook_url == true)
-					webhook_url = _secure.webhook_url; // require a _secure(SPACE_UTIL) static class with webhook_url(string) variable 
+					webhook_url = _Secure.webhook_url; // require a _secure(SPACE_UTIL) static class with webhook_url(string) variable 
 				#endregion
 				string webhook_profile_url = WebReqManager.instance.webhook_profile_url;
 

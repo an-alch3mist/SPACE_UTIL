@@ -53,13 +53,14 @@ UIRebindingSystem( -> Attach {typeof(UIRebindingSystem).Name}.cs to UIRebindingS
 		save button
 	close button [button]
 
-# reference [serializeField]
+# Required Prior
+## reference [serializeField]
 - template -- button Prefab
 - contentHolder (got contentSizeFitter, VerticalLayoutGroup components Attached)
 - template -- row Prefab
 - save, reset, close window button
 
-# make sure: 
+## make sure: 
 - There is PlayerInputActions.cs generated from inputAction
 - GameStore.playerIA shall lead to one of its instance";
 
@@ -127,7 +128,7 @@ UIRebindingSystem( -> Attach {typeof(UIRebindingSystem).Name}.cs to UIRebindingS
 		IEnumerator STIMULATE()
 		{
 			yield return null;
-			yield return RebindingSystemAnalysis();
+			this.UIIAMapIteration();
 			yield break;
 		}
 
@@ -139,16 +140,28 @@ UIRebindingSystem( -> Attach {typeof(UIRebindingSystem).Name}.cs to UIRebindingS
 		[SerializeField] Button _saveBinding;
 		[SerializeField] Button _closeBtn;
 
-		IEnumerator RebindingSystemAnalysis()
-		{
-			yield return null;
-			this.UIIAMapIteration(this.IA);
-		}
+		Dictionary<string, Button> MAP_BindingpathBtn;
+		/*
+		Dictionary<InputBinding, Button> MAP_BindingBtn;
 
-		void UIIAMapIteration(PlayerInputActions IA)
+		MAP<> BindingBtn Count: 6                                         
+		---------------------------------------------------------------------
+		 [jump:<Keyboard>/space, pfButton(Clone) (UnityEngine.UI.Button)]    
+		 [jump:, pfButton(Clone) (UnityEngine.UI.Button)]                    
+		 [shoot:<Mouse>/leftButton, pfButton(Clone) (UnityEngine.UI.Button)] 
+		 [shoot:, pfButton(Clone) (UnityEngine.UI.Button)]                   
+		 [brake:<Keyboard>/space, pfButton(Clone) (UnityEngine.UI.Button)]   
+		 [brake:<Keyboard>/numpad0, pfButton(Clone) (UnityEngine.UI.Button)] 
+		*/
+
+		void UIIAMapIteration()
 		{
 			// Clear existing UI
 			this._contentScrollViewTr.clearLeaves();
+
+			// init MAP_binding_btn
+			// this.MAP_BindingBtn = new Dictionary<InputBinding, Button>();
+			this.MAP_BindingpathBtn = new Dictionary<string, Button>();
 
 			// Iterate through ALL action maps
 			foreach (var actionMap in IA.asset.actionMaps)
@@ -174,13 +187,13 @@ UIRebindingSystem( -> Attach {typeof(UIRebindingSystem).Name}.cs to UIRebindingS
 					newRowTr = GameObject.Instantiate(this._templateRowPrefab, this._contentScrollViewTr).transform; newRowTr.clearLeaves();
 					GameObject.Instantiate(this._buttonPrefab, newRowTr).GC<Button>().setBtnTxt(action.name);
 
-					for (int i = 0; i < action.bindings.Count; i += 1)
+					for (int i2 = 0; i2 < action.bindings.Count; i2 += 1)
 					{
-						InputBinding binding = action.bindings[i];
+						InputBinding binding = action.bindings[i2];
 
 						if (binding.isComposite)
 						{
-							LOG.AddLog($"  Binding[{i}]: COMPOSITE '{binding.name}'");
+							LOG.AddLog($"  Binding[{i2}]: COMPOSITE '{binding.name}'");
 							continue;
 						}
 						if (binding.isPartOfComposite)
@@ -190,11 +203,16 @@ UIRebindingSystem( -> Attach {typeof(UIRebindingSystem).Name}.cs to UIRebindingS
 
 						// Create button with rebinding functionality
 						Button btn = GameObject.Instantiate(this._buttonPrefab, newRowTr).GC<Button>();
-
-						UpdateButtonText(btn, action, i);
+						this.MAP_BindingpathBtn[GetUniqueBindingPath(action, bindingIndex: i2)] = btn;
+						#region ad
+						btn.gameObject.name += GetUniqueBindingPath(action, bindingIndex: i2); 
+						#endregion
+						
+						//
+						UpdateButtonText(btn, action, i2);
 
 						InputAction currentAction = action;
-						int currentBindingIndex = i;
+						int currentBindingIndex = i2;
 
 						btn.onClick.AddListener(() =>
 						{
@@ -207,11 +225,18 @@ UIRebindingSystem( -> Attach {typeof(UIRebindingSystem).Name}.cs to UIRebindingS
 							this.StartCoroutine(PerformRebinding(currentAction, currentBindingIndex, btn));
 						});
 
-						LOG.AddLog($"  Binding[{i}]: {binding.effectivePath ?? "EMPTY"}");
+						LOG.AddLog($"  Binding[{i2}]: {binding.effectivePath ?? "EMPTY"}");
 					}
 				}
 			}
+
+			Debug.Log("done with UIIAMapIteration()".colorTag("cyan"));
+			LOG.AddLog(MAP_BindingpathBtn.ToTable(toString: true, name: "MAP<> BindingpathBtn"));
 		}
+
+		[SerializeField] string pressAnyKey = "Press Any key....";
+		[SerializeField] string emptyBinding = "@";
+
 		IEnumerator PerformRebinding(InputAction action, int bindingIndex, Button button)
 		{
 			activeRebindingButton = button;
@@ -219,7 +244,7 @@ UIRebindingSystem( -> Attach {typeof(UIRebindingSystem).Name}.cs to UIRebindingS
 			// We'll use these to get the correct display text when needed
 			activeRebindingOriginalText = null; // Not needed anymore, but keeping for cleanup
 
-			button.setBtnTxt("Press Any key....");
+			button.setBtnTxt(this.pressAnyKey);
 
 			LOG.H($"Rebinding {action.name}");
 			LOG.AddLog($"Original binding: {action.bindings[bindingIndex].effectivePath}", "");
@@ -271,6 +296,9 @@ UIRebindingSystem( -> Attach {typeof(UIRebindingSystem).Name}.cs to UIRebindingS
 				{
 					LOG.AddLog($".OnComplete() NewBinding: {action.bindings[bindingIndex].effectivePath}");
 					Debug.Log($".OnComplete() {action.bindings[bindingIndex].effectivePath}".colorTag("lime"));
+
+					// NEW: Clear duplicate bindings in the same action map
+					ClearDuplicateBindingsInActionMapOf(currAction: action, bindingIndex, this.MAP_BindingpathBtn);
 
 					// MODIFY: Use helper method to update button text
 					UpdateButtonText(button, action, bindingIndex);
@@ -351,8 +379,14 @@ UIRebindingSystem( -> Attach {typeof(UIRebindingSystem).Name}.cs to UIRebindingS
 
 		#region Helper
 
+		private static string GetUniqueBindingPath(InputAction action, int bindingIndex)
+		{
+			InputActionMap actionMap = action.actionMap;
+			return $"{actionMap.name}->{action.name}->{bindingIndex}";
+		}
+
 		// MODIFY: Add new helper method to update button text based on binding
-		private void UpdateButtonText(Button button, InputAction action, int bindingIndex)
+		private static void UpdateButtonText(Button button, InputAction action, int bindingIndex, string emptyText = "@")
 		{
 			string displayText = action.bindings[bindingIndex].ToDisplayString();
 
@@ -360,7 +394,7 @@ UIRebindingSystem( -> Attach {typeof(UIRebindingSystem).Name}.cs to UIRebindingS
 			if (string.IsNullOrEmpty(displayText) ||
 				string.IsNullOrEmpty(action.bindings[bindingIndex].effectivePath))
 			{
-				displayText = "Not Bound";
+				displayText = emptyText;
 			}
 
 			button.setBtnTxt(displayText);
@@ -406,6 +440,46 @@ UIRebindingSystem( -> Attach {typeof(UIRebindingSystem).Name}.cs to UIRebindingS
 		}
 		#endregion
 
+		private static void ClearDuplicateBindingsInActionMapOf(InputAction currAction, int currBindingIndex, Dictionary<string, Button> MAP_BindingpathBtn)
+		{
+			InputActionMap actionMap = currAction.actionMap;
+			string currDeviceKeyPath = currAction.bindings[currBindingIndex].effectivePath;
+
+			// nothing to check
+			if (currDeviceKeyPath == "")
+				return;
+
+			int clearedBindingCount = 0;
+			Debug.Log($"began ClearDuplicateBindingsInActionMapOf()".colorTag("white"));
+			foreach (var otherAction in actionMap.actions)
+				for (int i2 = 0; i2 < otherAction.bindings.Count; i2 += 1)
+				{
+					var otherBinding = otherAction.bindings[i2];
+
+					// do nothing
+					if (otherAction == currAction && i2 == currBindingIndex)
+						continue;
+					#region ad
+					// composite vec2 keyBindings
+					if (otherBinding.isComposite || otherBinding.isPartOfComposite)
+						continue; 
+					#endregion
+
+					if(otherBinding.effectivePath == currDeviceKeyPath)
+					{
+						// clear binding >>
+						otherAction.ApplyBindingOverride(i2, path: "");
+
+						string otherBindingId = GetUniqueBindingPath(otherAction, i2);
+						UpdateButtonText(MAP_BindingpathBtn[otherBindingId], otherAction, i2);
+
+						clearedBindingCount += 1;
+						// << clear binding
+					}
+				}
+
+			Debug.Log($"clearedCount: {clearedBindingCount}".colorTag("lime"));
+		}
 		/// <summary>
 		/// Reset ALL bindings in the entire InputActionAsset to defaults
 		/// </summary>
@@ -420,7 +494,7 @@ UIRebindingSystem( -> Attach {typeof(UIRebindingSystem).Name}.cs to UIRebindingS
 			// LOG.SaveGameData(GameDataType.inputKeyBindings, "");
 
 			// Refresh the UI
-			StartCoroutine(RebindingSystemAnalysis());
+			this.UIIAMapIteration();
 		}
 
 		/// <summary>
