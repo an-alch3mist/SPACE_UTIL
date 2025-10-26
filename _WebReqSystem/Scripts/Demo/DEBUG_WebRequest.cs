@@ -18,15 +18,15 @@ namespace SPACE_WebReqSystem
 		private void Start()
 		{
 			// submit button action
-			U.NameStartsWith(this.feedBackPanel, "submit").GetComponent<Button>() // todo path submit > text > 
+			this.feedBackPanel.NameStartsWith("submit").GetComponent<Button>() // todo path submit > text > 
 				.onClick.AddListener(() => 
 				{
 					WebReqManager.Discord.SendPayLoadJson_Feedback(
-					U.NameStartsWith(this.feedBackPanel, "inp").GetComponent<TMP_InputField>().text);
+					this.feedBackPanel.NameStartsWith("inp").GetComponent<TMP_InputField>().text);
 				});
 
 			// x button action
-			U.NameStartsWith(this.feedBackPanel, "x").GetComponent<Button>()
+			this.feedBackPanel.NameStartsWith("x").GetComponent<Button>()
 				.onClick.AddListener(() => this.feedBackPanel.SetActive(false));
 		}
 

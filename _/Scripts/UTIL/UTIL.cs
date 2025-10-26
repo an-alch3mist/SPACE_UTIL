@@ -9,6 +9,7 @@ using System.Text.RegularExpressions;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
+using UnityEngine.InputSystem;
 using TMPro;
 
 using System.Threading.Tasks;
@@ -884,20 +885,6 @@ namespace SPACE_UTIL
 		*/
 		#endregion
 
-		#region transform util
-		public static void clearLeaves(this Transform transform)
-		{
-			for (int i0 = 0; i0 < transform.childCount; i0 += 1)
-				GameObject.Destroy(transform.GetChild(i0).gameObject);
-		}
-
-		public static void disableLeaves(this Transform transform)
-		{
-			for (int i0 = 0; i0 < transform.childCount; i0 += 1)
-				transform.GetChild(i0).gameObject.SetActive(false);
-		}
-		#endregion
-
 		#region UI util
 		public static void setBtnTxt(this Button btn, string str)
 		{
@@ -927,151 +914,6 @@ namespace SPACE_UTIL
 	*/
 	public static class U
 	{
-		#region Transform/GameObject Leaf Search
-		// converted to lowercase before check
-		#region .NameStartsWith
-		/// <summary>
-		/// Get Transform at Gen 1
-		/// </summary>
-		public static Transform NameStartsWith(this Transform transform, string name)
-		{
-			for (int i0 = 0; i0 < transform.childCount; i0 += 1)
-				if (transform.GetChild(i0).name.ToLower().StartsWith(name.ToLower()))
-					return transform.GetChild(i0);
-			Debug.LogError($"found no leaf starting with that name: {name.ToLower()}, under transform: {transform.name}");
-			return null;
-		}
-		public static GameObject NameStartsWith(this GameObject gameObject, string name)
-		{
-			Transform transform = gameObject.transform;
-			for (int i0 = 0; i0 < transform.childCount; i0 += 1)
-				if (transform.GetChild(i0).name.ToLower().StartsWith(name.ToLower()))
-					return transform.GetChild(i0).gameObject;
-			Debug.LogError($"found no leaf starting with that name: {name.ToLower()}, under transform: {transform.name}");
-			return null;
-		}
-
-		#region Query location: b > c > d > e
-		/// <summary>
-		/// if transform @"a" = anscestor, than transform @"a".Query("b > c > d > e") =  transform @"d".NameStartsWith("e")
-		/// </summary>
-		public static Transform Query(this Transform transform, string query, char sep = '>') // query: leaf > leaflet
-		{
-			string[] QUERY = query.split($@"(\s)*(\{sep})(\s)*"); // clean(prior) by default than split
-			Transform leaf = transform;
-			foreach (string name in QUERY)
-				leaf = leaf.NameStartsWith(name); // error pause(name not found) handled by .NameStartsWith(name)
-			return leaf;
-		}
-		/// <summary>
-		/// if gameObject @"a" = anscestor, than gameObject @"a".Query("b > c > d > e") = gameObject @"d".NameStartsWith("e")
-		/// </summary>
-		public static GameObject Query(this GameObject gameObject, string query, char sep = '>') // query: leaf > leaflet
-		{
-			return gameObject.transform.Query(query, sep).gameObject;
-		}
-		#endregion
-		#endregion
-
-		// get Leaves under a Transform/GameObject
-		#region .GetFirstGenLeaves
-		/// <summary>
-		/// Get L<Transform> at Gen 1
-		/// </summary>
-		public static List<Transform> GetLeaves(this Transform transform)
-		{
-			List<Transform> T = new List<Transform>();
-			for (int i0 = 0; i0 < transform.childCount; i0 += 1)
-				if (transform.GetChild(i0))
-					T.Add(transform.GetChild(i0));
-
-			if (T.Count == 0)
-				Debug.LogError($"found no leaves under: {transform.name}");
-			return T;
-		}
-		public static List<GameObject> GetLeaves(this GameObject gameObject)
-		{
-			List<GameObject> G = new List<GameObject>();
-			Transform transform = gameObject.transform;
-			for (int i0 = 0; i0 < transform.childCount; i0 += 1)
-				if (transform.GetChild(i0))
-					G.Add(transform.GetChild(i0).gameObject);
-
-			if (G.Count == 0)
-				Debug.LogError($"found no leaves under: {transform.name}");
-			return G;
-		}
-		#endregion
-
-		// GetDepthLeaf under multiple gen of Transform/GameObject
-		#region GetDepthLeaf
-		/// <summary>
-		/// Get Transform after Depth Search
-		/// </summary>
-		public static Transform GetDepthLeaf(this Transform transform, string name)
-		{
-			foundChild = null;
-			DepthSearch(transform, name);
-			if (foundChild == null)
-				Debug.LogError($"no leaf found in depth search with name {name} under {transform.name}");
-			return foundChild;
-		}
-		public static GameObject GetDepthLeaf(this GameObject gameObject, string name)
-		{
-			foundChild = null;
-			DepthSearch(gameObject.transform, name);
-			if (foundChild == null)
-				Debug.LogError($"no leaf found in depth search with name {name} under {gameObject.name}");
-			return foundChild.gameObject;
-		}
-
-		static Transform foundChild;
-		// self comparision approach >>
-		static void DepthSearch(Transform transform, string name)
-		{
-			// exit //
-			if (transform.name.ToLower().StartsWith(name) == true)
-			{
-				foundChild = transform;
-				return;
-			}
-
-			// exit //
-			if (foundChild != null)
-				return;
-
-			for (int i0 = 0; i0 < transform.childCount; i0 += 1)
-				// recurive >>
-				DepthSearch(transform.GetChild(i0), name);
-			// << recursive
-		}
-		// << self comparision approach
-		#endregion
-
-		// Get Component Shorter format 
-		#region GetComponent -> GC
-		public static T GC<T>(this GameObject go) where T : Component
-		{
-			return go.GetComponent<T>();
-		}
-
-		public static Transform GTrLeaf<T>(this GameObject go) where T : Component
-		{
-			return go.GetComponentInChildren<T>().transform;
-		}
-
-		public static T GCLeaf<T>(this GameObject go) where T : Component
-		{
-			return go.GetComponentInChildren<T>();
-		}
-
-		public static IEnumerable<T> GCLeaves<T>(this GameObject go) where T : Component
-		{
-			return go.GetComponentsInChildren<T>();
-		}
-
-		#endregion
-		#endregion
 
 		#region CanPlaceObject ? at a give pos, _prefab.collider, rotationY
 		// CanPlaceBuilding.... pos2D, gameObject with a collider2D 
@@ -1299,6 +1141,365 @@ namespace SPACE_UTIL
 	}
 	#endregion
 
+	#region Ext
+	public static class ExtensionGameObject
+	{
+		#region Transform/GameObject/Component Leaf Search
+		// converted to lowercase before check
+		#region .NameStartsWith
+		/// <summary>
+		/// Get Transform at Gen 1
+		/// </summary>
+		public static Transform NameStartsWith(this Transform transform, string name)
+		{
+			for (int i0 = 0; i0 < transform.childCount; i0 += 1)
+				if (transform.GetChild(i0).name.ToLower().StartsWith(name.ToLower()))
+					return transform.GetChild(i0);
+			Debug.LogError($"found no leaf starting with that name: {name.ToLower()}, under transform: {transform.name}");
+			return null;
+		}
+		public static GameObject NameStartsWith(this GameObject gameObject, string name)
+		{
+			return gameObject.transform.NameStartsWith(name)?.gameObject;
+		}
+		public static Transform NameStartsWith(this Component component, string name)
+		{
+			return component.transform.NameStartsWith(name);
+		}
+
+		#region Query location: b > c > d > e
+		/// <summary>
+		/// if transform @"a" = ancestor, then transform @"a".Query("b > c > d > e") = transform @"d".NameStartsWith("e")
+		/// </summary>
+		public static Transform Query(this Transform transform, string query, char sep = '>') // query: leaf > leaflet
+		{
+			string[] QUERY = query.split($@"(\s)*(\{sep})(\s)*"); // clean(prior) by default than split
+			Transform leaf = transform;
+			foreach (string name in QUERY)
+				leaf = leaf.NameStartsWith(name); // error pause(name not found) handled by .NameStartsWith(name)
+			return leaf;
+		}
+
+		/// <summary>
+		/// if gameObject @"a" = ancestor, then gameObject @"a".Query("b > c > d > e") = gameObject @"d".NameStartsWith("e")
+		/// </summary>
+		public static GameObject Query(this GameObject gameObject, string query, char sep = '>') // query: leaf > leaflet
+		{
+			return gameObject.transform.Query(query, sep)?.gameObject;
+		}
+
+		/// <summary>
+		/// if component @"a" = ancestor, then component @"a".Query("b > c > d > e") = component @"d".NameStartsWith("e")
+		/// </summary>
+		public static Transform Query(this Component component, string query, char sep = '>') // query: leaf > leaflet
+		{
+			return component.transform.Query(query, sep);
+		}
+		#endregion
+		#endregion
+
+		// get Leaves under a Transform/GameObject/Component
+		#region .GetLeaves
+		/// <summary>
+		/// Get List<Transform> at Gen 1
+		/// </summary>
+		public static List<Transform> GetLeaves(this Transform transform)
+		{
+			List<Transform> T = new List<Transform>();
+			for (int i0 = 0; i0 < transform.childCount; i0 += 1)
+				if (transform.GetChild(i0))
+					T.Add(transform.GetChild(i0));
+
+			if (T.Count == 0)
+				Debug.LogError($"found no leaves under: {transform.name}");
+			return T;
+		}
+		public static List<Transform> GetLeaves(this GameObject gameObject)
+		{
+			List<Transform> T = new List<Transform>();
+			Transform transform = gameObject.transform;
+			for (int i0 = 0; i0 < transform.childCount; i0 += 1)
+				if (transform.GetChild(i0))
+					T.Add(transform.GetChild(i0));
+
+			if (T.Count == 0)
+				Debug.LogError($"found no leaves under: {transform.name}");
+			return T;
+		}
+		public static List<Transform> GetLeaves(this Component component)
+		{
+			return component.transform.GetLeaves();
+		}
+		#endregion
+
+		// GetDepthLeaf under multiple gen of Transform/GameObject/Component
+		#region GetDepthLeaf
+		/// <summary>
+		/// Get Transform after Depth Search
+		/// </summary>
+		public static Transform GetDepthLeaf(this Transform transform, string name)
+		{
+			foundChild = null;
+			DepthSearch(transform, name);
+			if (foundChild == null)
+				Debug.LogError($"no leaf found in depth search with name {name} under {transform.name}");
+			return foundChild;
+		}
+		public static GameObject GetDepthLeaf(this GameObject gameObject, string name)
+		{
+			foundChild = null;
+			DepthSearch(gameObject.transform, name);
+			if (foundChild == null)
+				Debug.LogError($"no leaf found in depth search with name {name} under {gameObject.name}");
+			return foundChild?.gameObject;
+		}
+		public static Transform GetDepthLeaf(this Component component, string name)
+		{
+			return component.transform.GetDepthLeaf(name);
+		}
+
+		static Transform foundChild;
+		// self comparison approach >>
+		static void DepthSearch(Transform transform, string name)
+		{
+			// exit //
+			if (transform.name.ToLower().StartsWith(name.ToLower()) == true)
+			{
+				foundChild = transform;
+				return;
+			}
+
+			// exit //
+			if (foundChild != null)
+				return;
+
+			for (int i0 = 0; i0 < transform.childCount; i0 += 1)
+				// recursive >>
+				DepthSearch(transform.GetChild(i0), name);
+			// << recursive
+		}
+		// << self comparison approach
+		#endregion
+
+		// Get Component Shorter format 
+		#region GetComponent -> GC
+		public static T GC<T>(this GameObject go) where T : Component
+		{
+			return go.GetComponent<T>();
+		}
+		public static T GC<T>(this Component component) where T : Component
+		{
+			return component.GetComponent<T>();
+		}
+
+		public static Transform GTrLeaf<T>(this GameObject go) where T : Component
+		{
+			return go.GetComponentInChildren<T>()?.transform;
+		}
+		public static Transform GTrLeaf<T>(this Component component) where T : Component
+		{
+			return component.GetComponentInChildren<T>()?.transform;
+		}
+
+		public static T GCLeaf<T>(this GameObject go) where T : Component
+		{
+			return go.GetComponentInChildren<T>();
+		}
+		public static T GCLeaf<T>(this Component component) where T : Component
+		{
+			return component.GetComponentInChildren<T>();
+		}
+
+		public static IEnumerable<T> GCLeaves<T>(this GameObject go) where T : Component
+		{
+			return go.GetComponentsInChildren<T>();
+		}
+		public static IEnumerable<T> GCLeaves<T>(this Component component) where T : Component
+		{
+			return component.GetComponentsInChildren<T>();
+		}
+		#endregion
+		#endregion
+
+		#region Clear or Disable Leaves
+		public static void clearLeaves(this Transform transform)
+		{
+			for (int i0 = 0; i0 < transform.childCount; i0 += 1)
+				GameObject.Destroy(transform.GetChild(i0).gameObject);
+		}
+		public static void clearLeaves(this GameObject gameObject)
+		{
+			gameObject.transform.clearLeaves();
+		}
+		public static void clearLeaves(this Component component)
+		{
+			component.transform.clearLeaves();
+		}
+
+		public static void disableLeaves(this Transform transform)
+		{
+			for (int i0 = 0; i0 < transform.childCount; i0 += 1)
+				transform.GetChild(i0).gameObject.SetActive(false);
+		}
+		public static void disableLeaves(this GameObject gameObject)
+		{
+			gameObject.transform.disableLeaves();
+		}
+		public static void disableLeaves(this Component component)
+		{
+			component.transform.disableLeaves();
+		}
+		#endregion
+	}
+
+	public static class ExtensionAnimator
+	{
+		public static void trySetBool(this Animator animator, object parameterType, bool val)
+		{
+			string paramName = parameterType.ToString();
+
+			// Check if parameter exists
+			foreach (AnimatorControllerParameter param in animator.parameters)
+			{
+				if (param.name == paramName && param.type == AnimatorControllerParameterType.Bool)
+				{
+					animator.SetBool(paramName, val);
+					return;
+				}
+			}
+
+			Debug.Log($"Bool parameter '{paramName}' not found in Animator".colorTag("red"));
+		}
+		public static bool tryGetBool(this Animator animator, object parameterType)
+		{
+			string paramName = parameterType.ToString();
+
+			// Check if parameter exists
+			foreach (AnimatorControllerParameter param in animator.parameters)
+			{
+				if (param.name == paramName && param.type == AnimatorControllerParameterType.Bool)
+				{
+					return animator.GetBool(paramName);
+				}
+			}
+
+			Debug.Log($"Bool parameter '{paramName}' not found in Animator".colorTag("red"));
+			return false;
+		}
+
+		public static void TrySetTrigger(this Animator animator, object parameterType)
+		{
+			string paramName = parameterType.ToString();
+
+			// Check if parameter exists
+			foreach (AnimatorControllerParameter param in animator.parameters)
+			{
+				if (param.name == paramName && param.type == AnimatorControllerParameterType.Trigger)
+				{
+					animator.SetTrigger(paramName);
+					return;
+				}
+			}
+
+			Debug.Log($"Trigger parameter '{paramName}' not found in Animator".colorTag("red"));
+		}
+
+		public static void trySetFloat(this Animator animator, object parameterType, float val)
+		{
+			string paramName = parameterType.ToString();
+
+			// Check if parameter exists
+			foreach (AnimatorControllerParameter param in animator.parameters)
+			{
+				if (param.name == paramName && param.type == AnimatorControllerParameterType.Float)
+				{
+					animator.SetFloat(paramName, val);
+					return;
+				}
+			}
+
+			Debug.Log($"Float parameter '{paramName}' not found in Animator".colorTag("red"));
+		}
+		public static float tryGetFloat(this Animator animator, object parameterType)
+		{
+			string paramName = parameterType.ToString();
+
+			// Check if parameter exists
+			foreach (AnimatorControllerParameter param in animator.parameters)
+			{
+				if (param.name == paramName && param.type == AnimatorControllerParameterType.Float)
+				{
+					return animator.GetFloat(paramName);
+				}
+			}
+
+			Debug.Log($"Float parameter '{paramName}' not found in Animator".colorTag("red"));
+			return 0f;
+		}
+	}
+
+	public static class ExtensionInputSystem
+	{
+		/// <summary>
+		/// Attempts to retrieve an InputAction from an InputActionAsset using enum-style naming.
+		/// Example: GameActionType.character__jump → actionMap: "character", action: "jump"
+		/// </summary>
+		public static UnityEngine.InputSystem.InputAction tryGet(this UnityEngine.InputSystem.InputActionAsset IAAsset, object actionType)
+		{
+			string fullName = actionType.ToString();
+
+			// Split by double underscore to get actionMap and action name
+			string[] parts = fullName.split(@"__");
+
+			if (parts.Length != 2)
+			{
+				Debug.Log($"Invalid action format '{fullName}'. Expected format: 'actionMap__actionName' (e.g., 'character__jump')".colorTag("red"));
+				return null;
+			}
+
+			string actionMapName = parts[0];
+			string actionName = parts[1];
+
+			// Find the action map
+			var actionMap = IAAsset.FindActionMap(actionMapName);
+			if (actionMap == null)
+			{
+				Debug.Log($"ActionMap '{actionMapName}' not found in InputActionAsset: {IAAsset.name}".colorTag("red"));
+				return null;
+			}
+
+			// Find the action within the map
+			var action = actionMap.FindAction(actionName);
+			if (action == null)
+			{
+				Debug.Log($"Action '{actionName}' not found in ActionMap '{actionMapName}'".colorTag("red"));
+				return null;
+			}
+
+			return action;
+		}
+
+		public static void tryLoadBindingOverridesFromJson(this UnityEngine.InputSystem.InputActionAsset IAAsset, object dataType)
+		{
+			try
+			{
+				Debug.Log($"success parsing filePath: ./{dataType} loaded IA with overiden bindings".colorTag("lime"));
+				// Load from Saved GameData
+				IAAsset.LoadBindingOverridesFromJson(LOG.LoadGameData(dataType));
+			}
+			catch (Exception)
+			{
+				Debug.Log($"error parsing filePath: ./{dataType} so loaded default IA".colorTag("red"));
+			}
+		}
+		public static void trySaveBindingOverridesAsJson(this UnityEngine.InputSystem.InputActionAsset IAAsset, object dataType)
+		{
+			string Json = IAAsset.SaveBindingOverridesAsJson();
+			LOG.SaveGameData(dataType, Json);
+		}
+	}
+	#endregion
+
 	#region LOG
 	/*
 		Used as: 
@@ -1457,8 +1658,17 @@ namespace SPACE_UTIL
 		/// </summary>
 		public static string ToJson(this object obj, bool pretify = true)
 		{
-			if (obj == null) return "{ } /* null */";
-			return JsonUtility.ToJson(obj, pretify);
+			try
+			{
+				if (obj == null) return "{ } /* null */";
+				return JsonUtility.ToJson(obj, pretify);
+			}
+			catch (Exception e)
+			{
+				Debug.Log($"error parsing {obj} to Json reason: {e.Message}".colorTag("red"));
+				return "";
+				// throw;
+			}
 		}
 
 

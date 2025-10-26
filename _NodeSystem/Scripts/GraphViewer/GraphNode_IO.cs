@@ -30,7 +30,7 @@ namespace SPACE_GRAPH_VIEW
 
 			void SetText(string str)
 			{
-				TextMeshPro tm = U.NameStartsWith(this.gameObject, "text").GetComponent<TextMeshPro>();
+				TextMeshPro tm = this.gameObject.NameStartsWith("text").GetComponent<TextMeshPro>();
 				tm.text = str;
 				tm.ForceMeshUpdate();
 

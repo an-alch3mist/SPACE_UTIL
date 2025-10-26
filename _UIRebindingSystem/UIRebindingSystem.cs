@@ -64,18 +64,26 @@ UIRebindingSystem( -> Attach {typeof(UIRebindingSystem).Name}.cs to UIRebindingS
 - There is PlayerInputActions.cs generated from inputAction
 - GameStore.playerIA shall lead to one of its instance";
 
-		PlayerInputActions IA;
+		[Header("Input Configuration")]
+		[Tooltip("Drag your .inputactions asset here OR set via GameStore")]
+		[SerializeField] private InputActionAsset _inputActionAsset;
+
+		InputActionAsset IA;
+		// PlayerInputActions IA;
 		private void OnEnable()
 		{
 			Debug.Log(C.method("OnEnable", this, "white"));
 
 			// playerIA from GameStore
-			this.IA = GameStore.playerIA;
+			// this.IA = GameStore.playerIA;
+
+			this.IA = _inputActionAsset;
+			this.IA.LoadBindingOverridesFromJson(LOG.LoadGameData(GameDataType.inputKeyBindings));
 
 			// start of rebinding UI initialization and routine
 			StopAllCoroutines();
 			CancelActiveRebinding();
-			StartCoroutine(STIMULATE());
+			UIIAMapIteration();
 
 			// Hook up reset and save buttons
 			if (this._resetBinding != null)
@@ -125,12 +133,6 @@ UIRebindingSystem( -> Attach {typeof(UIRebindingSystem).Name}.cs to UIRebindingS
 			}
 		}
 
-		IEnumerator STIMULATE()
-		{
-			yield return null;
-			this.UIIAMapIteration();
-			yield break;
-		}
 
 		[Header("templateUI/UI elem reference")]
 		[SerializeField] Transform _contentScrollViewTr;
@@ -141,6 +143,7 @@ UIRebindingSystem( -> Attach {typeof(UIRebindingSystem).Name}.cs to UIRebindingS
 		[SerializeField] Button _closeBtn;
 
 		Dictionary<string, Button> MAP_BindingpathBtn;
+		#region <Binding(struct), Button> -> depend on hasCode of Binding
 		/*
 		Dictionary<InputBinding, Button> MAP_BindingBtn;
 
@@ -153,6 +156,7 @@ UIRebindingSystem( -> Attach {typeof(UIRebindingSystem).Name}.cs to UIRebindingS
 		 [brake:<Keyboard>/space, pfButton(Clone) (UnityEngine.UI.Button)]   
 		 [brake:<Keyboard>/numpad0, pfButton(Clone) (UnityEngine.UI.Button)] 
 		*/
+		#endregion
 
 		void UIIAMapIteration()
 		{
@@ -164,7 +168,8 @@ UIRebindingSystem( -> Attach {typeof(UIRebindingSystem).Name}.cs to UIRebindingS
 			this.MAP_BindingpathBtn = new Dictionary<string, Button>();
 
 			// Iterate through ALL action maps
-			foreach (var actionMap in IA.asset.actionMaps)
+			// foreach (var actionMap in IA.asset.actionMaps)
+			foreach (var actionMap in IA.actionMaps)
 			{
 				// Create a header/separator for each action map
 				GameObject headerRow = GameObject.Instantiate(this._templateRowPrefab, this._contentScrollViewTr); headerRow.transform.clearLeaves();
