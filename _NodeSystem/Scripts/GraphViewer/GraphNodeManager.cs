@@ -5,6 +5,8 @@ using UnityEngine;
 using SPACE_UTIL;
 using SPACE_GRAPH_VIEW.SPACE_DirGraphNode; // subspace
 
+using SPACE_prev;
+
 namespace SPACE_GRAPH_VIEW
 {
 	/*
@@ -25,7 +27,7 @@ namespace SPACE_GRAPH_VIEW
 		#region README
 		[TextArea(3, 10)]
 		[SerializeField] string README = $@"0. Attach {typeof(GraphNodeManager).Name} to Empty Obj
-1. Assets/LOG/GameData.txt Have Node Relation in seprated by ->
+1. Make Sure Node Relation when set externally is seprated by ->
 2. pfGraphNode is Ref.prefab or Loaded Auto From Resources/.prefab
 (note that all fields are config @scale 1f, 20fps)";
 		#endregion
@@ -40,9 +42,6 @@ namespace SPACE_GRAPH_VIEW
 				Debug.LogError(this.ToString() + ": pfGraphNode is null in");
 			GraphNodeManager.Instance = this;
 			MAP_GraphNodeReg = new Dictionary<int, GraphNode_IO>();
-			// check >>
-			//Distribute_initialize();
-			// << check
 		}
 		
 		private void Update()

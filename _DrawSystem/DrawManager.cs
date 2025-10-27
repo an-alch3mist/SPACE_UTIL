@@ -38,7 +38,6 @@ namespace SPACE_DrawSystem
 
 	}
 
-
 	/// <summary>
 	/// Create a new persistent line
 	/// order of calling: 

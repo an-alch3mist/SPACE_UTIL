@@ -15,6 +15,14 @@ namespace SPACE_NodeSystem
 	*/
 	public class NodeManager : MonoBehaviour
 	{
+		[TextArea(minLines: 10, maxLines: 20)]
+		[SerializeField] string _nodeRelation = @"start -> 0
+0 -> 1
+1 -> A
+A -> B
+B -> C
+C -> 0";
+
 		private void Awake()
 		{
 			Debug.Log("Awake(): " + this);
@@ -97,18 +105,18 @@ namespace SPACE_NodeSystem
 		{
 			// parse IN here >>
 			MAP_NodeReg = new Dictionary<int, Node>();
-			string IN = LOG.LoadGameData(GameDataType.GameData);
+			string IN = this._nodeRelation;
 
 			// ad >>
 			if (IN.Length == 0)
 			{
-				Debug.LogError("GameData Empty");
+				Debug.Log("node relation is empty".colorTag("yellow"));
 				return;
 			}
 			// << ad
 
 			// initialize unique node
-			IN.split(@"\n").forEach(line =>
+			IN.clean().split(@"\n").forEach(line =>
 			{
 				var ID = line.split(@" \-\> ");
 				ID.forEach(id =>

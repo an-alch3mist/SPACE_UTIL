@@ -1,8 +1,12 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using SPACE_UTIL;
 using TMPro;
+
+using SPACE_UTIL;
+using SPACE_DrawSystem;
+
+using SPACE_prev;
 
 namespace SPACE_GRAPH_VIEW
 {
@@ -30,13 +34,13 @@ namespace SPACE_GRAPH_VIEW
 
 			void SetText(string str)
 			{
-				TextMeshPro tm = this.gameObject.NameStartsWith("text").GetComponent<TextMeshPro>();
+				TextMeshPro tm = this.gameObject.leafNameStartsWith("text").GetComponent<TextMeshPro>();
 				tm.text = str;
 				tm.ForceMeshUpdate();
 
 				float pad = 0.2f;
 				Vector2 textSize = tm.GetRenderedValues(onlyVisibleCharacters: false); // including new line, space
-				Transform back_Transform = this.transform.NameStartsWith("back");
+				Transform back_Transform = this.transform.leafNameStartsWith("back");
 				back_Transform.localScale = (Vector3)textSize + new Vector3(pad, pad, 1);
 			}
 

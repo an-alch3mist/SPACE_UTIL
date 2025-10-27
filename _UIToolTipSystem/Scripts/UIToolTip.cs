@@ -35,12 +35,12 @@ using SPACE_UISystem;
 		private void Awake()
 		{
 			this.ToolTipRect = this.gameObject.GetComponent<RectTransform>();
-			this.tm = this.gameObject.NameStartsWith("back").NameStartsWith("text").GetComponent<TextMeshProUGUI>();
+			this.tm = this.gameObject.leafNameStartsWith("back").leafNameStartsWith("text").GetComponent<TextMeshProUGUI>();
 			UIToolTip.Ins = this;
 
 			// optional outline border >>
-			if (this.gameObject.NameStartsWith("back").GetComponent<Outline>() != null)
-				this.border = C.ceil(this.gameObject.NameStartsWith("back").GetComponent<Outline>().effectDistance.x);
+			if (this.gameObject.leafNameStartsWith("back").GetComponent<Outline>() != null)
+				this.border = C.ceil(this.gameObject.leafNameStartsWith("back").GetComponent<Outline>().effectDistance.x);
 			else
 				this.border = 0;
 
@@ -76,7 +76,7 @@ using SPACE_UISystem;
 
 		public void Show(bool Active = true)
 		{
-			this.gameObject.NameStartsWith("back").SetActive(Active);
+			this.gameObject.leafNameStartsWith("back").gameObject.SetActive(Active);
 		}
 
 		public void SetPos(Vector2 pos) // its INPUT.UI.pos

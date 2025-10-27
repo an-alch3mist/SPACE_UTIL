@@ -414,6 +414,18 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 419dc1bdee2704c438fb8611590224d1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _nodeRelation: ' start -> 0
+
+    0 -> 1
+
+    1 -> A
+
+    A -> B
+
+    B -> C
+
+    C
+    -> 0'
 --- !u!1 &774890403
 GameObject:
   m_ObjectHideFlags: 0
@@ -459,14 +471,14 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   README: '0. Attach {typeof(GraphNodeManager).Name} to Empty Obj
 
-    1. In Assets/LOG/GameData.txt
-    Have Node Relation in seprated by ->
+    1. Make Sure
+    Node Relation when set externally is seprated by ->
 
-    2. pfGraphNode is Ref.prefab or Loaded
-    Auto From Resources/.prefab
+    2. pfGraphNode is Ref.prefab
+    or Loaded Auto From Resources/.prefab
 
-    (note that all fields are config @scale 1f,
-    20fps)'
+    (note that all fields are config @scale
+    1f, 20fps)'
   pfGraphNode: {fileID: 0}
   initial_dist_from_worldCenter: 5
   init_iter_UpdateDistribute: 10
@@ -624,6 +636,7 @@ MonoBehaviour:
     2. Ref Scene Canvas(for INPUT.UI purpose)'
   MainCam: {fileID: 519420031}
   CanvasRectTransform: {fileID: 207583907}
+  TMFps: {fileID: 0}
 --- !u!1 &1692793325
 GameObject:
   m_ObjectHideFlags: 0

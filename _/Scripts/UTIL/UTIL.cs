@@ -914,8 +914,7 @@ namespace SPACE_UTIL
 	*/
 	public static class U
 	{
-
-		#region CanPlaceObject ? at a give pos, _prefab.collider, rotationY
+		#region ad CanPlaceObject ? at a give pos, _prefab.collider, rotationY
 		// CanPlaceBuilding.... pos2D, gameObject with a collider2D 
 		#region CanPlaceObject2D(Vector2 pos2D, GameObject gameObject, int rotationZ = 0)
 		public static bool CanPlaceObject2D(Vector2 pos2D, GameObject gameObject, int rotationZ = 0)
@@ -1142,120 +1141,108 @@ namespace SPACE_UTIL
 	#endregion
 
 	#region Ext
-	public static class ExtensionGameObject
+	public static class ExtensionGameObjectOrComponent
 	{
-		#region Transform/GameObject/Component Leaf Search
-		// converted to lowercase before check
-		#region .NameStartsWith
+		#region .leafNameStartsWith, .leafQuery, .getLeavesGen1, .getDepthLeafNameStartingWith
 		/// <summary>
-		/// Get Transform at Gen 1
+		/// Get A Certain Transform at Gen 1
 		/// </summary>
-		public static Transform NameStartsWith(this Transform transform, string name)
+		public static Transform leafNameStartsWith(this GameObject gameObject, string name)
 		{
+			Transform transform = gameObject.transform;
 			for (int i0 = 0; i0 < transform.childCount; i0 += 1)
 				if (transform.GetChild(i0).name.ToLower().StartsWith(name.ToLower()))
 					return transform.GetChild(i0);
 			Debug.LogError($"found no leaf starting with that name: {name.ToLower()}, under transform: {transform.name}");
 			return null;
 		}
-		public static GameObject NameStartsWith(this GameObject gameObject, string name)
+		public static Transform leafNameStartsWith(this Component component, string name)
 		{
-			return gameObject.transform.NameStartsWith(name)?.gameObject;
-		}
-		public static Transform NameStartsWith(this Component component, string name)
-		{
-			return component.transform.NameStartsWith(name);
-		}
-
-		#region Query location: b > c > d > e
-		/// <summary>
-		/// if transform @"a" = ancestor, then transform @"a".Query("b > c > d > e") = transform @"d".NameStartsWith("e")
-		/// </summary>
-		public static Transform Query(this Transform transform, string query, char sep = '>') // query: leaf > leaflet
-		{
-			string[] QUERY = query.split($@"(\s)*(\{sep})(\s)*"); // clean(prior) by default than split
-			Transform leaf = transform;
-			foreach (string name in QUERY)
-				leaf = leaf.NameStartsWith(name); // error pause(name not found) handled by .NameStartsWith(name)
-			return leaf;
+			return component.gameObject.leafNameStartsWith(name);
 		}
 
 		/// <summary>
 		/// if gameObject @"a" = ancestor, then gameObject @"a".Query("b > c > d > e") = gameObject @"d".NameStartsWith("e")
 		/// </summary>
-		public static GameObject Query(this GameObject gameObject, string query, char sep = '>') // query: leaf > leaflet
+		public static Transform leafQuery(this GameObject gameObject, string query, char sep = '>')
 		{
-			return gameObject.transform.Query(query, sep)?.gameObject;
-		}
+			string[] QUERY = query.Split(sep); // or your custom .split()
+			Transform leaf = gameObject.transform;
 
-		/// <summary>
-		/// if component @"a" = ancestor, then component @"a".Query("b > c > d > e") = component @"d".NameStartsWith("e")
-		/// </summary>
-		public static Transform Query(this Component component, string query, char sep = '>') // query: leaf > leaflet
-		{
-			return component.transform.Query(query, sep);
+			foreach (string name in QUERY)
+			{
+				if (leaf == null)
+				{
+					Debug.LogError($"leafQuery starting from rootName: {gameObject.name} is null for leafName: {name} with query: {query}");
+					return null; // 👈 Add this
+				}
+				leaf = leaf.leafNameStartsWith(name.Trim());
+			}
+
+			return leaf;
 		}
-		#endregion
-		#endregion
+		public static Transform leafQuery(this Component component, string query, char sep = '>') // query: leaf > leaflet
+		{
+			return component.gameObject.leafQuery(query, sep);
+		}
 
 		// get Leaves under a Transform/GameObject/Component
-		#region .GetLeaves
 		/// <summary>
 		/// Get List<Transform> at Gen 1
 		/// </summary>
-		public static List<Transform> GetLeaves(this Transform transform)
+		public static List<Transform> getLeavesGen1(this GameObject gameObject)
 		{
-			List<Transform> T = new List<Transform>();
-			for (int i0 = 0; i0 < transform.childCount; i0 += 1)
-				if (transform.GetChild(i0))
-					T.Add(transform.GetChild(i0));
-
-			if (T.Count == 0)
-				Debug.LogError($"found no leaves under: {transform.name}");
-			return T;
-		}
-		public static List<Transform> GetLeaves(this GameObject gameObject)
-		{
-			List<Transform> T = new List<Transform>();
+			List<Transform> TRANSFORM = new List<Transform>();
 			Transform transform = gameObject.transform;
 			for (int i0 = 0; i0 < transform.childCount; i0 += 1)
-				if (transform.GetChild(i0))
-					T.Add(transform.GetChild(i0));
+				TRANSFORM.Add(transform.GetChild(i0));
 
-			if (T.Count == 0)
-				Debug.LogError($"found no leaves under: {transform.name}");
-			return T;
+			return TRANSFORM;
 		}
-		public static List<Transform> GetLeaves(this Component component)
+		public static List<Transform> getLeavesGen1(this Component component)
 		{
-			return component.transform.GetLeaves();
+			return component.gameObject.getLeavesGen1();
 		}
-		#endregion
 
 		// GetDepthLeaf under multiple gen of Transform/GameObject/Component
-		#region GetDepthLeaf
+		// Better depth search without static state
+		public static Transform getDepthLeafNameStartingWith(this GameObject gameObject, string name)
+		{
+			return DepthSearchRecursive(gameObject.transform, name.ToLower());
+		}
+		public static Transform getDepthLeafNameStartingWith(this Component component, string name)
+		{
+			return component.gameObject.getDepthLeafNameStartingWith(name);
+		}
+		static Transform DepthSearchRecursive(Transform current, string lowerName)
+		{
+			if (current.name.ToLower().StartsWith(lowerName))
+				return current;
+
+			for (int i = 0; i < current.childCount; i += 1)
+			{
+				Transform found = DepthSearchRecursive(current.GetChild(i), lowerName);
+				if (found != null) return found;
+			}
+
+			return null;
+		}
+
+		#region prev approach, thread safe issue(according to seek)
 		/// <summary>
 		/// Get Transform after Depth Search
 		/// </summary>
-		public static Transform GetDepthLeaf(this Transform transform, string name)
-		{
-			foundChild = null;
-			DepthSearch(transform, name);
-			if (foundChild == null)
-				Debug.LogError($"no leaf found in depth search with name {name} under {transform.name}");
-			return foundChild;
-		}
-		public static GameObject GetDepthLeaf(this GameObject gameObject, string name)
+		static Transform getDepthLeafNameStartingWith_prev(this GameObject gameObject, string name)
 		{
 			foundChild = null;
 			DepthSearch(gameObject.transform, name);
 			if (foundChild == null)
 				Debug.LogError($"no leaf found in depth search with name {name} under {gameObject.name}");
-			return foundChild?.gameObject;
+			return foundChild?.transform;
 		}
-		public static Transform GetDepthLeaf(this Component component, string name)
+		static Transform getDepthLeafNameStartingWith_prev(this Component component, string name)
 		{
-			return component.transform.GetDepthLeaf(name);
+			return component.gameObject.getDepthLeafNameStartingWith_prev(name);
 		}
 
 		static Transform foundChild;
@@ -1278,27 +1265,20 @@ namespace SPACE_UTIL
 				DepthSearch(transform.GetChild(i0), name);
 			// << recursive
 		}
-		// << self comparison approach
+		// << self comparison approach 
 		#endregion
 
+		#endregion
+
+		#region .GC<T>, .GCLeaf<T>, .GCLeaves<T>
 		// Get Component Shorter format 
-		#region GetComponent -> GC
 		public static T GC<T>(this GameObject go) where T : Component
 		{
 			return go.GetComponent<T>();
 		}
 		public static T GC<T>(this Component component) where T : Component
 		{
-			return component.GetComponent<T>();
-		}
-
-		public static Transform GTrLeaf<T>(this GameObject go) where T : Component
-		{
-			return go.GetComponentInChildren<T>()?.transform;
-		}
-		public static Transform GTrLeaf<T>(this Component component) where T : Component
-		{
-			return component.GetComponentInChildren<T>()?.transform;
+			return component.gameObject.GC<T>();
 		}
 
 		public static T GCLeaf<T>(this GameObject go) where T : Component
@@ -1307,7 +1287,7 @@ namespace SPACE_UTIL
 		}
 		public static T GCLeaf<T>(this Component component) where T : Component
 		{
-			return component.GetComponentInChildren<T>();
+			return component.gameObject.GCLeaf<T>();
 		}
 
 		public static IEnumerable<T> GCLeaves<T>(this GameObject go) where T : Component
@@ -1316,39 +1296,74 @@ namespace SPACE_UTIL
 		}
 		public static IEnumerable<T> GCLeaves<T>(this Component component) where T : Component
 		{
-			return component.GetComponentsInChildren<T>();
-		}
-		#endregion
+			return component.gameObject.GCLeaves<T>();
+		} 
 		#endregion
 
-		#region Clear or Disable Leaves
-		public static void clearLeaves(this Transform transform)
-		{
-			for (int i0 = 0; i0 < transform.childCount; i0 += 1)
-				GameObject.Destroy(transform.GetChild(i0).gameObject);
-		}
+		#region .clearLeaves, .toggleLeaves, .toggle
+		// destroy
 		public static void clearLeaves(this GameObject gameObject)
 		{
-			gameObject.transform.clearLeaves();
+			Transform transform = gameObject.transform;
+			for (int i = transform.childCount - 1; i >= 0; i -= 1)
+				GameObject.Destroy(transform.GetChild(i).gameObject);
 		}
 		public static void clearLeaves(this Component component)
 		{
-			component.transform.clearLeaves();
+			component.gameObject.clearLeaves();
 		}
 
-		public static void disableLeaves(this Transform transform)
+		// gameObjects setActive
+		public static void toggleLeaves(this GameObject gameObject, bool value = false)
 		{
+			Transform transform = gameObject.transform;
 			for (int i0 = 0; i0 < transform.childCount; i0 += 1)
-				transform.GetChild(i0).gameObject.SetActive(false);
+				transform.GetChild(i0).gameObject.SetActive(value);
 		}
-		public static void disableLeaves(this GameObject gameObject)
+		public static void toggleLeaves(this Component component, bool value = false)
 		{
-			gameObject.transform.disableLeaves();
+			component.gameObject.toggleLeaves(value);
 		}
-		public static void disableLeaves(this Component component)
+
+		// gameObject setActive
+		public static Transform toggle(this GameObject gameObject, bool value = false)
 		{
-			component.transform.disableLeaves();
+			gameObject.SetActive(value);
+			return gameObject.transform;
 		}
+		public static Transform toggle(this Component component, bool value = false)
+		{
+			return component.gameObject.toggle(value);
+		}
+		#endregion
+
+		#region .getHierarchyString
+		/// <summary>
+		/// Get full hierarchy structure as a string for logging/debugging
+		/// </summary>
+		public static string getHierarchyString(this GameObject gameObject, int selfDepth = 0)
+		{
+			StringBuilder sb = new StringBuilder();
+			BuildHierarchyString(gameObject, selfDepth, sb);
+			return sb.ToString();
+		}
+		private static void BuildHierarchyString(GameObject gameObject, int depth, StringBuilder sb)
+		{
+			string indent = new string(' ', depth * 2);
+			sb.AppendLine($"{indent}{gameObject.name}");
+
+			for (int i0 = 0; i0 < gameObject.transform.childCount; i0 += 1)
+			{
+				Transform child = gameObject.transform.GetChild(i0);
+				BuildHierarchyString(child.gameObject, depth + 1, sb);
+			}
+		}
+
+		// Component overloads
+		public static string getHierarchyString(this Component component, int selfDepth = 0)
+		{
+			return component.gameObject.getHierarchyString(selfDepth);
+		} 
 		#endregion
 	}
 
@@ -1886,39 +1901,48 @@ namespace SPACE_UTIL
 		#endregion
 	}
 	#endregion
+}
 
-	#region DRAW_prev
+
+namespace SPACE_prev
+{
+	#region ad DRAW_prev
 	public static class DRAW_prev
 	{
 		public static Color col = Color.red;
 		public static float dt = 10f;
 
-		public static Transform DebugHolder;
-
-		public static void Init()
-		{
-			if (GameObject.Find("DebugHolder") != null)
-				GameObject.Destroy(GameObject.Find("DebugHolder"));
-			DebugHolder = new GameObject("DebugHolder").transform;
-		}
-
-
-		#region Line
+		#region LINE
 		public static void Line(Vector3 a, Vector3 b, float e = 1f / 200)
 		{
+			Vector3 nX = b - a,
+							nY = -Vector3.Cross(-Vector3.forward, nX).normalized;
 
-		} 
+			Debug.DrawLine(a - nY * e, b - nY * e, DRAW_prev.col, DRAW_prev.dt);
+			Debug.DrawLine(a + nY * e, b + nY * e, DRAW_prev.col, DRAW_prev.dt);
+		}
 		#endregion
 
 		#region ARROW
 		public static void Arrow(Vector3 a, Vector3 b, float t = 1f, float s = 1f / 15, float e = 1f / 200)
 		{
+			Vector3 nX = (b - a).normalized,
+							nY = -Vector3.Cross(-Vector3.forward, nX).normalized;
 
+			DRAW_prev.Line(a, b, e);
+			DRAW_prev.Line(lerp(a, b, t) - nX * (s * 1.6f) + nY * s, lerp(a, b, t), e);
+			DRAW_prev.Line(lerp(a, b, t) - nX * (s * 1.6f) - nY * s, lerp(a, b, t), e);
+		}
+		
+		static Vector3 lerp(Vector3 a, Vector3 b, float t)
+		{
+			Vector3 n = b - a;
+			return a + n * t;
 		}
 		#endregion
+
+
 
 	}
 	#endregion
 }
-
-

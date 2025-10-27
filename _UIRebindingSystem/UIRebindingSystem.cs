@@ -70,9 +70,15 @@ UIRebindingSystem( -> Attach {typeof(UIRebindingSystem).Name}.cs to UIRebindingS
 
 		InputActionAsset IA;
 		// PlayerInputActions IA;
+		#region Unity LifeCycle
 		private void OnEnable()
 		{
 			Debug.Log(C.method("OnEnable", this, "white"));
+			if (this.IA == null)
+			{
+				Debug.Log($"unassigned InputActionAsset IA {this._inputActionAsset}".colorTag("red"));
+				return;
+			}
 
 			// playerIA from GameStore
 			// this.IA = GameStore.playerIA;
@@ -95,15 +101,21 @@ UIRebindingSystem( -> Attach {typeof(UIRebindingSystem).Name}.cs to UIRebindingS
 			if (this._closeBtn != null)
 				_closeBtn.onClick.AddListener(() => { this.gameObject.SetActive(false); });
 		}
-
-		private void Update()
+		private void OnDisable()
 		{
-			if (INPUT.M.InstantDown(1))
-			{
-				// the start of routine
-				// started from Start() [UnityLifeCycle]
-			}
+			Debug.Log(C.method("OnDisable", this, "orange"));
+
+			if (this.IA == null) return;
+			CancelActiveRebinding();
 		}
+		private void OnDestroy()
+		{
+			Debug.Log(C.method("OnDestroy", this, "orange"));
+
+			if (this.IA == null) return;
+			CancelActiveRebinding();
+		}
+		#endregion
 
 		// Cancel any active rebinding operation
 		private void CancelActiveRebinding()
@@ -133,7 +145,6 @@ UIRebindingSystem( -> Attach {typeof(UIRebindingSystem).Name}.cs to UIRebindingS
 			}
 		}
 
-
 		[Header("templateUI/UI elem reference")]
 		[SerializeField] Transform _contentScrollViewTr;
 		[SerializeField] GameObject _templateRowPrefab;
@@ -141,6 +152,8 @@ UIRebindingSystem( -> Attach {typeof(UIRebindingSystem).Name}.cs to UIRebindingS
 		[SerializeField] Button _resetBinding;
 		[SerializeField] Button _saveBinding;
 		[SerializeField] Button _closeBtn;
+		[SerializeField] string pressAnyKey = "Press Any key....";
+		[SerializeField] string emptyBinding = "@";
 
 		Dictionary<string, Button> MAP_BindingpathBtn;
 		#region <Binding(struct), Button> -> depend on hasCode of Binding
@@ -157,7 +170,6 @@ UIRebindingSystem( -> Attach {typeof(UIRebindingSystem).Name}.cs to UIRebindingS
 		 [brake:<Keyboard>/numpad0, pfButton(Clone) (UnityEngine.UI.Button)] 
 		*/
 		#endregion
-
 		void UIIAMapIteration()
 		{
 			// Clear existing UI
@@ -239,9 +251,70 @@ UIRebindingSystem( -> Attach {typeof(UIRebindingSystem).Name}.cs to UIRebindingS
 			LOG.AddLog(MAP_BindingpathBtn.ToTable(toString: true, name: "MAP<> BindingpathBtn"));
 		}
 
-		[SerializeField] string pressAnyKey = "Press Any key....";
-		[SerializeField] string emptyBinding = "@";
+		#region Helper
 
+		private static string GetUniqueBindingPath(InputAction action, int bindingIndex)
+		{
+			InputActionMap actionMap = action.actionMap;
+			return $"{actionMap.name}->{action.name}->{bindingIndex}";
+		}
+
+		// MODIFY: Add new helper method to update button text based on binding
+		private static void UpdateButtonText(Button button, InputAction action, int bindingIndex, string emptyText = "@")
+		{
+			string displayText = action.bindings[bindingIndex].ToDisplayString();
+
+			// If the binding is empty or returns empty string, show "Not Bound"
+			if (string.IsNullOrEmpty(displayText) ||
+				string.IsNullOrEmpty(action.bindings[bindingIndex].effectivePath))
+			{
+				displayText = emptyText;
+			}
+
+			button.setBtnTxt(displayText);
+		}
+
+		// Helper method to check if a cancel key is pressed
+		private bool IsCancelKeyPressed(string controlPath)
+		{
+			var control = InputSystem.FindControl(controlPath);
+			if (control is UnityEngine.InputSystem.Controls.ButtonControl button)
+			{
+				return button.wasPressedThisFrame;
+			}
+			return false;
+		}
+
+		// RESET FUNCTIONALITY
+		/// <summary>
+		/// Reset a specific binding to its default value
+		/// </summary>
+		private void ResetBindingToDefault(InputAction action, int bindingIndex)
+		{
+			action.RemoveBindingOverride(bindingIndex);
+			Debug.Log($"Reset binding {bindingIndex} of action '{action.name}' to default".colorTag("cyan"));
+		}
+
+		/// <summary>
+		/// Reset all bindings for a specific action to defaults
+		/// </summary>
+		private void ResetActionToDefault(InputAction action)
+		{
+			action.RemoveAllBindingOverrides();
+			Debug.Log($"Reset all bindings for action '{action.name}' to defaults".colorTag("cyan"));
+		}
+
+		/// <summary>
+		/// Reset all bindings in an action map to defaults
+		/// </summary>
+		private void ResetActionMapToDefault(InputActionMap actionMap)
+		{
+			actionMap.RemoveAllBindingOverrides();
+			Debug.Log($"Reset all bindings in action map '{actionMap.name}' to defaults".colorTag("cyan"));
+		}
+		#endregion
+
+		#region private API Crucial
 		IEnumerator PerformRebinding(InputAction action, int bindingIndex, Button button)
 		{
 			activeRebindingButton = button;
@@ -382,69 +455,6 @@ UIRebindingSystem( -> Attach {typeof(UIRebindingSystem).Name}.cs to UIRebindingS
 			}
 		}
 
-		#region Helper
-
-		private static string GetUniqueBindingPath(InputAction action, int bindingIndex)
-		{
-			InputActionMap actionMap = action.actionMap;
-			return $"{actionMap.name}->{action.name}->{bindingIndex}";
-		}
-
-		// MODIFY: Add new helper method to update button text based on binding
-		private static void UpdateButtonText(Button button, InputAction action, int bindingIndex, string emptyText = "@")
-		{
-			string displayText = action.bindings[bindingIndex].ToDisplayString();
-
-			// If the binding is empty or returns empty string, show "Not Bound"
-			if (string.IsNullOrEmpty(displayText) ||
-				string.IsNullOrEmpty(action.bindings[bindingIndex].effectivePath))
-			{
-				displayText = emptyText;
-			}
-
-			button.setBtnTxt(displayText);
-		}
-
-		// Helper method to check if a cancel key is pressed
-		private bool IsCancelKeyPressed(string controlPath)
-		{
-			var control = InputSystem.FindControl(controlPath);
-			if (control is UnityEngine.InputSystem.Controls.ButtonControl button)
-			{
-				return button.wasPressedThisFrame;
-			}
-			return false;
-		}
-
-		// RESET FUNCTIONALITY
-		/// <summary>
-		/// Reset a specific binding to its default value
-		/// </summary>
-		private void ResetBindingToDefault(InputAction action, int bindingIndex)
-		{
-			action.RemoveBindingOverride(bindingIndex);
-			Debug.Log($"Reset binding {bindingIndex} of action '{action.name}' to default".colorTag("cyan"));
-		}
-
-		/// <summary>
-		/// Reset all bindings for a specific action to defaults
-		/// </summary>
-		private void ResetActionToDefault(InputAction action)
-		{
-			action.RemoveAllBindingOverrides();
-			Debug.Log($"Reset all bindings for action '{action.name}' to defaults".colorTag("cyan"));
-		}
-
-		/// <summary>
-		/// Reset all bindings in an action map to defaults
-		/// </summary>
-		private void ResetActionMapToDefault(InputActionMap actionMap)
-		{
-			actionMap.RemoveAllBindingOverrides();
-			Debug.Log($"Reset all bindings in action map '{actionMap.name}' to defaults".colorTag("cyan"));
-		}
-		#endregion
-
 		private static void ClearDuplicateBindingsInActionMapOf(InputAction currAction, int currBindingIndex, Dictionary<string, Button> MAP_BindingpathBtn)
 		{
 			InputActionMap actionMap = currAction.actionMap;
@@ -467,10 +477,10 @@ UIRebindingSystem( -> Attach {typeof(UIRebindingSystem).Name}.cs to UIRebindingS
 					#region ad
 					// composite vec2 keyBindings
 					if (otherBinding.isComposite || otherBinding.isPartOfComposite)
-						continue; 
+						continue;
 					#endregion
 
-					if(otherBinding.effectivePath == currDeviceKeyPath)
+					if (otherBinding.effectivePath == currDeviceKeyPath)
 					{
 						// clear binding >>
 						otherAction.ApplyBindingOverride(i2, path: "");
@@ -528,17 +538,7 @@ UIRebindingSystem( -> Attach {typeof(UIRebindingSystem).Name}.cs to UIRebindingS
 				IA.LoadBindingOverridesFromJson(savedJson);
 				Debug.Log("Loaded saved bindings".colorTag("green"));
 			}
-		}
-
-		private void OnDisable()
-		{
-			Debug.Log(C.method("OnDisable", this, "orange"));
-			CancelActiveRebinding();
-		}
-		private void OnDestroy()
-		{
-			Debug.Log(C.method("OnDestroy", this, "orange"));
-			CancelActiveRebinding();
-		}
+		} 
+		#endregion
 	}
 }
