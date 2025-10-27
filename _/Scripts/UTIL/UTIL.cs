@@ -1515,6 +1515,209 @@ namespace SPACE_UTIL
 	}
 	#endregion
 
+
+	#region R
+	/// <summary>
+	/// Unified resource cache with generic syntax: R.get<T>(enum)
+	/// Example: GameObject prefab = R.get<GameObject>(ResourceType.prefab__bullet__cannon);
+	/// Example: AudioClip clip = R.get<AudioClip>(ResourceType.audio__sfx__shoot);
+	/// All resources use "__" separator which converts to "/" for folder structure
+	/// </summary>
+	public static class R
+	{
+		// Unified cache for all resource types
+		private static Dictionary<string, UnityEngine.Object> cache = new Dictionary<string, UnityEngine.Object>();
+
+		/// <summary>
+		/// Gets any resource type from Resources folder based on enum/object name.
+		/// prefab__bullet__cannon → Resources/prefab/bullet/cannon
+		/// audio__sfx__shoot → Resources/audio/sfx/shoot
+		/// Caches the result for subsequent calls.
+		/// </summary>
+		public static T get<T>(object resourceType) where T : UnityEngine.Object
+		{
+			string resourceTypeStr = resourceType.ToString();
+
+			// Return cached if available
+			if (cache.TryGetValue(resourceTypeStr, out UnityEngine.Object cached))
+			{
+				if (cached is T typedCache)
+					return typedCache;
+
+				Debug.LogError($"Cached resource '{resourceTypeStr}' is type {cached.GetType().Name}, not {typeof(T).Name}".colorTag("red"));
+				return null;
+			}
+
+			// Convert enum to path: prefab__bullet__cannon → prefab/bullet/cannon
+			string path = resourceTypeStr.replace(@"__", "/");
+
+			// Load from Resources
+			T resource = Resources.Load<T>(path);
+
+			if (resource == null)
+			{
+				Debug.LogError($"Failed to load {typeof(T).Name} at path: Resources/{path}".colorTag("red"));
+				return null;
+			}
+
+			// Cache and return
+			cache[resourceTypeStr] = resource;
+			return resource;
+		}
+
+		#region public API
+		// error: Failed to load Object at path: Resources/ResourceType[]
+		// resolved by removing params since it assume object[] which is also considered as object.
+		/// <summary>
+		/// used as: R.preloadAll(C.getEnumValues<ResourceType>().map(en => (object)en).ToArray());
+		/// </summary>
+		public static void preloadAll(object[] resourceTypes)
+		{
+			resourceTypes.forEach(resourceType => get<UnityEngine.Object>(resourceType));
+			Debug.Log($"Preloaded {resourceTypes.Length} resources into cache".colorTag("lime"));
+		}
+
+		/// <summary>
+		/// Clears all cached resources and unloads unused assets.
+		/// </summary>
+		public static void clearCache()
+		{
+			cache.Clear();
+			Resources.UnloadUnusedAssets();
+		}
+
+		/// <summary>
+		/// Gets cache statistics for debugging.
+		/// </summary>
+		public static string stats()
+		{
+			// Group by type
+			var typeGroups = new Dictionary<Type, int>();
+
+			foreach (var kvp in cache)
+			{
+				if (kvp.Value != null)
+				{
+					Type type = kvp.Value.GetType(); // GameObject/AudioClip/Material/TextAsset
+					if (!typeGroups.ContainsKey(type))
+						typeGroups[type] = 0;
+					typeGroups[type]++;
+				}
+			}
+
+			string result = "ResourceCache Stats:\n";
+			result += $"  Total cached: {cache.Count}\n";
+
+			foreach (var kvp in typeGroups)
+			{
+				result += $"  {kvp.Key.Name}: {kvp.Value}\n";
+			}
+
+			return result;
+		}
+
+		/// <summary>
+		/// Logs the Resources folder structure based on cached resources.
+		/// Shows a tree view of all loaded resources organized by folder.
+		/// Usage: R.getHeirarchy();
+		/// </summary>
+		public static string getHeirarchy()
+		{
+			if (cache.Count == 0)
+			{
+				Debug.Log("ResourceCache is empty. No resources loaded yet.".colorTag("yellow"));
+				return "";
+			}
+
+			// Build tree structure from cached resource paths
+			var tree = new Dictionary<string, List<string>>();
+
+			foreach (var kvp in cache)
+			{
+				if (kvp.Value == null) continue;
+
+				string fullPath = kvp.Key.replace(@"__", "/");
+				string[] parts = fullPath.Split('/');
+
+				// Build path incrementally: "bullet" -> "bullet/sphere"
+				string currentPath = "";
+				for (int i = 0; i < parts.Length; i++)
+				{
+					string parentPath = currentPath;
+					currentPath = currentPath == "" ? parts[i] : $"{currentPath}/{parts[i]}";
+
+					if (!tree.ContainsKey(parentPath))
+						tree[parentPath] = new List<string>();
+
+					if (!tree[parentPath].Contains(currentPath))
+						tree[parentPath].Add(currentPath);
+				}
+			}
+
+			// Build visual tree
+			string result = "./Resources/\n";
+			result += BuildTreeRecursive(tree, "", "    ", true);
+
+			return result;
+		}
+
+		#region getHeirarchy Helper
+		private static string GetExtension(UnityEngine.Object obj)
+		{
+			if (obj is GameObject) return ".prefab";
+			if (obj is Sprite || obj is Texture2D) return ".png";
+			if (obj is AudioClip) return ".wav";
+			if (obj is Material) return ".mat";
+			if (obj is TextAsset) return ".txt";
+			return "";
+		}
+		private static string BuildTreeRecursive(Dictionary<string, List<string>> tree, string currentPath, string indent, bool isRoot)
+		{
+			if (!tree.ContainsKey(currentPath))
+				return "";
+
+			var children = tree[currentPath];
+			children.Sort(); // Alphabetical order
+
+			string result = "";
+
+			for (int i = 0; i < children.Count; i++)
+			{
+				bool isLast = (i == children.Count - 1);
+				string childPath = children[i];
+				string childName = childPath.Split('/')[childPath.Split('/').Length - 1];
+
+				// Check if this is a file (has cached resource)
+				bool isFile = false;
+				foreach (var kvp in cache)
+				{
+					if (kvp.Value != null && kvp.Key.replace(@"__", "/") == childPath)
+					{
+						string extension = GetExtension(kvp.Value);
+						childName += extension;
+						isFile = true;
+						break;
+					}
+				}
+
+				// Draw tree lines with box-drawing characters
+				string connector = isLast ? "└─ " : "├─ ";
+				string childIndent = indent + (isLast ? "   " : "│  ");
+
+				result += $"{indent}{connector}{childName}\n";
+
+				// Recurse if it's a folder
+				if (!isFile)
+					result += BuildTreeRecursive(tree, childPath, childIndent, false);
+			}
+
+			return result;
+		} 
+		#endregion
+		#endregion
+	} 
+	#endregion
+
 	#region LOG
 	/*
 		Used as: 
