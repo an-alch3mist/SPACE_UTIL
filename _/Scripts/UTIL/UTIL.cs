@@ -1500,7 +1500,7 @@ namespace SPACE_UTIL
 		{
 			try
 			{
-				Debug.Log($"success parsing overriden bindings".colorTag("lime"));
+				Debug.Log($"success tried parsing(if hash Id for binding value match) overriden bindings".colorTag("lime"));
 				// Load from Saved GameData
 				IAAsset.LoadBindingOverridesFromJson(overrideJSON);
 			}

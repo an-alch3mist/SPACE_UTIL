@@ -418,7 +418,7 @@ UIRebindingSystem( -> Attach {typeof(UIRebindingSystem).Name}.cs to UIRebindingS
 					// MODIFY: Use helper method to restore button text based on current binding state
 					UpdateButtonText(button, action, bindingIndex);
 
-					if (EventSystem.current != null)
+					if (EventSystem.current != null) // deselect all button to avoid selection of same button which is not desired
 						EventSystem.current.SetSelectedGameObject(null);
 
 					activeRebindingOperation = null;
@@ -451,6 +451,7 @@ UIRebindingSystem( -> Attach {typeof(UIRebindingSystem).Name}.cs to UIRebindingS
 						break;
 					}
 				}
+
 				yield return null;
 			}
 
