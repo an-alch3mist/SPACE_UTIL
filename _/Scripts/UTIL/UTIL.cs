@@ -1496,23 +1496,18 @@ namespace SPACE_UTIL
 			return action;
 		}
 
-		public static void tryLoadBindingOverridesFromJson(this UnityEngine.InputSystem.InputActionAsset IAAsset, object dataType)
+		public static void tryLoadBindingOverridesFromJson(this UnityEngine.InputSystem.InputActionAsset IAAsset, string overrideJSON)
 		{
 			try
 			{
-				Debug.Log($"success parsing filePath: ./{dataType} loaded IA with overiden bindings".colorTag("lime"));
+				Debug.Log($"success parsing overriden bindings".colorTag("lime"));
 				// Load from Saved GameData
-				IAAsset.LoadBindingOverridesFromJson(LOG.LoadGameData(dataType));
+				IAAsset.LoadBindingOverridesFromJson(overrideJSON);
 			}
 			catch (Exception)
 			{
-				Debug.Log($"error parsing filePath: ./{dataType} so loaded default IA".colorTag("red"));
+				Debug.Log($"error parsing overriden bindings so loaded default IA".colorTag("red"));
 			}
-		}
-		public static void trySaveBindingOverridesAsJson(this UnityEngine.InputSystem.InputActionAsset IAAsset, object dataType)
-		{
-			string Json = IAAsset.SaveBindingOverridesAsJson();
-			LOG.SaveGameData(dataType, Json);
 		}
 	}
 	#endregion
