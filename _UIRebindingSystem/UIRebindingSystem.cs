@@ -91,6 +91,8 @@ UIRebindingSystem( -> Attach {typeof(UIRebindingSystem).Name}.cs to UIRebindingS
 			// this.IA = GameStore.playerIA;
 
 			this.IA = _inputActionAsset;
+
+			// not required( since universal rule: load at start of game, save at any time in game ), just done to keep from in-game script dependency.
 			this.IA.LoadBindingOverridesFromJson(LOG.LoadGameData(GameDataType.inputKeyBindings));
 
 			// start of rebinding UI initialization and routine

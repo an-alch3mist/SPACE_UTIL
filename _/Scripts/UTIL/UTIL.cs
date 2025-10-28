@@ -1455,6 +1455,8 @@ namespace SPACE_UTIL
 
 	public static class ExtensionInputSystem
 	{
+		// no cross dependency with any other UTIL.cs class
+
 		/// <summary>
 		/// Attempts to retrieve an InputAction from an InputActionAsset using enum-style naming. (seperateor: "__")
 		/// Example: GameActionType.character__jump → actionMap: "character", action: "jump"
