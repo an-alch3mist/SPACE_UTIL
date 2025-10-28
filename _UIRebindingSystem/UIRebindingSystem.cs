@@ -344,7 +344,7 @@ UIRebindingSystem( -> Attach {typeof(UIRebindingSystem).Name}.cs to UIRebindingS
 			Debug.Log($"Press any key to rebind {action.name} (ESC/Backspace/Delete to cancel)...".colorTag("lime"));
 
 			activeRebindingOperation = action.PerformInteractiveRebinding(bindingIndex)
-				.WithControlsExcluding("Mouse")
+				// .WithControlsExcluding("Mouse")
 				// REMOVE: These don't reliably prevent anyKey binding
 				// .WithControlsExcluding("<Keyboard>/escape")
 				// .WithControlsExcluding("<Keyboard>/backspace")

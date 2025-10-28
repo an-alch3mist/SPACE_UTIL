@@ -9,45 +9,29 @@ public class DEBUG_IAEventsAssetController : MonoBehaviour
 {
 	[SerializeField] private InputActionAsset _inputActionAsset;
 
-	// Cache actions in Awake
-	private InputAction jump, shoot, walk;
+	enum InputActionType
+	{
+		character__jump,
+		character__shoot,
+	}
 
-	[Header("just to log")]
-	[SerializeField] Vector2 movementDir;
 	private void Awake()
 	{
-		Debug.Log("Awake(): " + this);
-		InputActionAsset IA = this._inputActionAsset;
-		// Cache once for performance
-		InputActionMap charMap = _inputActionAsset.FindActionMap("character");
-		jump = charMap.FindAction("jump");
-		shoot = charMap.FindAction("shoot");
-		walk = charMap.FindAction("walk");
+		Debug.Log(C.method("Awake", this));
 
-		// Bind events
-		jump.performed += ctx => Jump();
-		shoot.performed += ctx => Shoot();
-		walk.performed += ctx => movementDir = ctx.ReadValue<Vector2>();
-		walk.canceled += ctx => movementDir = Vector2.zero;
-
-		/*
-		IA.character.jump.performed += (ctx) => this.Jump();
-		IA.character.shoot.performed += (ctx) => this.Shoot();
-
-		IA.character.walk.performed += (ctx) => this.movementDir = ctx.ReadValue<Vector2>();
-		IA.character.walk.canceled += (ctx) => this.movementDir = Vector2.zero;
-		*/
+		var IA = this._inputActionAsset;
+		IA.tryGet(InputActionType.character__jump).started += (ctx) => { this.jump(); };
+		IA.tryGet(InputActionType.character__shoot).started += (ctx) => { this.shoot(); };
 	}
 
 	private void OnEnable() => _inputActionAsset.Enable();
 	private void OnDisable() => _inputActionAsset.Disable();
 
-
-	void Jump()
+	void jump()
 	{
 		Debug.Log("Jump()");
 	}
-	void Shoot()
+	void shoot()
 	{
 		Debug.Log("Shoot()");
 	}
