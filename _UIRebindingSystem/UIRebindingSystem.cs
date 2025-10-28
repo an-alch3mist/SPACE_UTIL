@@ -330,7 +330,7 @@ UIRebindingSystem( -> Attach {typeof(UIRebindingSystem).Name}.cs to UIRebindingS
 			// MODIFY: Store action and binding index instead of text string
 			// We'll use these to get the correct display text when needed
 			activeRebindingOriginalText = null; // Not needed anymore, but keeping for cleanup
-
+			//
 			button.setBtnTxt(this.pressAnyKey);
 
 			LOG.H($"Rebinding {action.name}");
