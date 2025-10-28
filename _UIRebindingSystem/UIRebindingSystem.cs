@@ -38,7 +38,7 @@ namespace SPACE_UISystem
 			// Debug.Log(C.method("Awake", this, "white"));
 		}
 
-		[TextArea(minLines: 22, maxLines: 24)]
+		[TextArea(minLines: 10, maxLines: 12)]
 		[SerializeField] string README = $@"# file structure: 
 UIRebindingSystem( -> Attach {typeof(UIRebindingSystem).Name}.cs to UIRebindingSystem )
 	template--scroll_view/viewport/content
@@ -79,6 +79,7 @@ UIRebindingSystem( -> Attach {typeof(UIRebindingSystem).Name}.cs to UIRebindingS
 		private void OnEnable()
 		{
 			Debug.Log(C.method("OnEnable", this, "white"));
+			this.IA = this._inputActionAsset;
 			if (this.IA == null)
 			{
 				Debug.Log($"unassigned InputActionAsset IA {this._inputActionAsset}".colorTag("red"));

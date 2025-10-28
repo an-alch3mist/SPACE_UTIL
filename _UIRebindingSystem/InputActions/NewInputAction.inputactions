@@ -1,0 +1,54 @@
+{
+    "name": "NewInputAction",
+    "maps": [
+        {
+            "name": "character",
+            "id": "8d374c2a-9053-406e-a065-a95b9ceb281d",
+            "actions": [
+                {
+                    "name": "jump",
+                    "type": "Button",
+                    "id": "3300272d-0d42-435a-9c92-b490944608e0",
+                    "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
+                    "name": "shoot",
+                    "type": "Button",
+                    "id": "4aab2e43-c965-4e3f-8a84-e0e295fdcd34",
+                    "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                }
+            ],
+            "bindings": [
+                {
+                    "name": "",
+                    "id": "017c8df9-8d70-45dc-a2ba-1228fd5c5aaf",
+                    "path": "<Keyboard>/space",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "jump",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "d8eb9f16-a0f3-43d9-8091-6046061c70d6",
+                    "path": "<Mouse>/leftButton",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "shoot",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                }
+            ]
+        }
+    ],
+    "controlSchemes": []
+}
