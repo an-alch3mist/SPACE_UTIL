@@ -7,6 +7,7 @@ using SPACE_UTIL;
 
 public class DEBUG_IAEventsAssetController : MonoBehaviour
 {
+	// Depend on: InputActionAsset
 	[SerializeField] private InputActionAsset _inputActionAsset;
 
 	enum InputActionType

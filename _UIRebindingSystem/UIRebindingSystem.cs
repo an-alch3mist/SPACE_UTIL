@@ -15,7 +15,8 @@ using SPACE_SYNTAX;
 
 namespace SPACE_UISystem
 {
-	// depend on external: GameStore.playerIA, GameDataType.inputKeyBindings
+	// Depend on: InputActionAsset
+	// no external dependencies other than that.
 	public class UIRebindingSystem : MonoBehaviour
 	{
 		#region SEEK
