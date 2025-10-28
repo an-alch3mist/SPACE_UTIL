@@ -1456,7 +1456,7 @@ namespace SPACE_UTIL
 	public static class ExtensionInputSystem
 	{
 		/// <summary>
-		/// Attempts to retrieve an InputAction from an InputActionAsset using enum-style naming.
+		/// Attempts to retrieve an InputAction from an InputActionAsset using enum-style naming. (seperateor: "__")
 		/// Example: GameActionType.character__jump → actionMap: "character", action: "jump"
 		/// </summary>
 		public static UnityEngine.InputSystem.InputAction tryGet(this UnityEngine.InputSystem.InputActionAsset IAAsset, object actionType)
@@ -1515,7 +1515,6 @@ namespace SPACE_UTIL
 	}
 	#endregion
 
-
 	#region R
 	/// <summary>
 	/// Unified resource cache with generic syntax: R.get<T>(enum)
@@ -1531,7 +1530,7 @@ namespace SPACE_UTIL
 		/// <summary>
 		/// Gets any resource type from Resources folder based on enum/object name.
 		/// prefab__bullet__cannon → Resources/prefab/bullet/cannon
-		/// audio__sfx__shoot → Resources/audio/sfx/shoot
+		/// RLoadType.audio__sfx__shoot → Resources/audio/sfx/shoot
 		/// Caches the result for subsequent calls.
 		/// </summary>
 		public static T get<T>(object resourceType) where T : UnityEngine.Object

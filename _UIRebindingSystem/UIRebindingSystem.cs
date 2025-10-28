@@ -68,6 +68,11 @@ UIRebindingSystem( -> Attach {typeof(UIRebindingSystem).Name}.cs to UIRebindingS
 		[Tooltip("Drag your .inputactions asset here OR set via GameStore")]
 		[SerializeField] private InputActionAsset _inputActionAsset;
 
+		enum GameDataType
+		{
+			inputKeyBindings,
+		}
+
 		InputActionAsset IA;
 		// PlayerInputActions IA;
 		#region Unity LifeCycle
