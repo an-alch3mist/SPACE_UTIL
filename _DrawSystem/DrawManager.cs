@@ -50,10 +50,10 @@ namespace SPACE_DrawSystem
 		// PRIVATE FIELDS
 		// ============================================================
 
-		private GameObject _lineObj;
-		private LineRenderer _lr;
-		private Vector3 _a;
-		private Vector3 _b;
+		private GameObject lineObj;
+		private LineRenderer lr;
+		private Vector3 aRef;
+		private Vector3 bRef;
 
 		// ============================================================
 		// PUBLIC PROPERTIES
@@ -64,10 +64,10 @@ namespace SPACE_DrawSystem
 		/// </summary>
 		public Vector3 a
 		{
-			get { return _a; }
+			get { return aRef; }
 			set
 			{
-				_a = value;
+				aRef = value;
 				UpdatePositions();
 			}
 		}
@@ -77,10 +77,10 @@ namespace SPACE_DrawSystem
 		/// </summary>
 		public Vector3 b
 		{
-			get { return _b; }
+			get { return bRef; }
 			set
 			{
-				_b = value;
+				bRef = value;
 				UpdatePositions();
 			}
 		}
@@ -90,11 +90,11 @@ namespace SPACE_DrawSystem
 		/// </summary>
 		public Color color
 		{
-			get { return _lr.startColor; }
+			get { return lr.startColor; }
 			set
 			{
-				_lr.startColor = value;
-				_lr.endColor = value;
+				lr.startColor = value;
+				lr.endColor = value;
 			}
 		}
 
@@ -103,53 +103,75 @@ namespace SPACE_DrawSystem
 		/// </summary>
 		public float e
 		{
-			get { return _lr.startWidth; }
+			get { return lr.startWidth; }
 			set
 			{
-				_lr.startWidth = value;
-				_lr.endWidth = value;
+				lr.startWidth = value;
+				lr.endWidth = value;
 			}
 		}
 
-		/// <summary>
-		/// Is the line still valid (not destroyed)
-		/// </summary>
-		public bool Exist
-		{
-			get { return _lineObj != null && _lr != null; }
-		}
 
-		// ============================================================
-		// CONSTRUCTOR
-		// ============================================================
-
-
+		// ========================= CHAIN SYNTAX =============================== >> //
 		/*
-		public static void Line(Vector3 a, Vector3 b, Color? color = null, float duration = 0f)
-		{
-			Debug.DrawLine(a, b, color ?? Color.red, duration);
-		}
+		Line line = new Line();
+		line.init().setA().setB().setCol().setE();
+
+		Line.create().setA().setB().setCol().setE();
 		*/
 
-
-		public Line(Vector3 a, Vector3 b, float e = 1f / 50, Color? color = null, string name = "")
+		public Line setA(Vector3 val)
+		{
+			this.aRef = val;
+			this.UpdatePositions();
+			return this;
+		}
+		public Line setB(Vector3 val)
+		{
+			this.bRef = val;
+			this.UpdatePositions();
+			return this;
+		}
+		public Line setCol(Color val)
+		{
+			lr.startColor = val;
+			lr.endColor = val;
+			return this;
+		}
+		public Line setE(float val = 1f / 50)
+		{
+			lr.startWidth = val;
+			lr.endWidth = val;
+			return this;
+		}
+		public static Line create(string name = "line", Color? color = null, float e = 1f / 50)
 		{
 			if (DRAW.DrawHolder == null)
 			{
-				Debug.LogError("DRAW.Init() must be called first");
-				return;
+				DRAW.Init();
+				Debug.Log("DRAW wasnt initizlized, just done now".colorTag("red"));
 			}
 
-			this._a = a;
-			this._b = b;
+			Line line = new Line();
 
-			this._lineObj = new GameObject($"{name}, a: {a}, b: {b}");
-			this._lineObj.transform.SetParent(DRAW.DrawHolder);
+			line.aRef = Vector3.right * (float)1e6;
+			line.bRef = Vector3.right * (float)1e6 - Vector3.right * 0.01f;
 
-			this._lr = _lineObj.AddComponent<LineRenderer>();
-			this.SetupLineRenderer(e, color ?? DRAW.Col);
-			this.UpdatePositions();
+			line.lineObj = new GameObject($"{name}");
+			line.lineObj.transform.SetParent(DRAW.DrawHolder);
+
+			line.lr = line.lineObj.AddComponent<LineRenderer>();
+			line.SetupLineRenderer(e, color ?? DRAW.Col);
+			line.UpdatePositions();
+
+			return line;
 		}
+		// << ========================= CHAIN SYNTAX =============================== //
+
+		#region prev constructor approach
+		// ============================================================
+		// CONSTRUCTOR
+		// ============================================================
 
 		/// <summary>
 		/// Create a new persistent line
@@ -158,20 +180,22 @@ namespace SPACE_DrawSystem
 		{
 			if (DRAW.DrawHolder == null)
 			{
-				Debug.LogError("DRAW.Init() must be called first");
-				return;
+				DRAW.Init();
+				Debug.Log("DRAW wasnt initizlized, just done now".colorTag("red"));
+				// Debug.LogError("DRAW.Init() must be called first");
 			}
 
-			this._a = Vector3.right * (float)1e6;
-			this._b = Vector3.right * (float)1e6 - Vector3.right * 0.01f;
+			this.aRef = Vector3.right * (float)1e6;
+			this.bRef = Vector3.right * (float)1e6 - Vector3.right * 0.01f;
 
-			this._lineObj = new GameObject($"{name}");
-			this._lineObj.transform.SetParent(DRAW.DrawHolder);
+			this.lineObj = new GameObject($"{name}");
+			this.lineObj.transform.SetParent(DRAW.DrawHolder);
 
-			this._lr = _lineObj.AddComponent<LineRenderer>();
+			this.lr = lineObj.AddComponent<LineRenderer>();
 			this.SetupLineRenderer(e, color ?? DRAW.Col);
 			this.UpdatePositions();
-		}
+		} 
+		#endregion
 
 		// ============================================================
 		// PUBLIC METHODS
@@ -180,8 +204,8 @@ namespace SPACE_DrawSystem
 		// clear line vertex positions
 		public void Clear()
 		{
-			this._a = Vector3.right * (float)1e6;
-			this._b = Vector3.right * (float)1e6 - Vector3.right * 0.01f;
+			this.aRef = Vector3.right * (float)1e6;
+			this.bRef = Vector3.right * (float)1e6 - Vector3.right * 0.01f;
 			this.UpdatePositions();
 		}
 
@@ -190,8 +214,8 @@ namespace SPACE_DrawSystem
 		/// </summary>
 		public void Destroy()
 		{
-			if (_lineObj != null)
-				UnityEngine.Object.Destroy(_lineObj);
+			if (lineObj != null)
+				UnityEngine.Object.Destroy(lineObj);
 		}
 
 		// ============================================================
@@ -203,11 +227,11 @@ namespace SPACE_DrawSystem
 		/// </summary>
 		private void SetupLineRenderer(float thickness, Color color)
 		{
-			_lr.startWidth = thickness;
-			_lr.endWidth = thickness;
-			_lr.material = new Material(Shader.Find("Sprites/Default"));
-			_lr.startColor = color;
-			_lr.endColor = color;
+			lr.startWidth = thickness;
+			lr.endWidth = thickness;
+			lr.material = new Material(Shader.Find("Sprites/Default"));
+			lr.startColor = color;
+			lr.endColor = color;
 		}
 
 		/// <summary>
@@ -215,10 +239,10 @@ namespace SPACE_DrawSystem
 		/// </summary>
 		private void UpdatePositions()
 		{
-			if (_lr != null)
+			if (lr != null)
 			{
-				_lr.SetPosition(0, _a);
-				_lr.SetPosition(1, _b);
+				lr.SetPosition(0, aRef);
+				lr.SetPosition(1, bRef);
 			}
 		}
 	}
