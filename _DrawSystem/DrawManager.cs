@@ -7,56 +7,13 @@ using SPACE_UTIL;
 
 namespace SPACE_DrawSystem
 {
-	/// <summary>
-	/// Debug drawing utilities for runtime visualization
-	/// </summary>
-	public static class DRAW
-	{
-		// ============================================================
-		// PUBLIC FIELDS
-		// ============================================================
-
-		public static Transform DrawHolder;
-		public static Color Col = Color.red;
-
-		// ============================================================
-		// PUBLIC API
-		// ============================================================
-
-		public static Dictionary<string, IDraw> MAP_IDraw;
-
-		/// <summary>
-		/// Must be called before using DRAW. Creates DebugHolder parent object.
-		/// </summary>
-		public static void Init()
-		{
-			if (GameObject.Find("DrawHolder") != null) // root gameObject
-				UnityEngine.Object.Destroy(GameObject.Find("DrawHolder"));
-
-			DrawHolder = new GameObject("DrawHolder").transform;
-
-			// not working at the movement
-			MAP_IDraw = new Dictionary<string, IDraw>();
-		}
-
-		// ============================================================
-		// PRIVATE METHODS
-		// ============================================================
-
-	}
-
-	public interface IDraw
-	{
-
-	}
-
+	
 	/// <summary>
 	/// Create a new persistent line
-	/// order of calling: 
-	/// Line line = new Line(e: ,col: , name: ""); line.a = ; line.b = ;
-	/// line.Clear();
+	/// Line.create(id: "somthng").setA(a).setB(b).setCol(color);
+	/// Line line = new Line(); line.init(name: "somthng").setA(a).setB(b).setCol(color);
 	/// </summary>
-	public class Line : IDraw
+	public class Line
 	{
 		// ============================================================
 		// PRIVATE FIELDS
@@ -131,26 +88,30 @@ namespace SPACE_DrawSystem
 
 		Line.create(id).setA().setB().setCol().setE();
 		*/
+		static Transform DrawHolder;
 
 		// when called as: this.line.init(name: "hoverLine") .setA(ray.origin).setB(ray.origin + ray.direction * rayDist); // still creating multiple gameObject Instance
 		public Line init(string name = "line", Color? color = null, float e = 1f / 50)
 		{
-			if (DRAW.DrawHolder == null)
+			if (DrawHolder == null) // occurs first line
 			{
-				DRAW.Init();
-				Debug.Log("DRAW wasnt initizlized, just done now".colorTag("red"));
+				if (GameObject.Find("DrawHolder") != null)
+					GameObject.Find("DrawHolder").destroy();
+				DrawHolder = new GameObject("DrawHolder").transform;
+				Debug.Log("initialized DRAWHolder now".colorTag("lime"));
 			}
+			if (this.lineObj == null)  // occurs first call of a certain line
+			{
+				this.aRef = Vector3.right * (float)1e6;
+				this.bRef = Vector3.right * (float)1e6 - Vector3.right * 0.01f;
 
-			this.aRef = Vector3.right * (float)1e6;
-			this.bRef = Vector3.right * (float)1e6 - Vector3.right * 0.01f;
+				this.lineObj = new GameObject($"{name}");
+				this.lineObj.transform.SetParent(DrawHolder);
 
-			this.lineObj = new GameObject($"{name}");
-			this.lineObj.transform.SetParent(DRAW.DrawHolder);
-
-			this.lr = this.lineObj.AddComponent<LineRenderer>();
-			this.SetupLineRenderer(e, color ?? DRAW.Col);
-			this.UpdatePositions();
-
+				this.lr = this.lineObj.AddComponent<LineRenderer>();
+				this.SetupLineRenderer(e, color ?? Color.red);
+				this.UpdatePositions();
+			}
 			return this;
 		}
 		
@@ -181,53 +142,58 @@ namespace SPACE_DrawSystem
 		}
 
 		// create's multiple line obj
+		static Dictionary<string, Line> MAP_LINE;
 		public static Line create(string id = "line", Color? color = null, float e = 1f / 50)
 		{
-			if (DRAW.DrawHolder == null)
+			if (DrawHolder == null)
 			{
-				DRAW.Init();
-				Debug.Log("DRAW wasnt initizlized, just done now".colorTag("red"));
+				if (GameObject.Find("DrawHolder") != null)
+					GameObject.Find("DrawHolder").destroy();
+				DrawHolder = new GameObject("DrawHolder").transform;
+				Debug.Log("initialized DRAWHolder now".colorTag("lime"));
 			}
+			if(MAP_LINE == null)
+			{
+				MAP_LINE = new Dictionary<string, Line>();
+			}
+			if(MAP_LINE.ContainsKey(id) == false)
+			{
+				Line line = new Line();
 
-			Line line = new Line();
+				line.aRef = Vector3.right * (float)1e6;
+				line.bRef = Vector3.right * (float)1e6 - Vector3.right * 0.01f;
 
-			line.aRef = Vector3.right * (float)1e6;
-			line.bRef = Vector3.right * (float)1e6 - Vector3.right * 0.01f;
+				line.lineObj = new GameObject($"{id}");
+				line.lineObj.transform.SetParent(DrawHolder);
 
-			line.lineObj = new GameObject($"{id}");
-			line.lineObj.transform.SetParent(DRAW.DrawHolder);
+				line.lr = line.lineObj.AddComponent<LineRenderer>();
+				line.SetupLineRenderer(e, color ?? Color.red);
+				line.UpdatePositions();
+				MAP_LINE[id] = line;
 
-			line.lr = line.lineObj.AddComponent<LineRenderer>();
-			line.SetupLineRenderer(e, color ?? DRAW.Col);
-			line.UpdatePositions();
-
-			return line;
+				return line;
+			}
+			return MAP_LINE[id];
 		}
 		// << ========================= CHAIN SYNTAX =============================== //
-
-		#region prev constructor approach
-		// ============================================================
-		// CONSTRUCTOR
-		// ============================================================
-
-		#endregion
 
 		// ============================================================
 		// PUBLIC METHODS
 		// ============================================================
 
-		// clear line vertex positions
-		public void Clear()
+		// clear line vertex positionsm to somewhere far
+		public Line clear()
 		{
 			this.aRef = Vector3.right * (float)1e6;
 			this.bRef = Vector3.right * (float)1e6 - Vector3.right * 0.01f;
 			this.UpdatePositions();
+			return this;
 		}
 
 		/// <summary>
 		/// Destroy the line and clean up resources
 		/// </summary>
-		public void Destroy()
+		public void destroy()
 		{
 			if (lineObj != null)
 				UnityEngine.Object.Destroy(lineObj);
@@ -237,6 +203,7 @@ namespace SPACE_DrawSystem
 		// PRIVATE METHODS
 		// ============================================================
 
+		#region private API
 		/// <summary>
 		/// Configure LineRenderer with material, color, and thickness
 		/// </summary>
@@ -259,6 +226,7 @@ namespace SPACE_DrawSystem
 				lr.SetPosition(0, aRef);
 				lr.SetPosition(1, bRef);
 			}
-		}
+		} 
+		#endregion
 	}
 }

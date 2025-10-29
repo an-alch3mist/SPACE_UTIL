@@ -182,7 +182,7 @@ UIRebindingSystem( -> Attach {typeof(UIRebindingSystem).Name}.cs to UIRebindingS
 		void UIIAMapIteration()
 		{
 			// Clear existing UI
-			this._contentScrollViewTr.clearLeaves();
+			this._contentScrollViewTr.destroyLeaves();
 
 			// init MAP_binding_btn
 			// this.MAP_BindingBtn = new Dictionary<InputBinding, Button>();
@@ -193,7 +193,7 @@ UIRebindingSystem( -> Attach {typeof(UIRebindingSystem).Name}.cs to UIRebindingS
 			foreach (var actionMap in IA.actionMaps)
 			{
 				// Create a header/separator for each action map
-				GameObject headerRow = GameObject.Instantiate(this._templateRowPrefab, this._contentScrollViewTr); headerRow.transform.clearLeaves();
+				GameObject headerRow = GameObject.Instantiate(this._templateRowPrefab, this._contentScrollViewTr); headerRow.transform.destroyLeaves();
 
 				// Create a non-clickable label button for the action map name
 				Button headerBtn = GameObject.Instantiate(this._buttonPrefab, headerRow.transform).GC<Button>();
@@ -210,7 +210,7 @@ UIRebindingSystem( -> Attach {typeof(UIRebindingSystem).Name}.cs to UIRebindingS
 						continue;
 
 					// button to show case action
-					newRowTr = GameObject.Instantiate(this._templateRowPrefab, this._contentScrollViewTr).transform; newRowTr.clearLeaves();
+					newRowTr = GameObject.Instantiate(this._templateRowPrefab, this._contentScrollViewTr).transform; newRowTr.destroyLeaves();
 					GameObject.Instantiate(this._buttonPrefab, newRowTr).GC<Button>().setBtnTxt(action.name);
 
 					for (int i2 = 0; i2 < action.bindings.Count; i2 += 1)

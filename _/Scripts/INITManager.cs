@@ -38,7 +38,6 @@ namespace SPACE_UTIL
 
 			C.Init(); // PrefabHolder Obj Creation
 			ITER.reset(); // reset ITER_1D
-			DRAW.Init(); // reset DrawHolder
 
 			INITManager.Ins = this; // instance of InitManager to use MonoBehaviour features
 			//GameData.LoadGame(); // 

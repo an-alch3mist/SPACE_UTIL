@@ -1302,15 +1302,23 @@ namespace SPACE_UTIL
 
 		#region .clearLeaves, .toggleLeaves, .toggle
 		// destroy
-		public static void clearLeaves(this GameObject gameObject)
+		public static void destroyLeaves(this GameObject gameObject)
 		{
 			Transform transform = gameObject.transform;
 			for (int i = transform.childCount - 1; i >= 0; i -= 1)
 				GameObject.Destroy(transform.GetChild(i).gameObject);
 		}
-		public static void clearLeaves(this Component component)
+		public static void destroyLeaves(this Component component)
 		{
-			component.gameObject.clearLeaves();
+			component.gameObject.destroyLeaves();
+		}
+		public static void destroy(this GameObject gameObject)
+		{
+			GameObject.Destroy(gameObject);
+		}
+		public static void destroy(this Component component)
+		{
+			component.gameObject.destroy();
 		}
 
 		// gameObjects setActive
@@ -1335,6 +1343,7 @@ namespace SPACE_UTIL
 		{
 			return component.gameObject.toggle(value);
 		}
+
 		#endregion
 
 		#region .getHierarchyString
