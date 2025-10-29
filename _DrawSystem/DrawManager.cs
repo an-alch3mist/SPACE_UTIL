@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 
 using SPACE_UTIL;
@@ -21,6 +23,8 @@ namespace SPACE_DrawSystem
 		// PUBLIC API
 		// ============================================================
 
+		public static Dictionary<string, IDraw> MAP_IDraw;
+
 		/// <summary>
 		/// Must be called before using DRAW. Creates DebugHolder parent object.
 		/// </summary>
@@ -30,11 +34,18 @@ namespace SPACE_DrawSystem
 				UnityEngine.Object.Destroy(GameObject.Find("DrawHolder"));
 
 			DrawHolder = new GameObject("DrawHolder").transform;
+
+			MAP_IDraw = new Dictionary<string, IDraw>();
 		}
 
 		// ============================================================
 		// PRIVATE METHODS
 		// ============================================================
+
+	}
+
+	public interface IDraw
+	{
 
 	}
 
@@ -44,7 +55,7 @@ namespace SPACE_DrawSystem
 	/// Line line = new Line(e: ,col: , name: ""); line.a = ; line.b = ;
 	/// line.Clear();
 	/// </summary>
-	public class Line
+	public class Line : IDraw
 	{
 		// ============================================================
 		// PRIVATE FIELDS
@@ -117,8 +128,10 @@ namespace SPACE_DrawSystem
 		Line line = new Line();
 		line.init().setA().setB().setCol().setE();
 
-		Line.create().setA().setB().setCol().setE();
+		Line.create(id).setA().setB().setCol().setE();
 		*/
+
+		
 
 		public Line setA(Vector3 val)
 		{
@@ -144,7 +157,7 @@ namespace SPACE_DrawSystem
 			lr.endWidth = val;
 			return this;
 		}
-		public static Line create(string name = "line", Color? color = null, float e = 1f / 50)
+		public static Line create(string id = "line", Color? color = null, float e = 1f / 50)
 		{
 			if (DRAW.DrawHolder == null)
 			{
@@ -152,12 +165,19 @@ namespace SPACE_DrawSystem
 				Debug.Log("DRAW wasnt initizlized, just done now".colorTag("red"));
 			}
 
-			Line line = new Line();
+			Line line;
+			if (DRAW.MAP_IDraw.ContainsKey(id))
+				line = (Line)DRAW.MAP_IDraw[id];
+			else
+			{
+				line = new Line();
+				DRAW.MAP_IDraw[id] = line;
+			}
 
 			line.aRef = Vector3.right * (float)1e6;
 			line.bRef = Vector3.right * (float)1e6 - Vector3.right * 0.01f;
 
-			line.lineObj = new GameObject($"{name}");
+			line.lineObj = new GameObject($"{id}");
 			line.lineObj.transform.SetParent(DRAW.DrawHolder);
 
 			line.lr = line.lineObj.AddComponent<LineRenderer>();
