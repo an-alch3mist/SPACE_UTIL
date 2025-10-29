@@ -30,11 +30,12 @@ namespace SPACE_DrawSystem
 		/// </summary>
 		public static void Init()
 		{
-			if (GameObject.Find("DrawHolder") != null)
+			if (GameObject.Find("DrawHolder") != null) // root gameObject
 				UnityEngine.Object.Destroy(GameObject.Find("DrawHolder"));
 
 			DrawHolder = new GameObject("DrawHolder").transform;
 
+			// not working at the movement
 			MAP_IDraw = new Dictionary<string, IDraw>();
 		}
 
@@ -131,6 +132,27 @@ namespace SPACE_DrawSystem
 		Line.create(id).setA().setB().setCol().setE();
 		*/
 
+		// when called as: this.line.init(name: "hoverLine") .setA(ray.origin).setB(ray.origin + ray.direction * rayDist); // still creating multiple gameObject Instance
+		public Line init(string name = "line", Color? color = null, float e = 1f / 50)
+		{
+			if (DRAW.DrawHolder == null)
+			{
+				DRAW.Init();
+				Debug.Log("DRAW wasnt initizlized, just done now".colorTag("red"));
+			}
+
+			this.aRef = Vector3.right * (float)1e6;
+			this.bRef = Vector3.right * (float)1e6 - Vector3.right * 0.01f;
+
+			this.lineObj = new GameObject($"{name}");
+			this.lineObj.transform.SetParent(DRAW.DrawHolder);
+
+			this.lr = this.lineObj.AddComponent<LineRenderer>();
+			this.SetupLineRenderer(e, color ?? DRAW.Col);
+			this.UpdatePositions();
+
+			return this;
+		}
 		
 
 		public Line setA(Vector3 val)
@@ -157,6 +179,8 @@ namespace SPACE_DrawSystem
 			lr.endWidth = val;
 			return this;
 		}
+
+		// create's multiple line obj
 		public static Line create(string id = "line", Color? color = null, float e = 1f / 50)
 		{
 			if (DRAW.DrawHolder == null)
@@ -165,14 +189,7 @@ namespace SPACE_DrawSystem
 				Debug.Log("DRAW wasnt initizlized, just done now".colorTag("red"));
 			}
 
-			Line line;
-			if (DRAW.MAP_IDraw.ContainsKey(id))
-				line = (Line)DRAW.MAP_IDraw[id];
-			else
-			{
-				line = new Line();
-				DRAW.MAP_IDraw[id] = line;
-			}
+			Line line = new Line();
 
 			line.aRef = Vector3.right * (float)1e6;
 			line.bRef = Vector3.right * (float)1e6 - Vector3.right * 0.01f;
@@ -193,28 +210,6 @@ namespace SPACE_DrawSystem
 		// CONSTRUCTOR
 		// ============================================================
 
-		/// <summary>
-		/// Create a new persistent line
-		/// </summary>
-		public Line(float e = 1f / 50, Color? color = null, string name = "")
-		{
-			if (DRAW.DrawHolder == null)
-			{
-				DRAW.Init();
-				Debug.Log("DRAW wasnt initizlized, just done now".colorTag("red"));
-				// Debug.LogError("DRAW.Init() must be called first");
-			}
-
-			this.aRef = Vector3.right * (float)1e6;
-			this.bRef = Vector3.right * (float)1e6 - Vector3.right * 0.01f;
-
-			this.lineObj = new GameObject($"{name}");
-			this.lineObj.transform.SetParent(DRAW.DrawHolder);
-
-			this.lr = lineObj.AddComponent<LineRenderer>();
-			this.SetupLineRenderer(e, color ?? DRAW.Col);
-			this.UpdatePositions();
-		} 
 		#endregion
 
 		// ============================================================
