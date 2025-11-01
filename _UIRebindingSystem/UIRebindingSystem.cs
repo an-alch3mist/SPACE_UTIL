@@ -13,7 +13,7 @@ using UnityEngine.EventSystems;
 using SPACE_UTIL;
 using SPACE_SYNTAX;
 
-namespace SPACE_UISystem
+namespace SPACE_UISystem.Rebinding
 {
 	// Depend on: InputActionAsset
 	// no external dependencies other than that.

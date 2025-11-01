@@ -5,35 +5,38 @@ using UnityEngine.InputSystem;
 
 using SPACE_UTIL;
 
-public class DEBUG_IAEventsAssetController : MonoBehaviour
+namespace SPACE_UISystem.Rebinding
 {
-	// Depend on: InputActionAsset
-	[SerializeField] private InputActionAsset _inputActionAsset;
-
-	enum InputActionType
+	public class DEBUG_IAEventsAssetController : MonoBehaviour
 	{
-		character__jump,
-		character__shoot,
-	}
+		// Depend on: InputActionAsset
+		[SerializeField] private InputActionAsset _inputActionAsset;
 
-	private void Awake()
-	{
-		Debug.Log(C.method("Awake", this));
+		enum InputActionType
+		{
+			character__jump,
+			character__shoot,
+		}
 
-		var IA = this._inputActionAsset;
-		IA.tryGet(InputActionType.character__jump).started += (ctx) => { this.jump(); };
-		IA.tryGet(InputActionType.character__shoot).started += (ctx) => { this.shoot(); };
-	}
+		private void Awake()
+		{
+			Debug.Log(C.method("Awake", this));
 
-	private void OnEnable() => _inputActionAsset.Enable();
-	private void OnDisable() => _inputActionAsset.Disable();
+			var IA = this._inputActionAsset;
+			IA.tryGet(InputActionType.character__jump).started += (ctx) => { this.jump(); };
+			IA.tryGet(InputActionType.character__shoot).started += (ctx) => { this.shoot(); };
+		}
 
-	void jump()
-	{
-		Debug.Log("Jump()");
-	}
-	void shoot()
-	{
-		Debug.Log("Shoot()");
+		private void OnEnable() => _inputActionAsset.Enable();
+		private void OnDisable() => _inputActionAsset.Disable();
+
+		void jump()
+		{
+			Debug.Log("Jump()");
+		}
+		void shoot()
+		{
+			Debug.Log("Shoot()");
+		}
 	}
 }
