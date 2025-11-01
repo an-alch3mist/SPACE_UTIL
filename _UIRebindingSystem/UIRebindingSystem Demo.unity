@@ -235,7 +235,7 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 0}
-  m_RootOrder: 3
+  m_RootOrder: 2
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &526612022
 MonoBehaviour:
@@ -257,53 +257,6 @@ MonoBehaviour:
   use_from_secure_webhook_url: 1
   webhook_profile_url: https://media.discordapp.net/attachments/1380909082298421410/1380909111918723144/cunning-anime-hacker-modern-female-ninja-with-long-dark-brown-hair-brown-eyes-epic-b_983420-159985.png?ex=68459754&is=684445d4&hm=c0966cf03a4e4e052fbcafd9c285ca682b4d3598f3e499b805c798cf44ea1b84&=&format=webp&quality=lossless&width=814&height=814
   send_sendPayLoadJson_onAwake: 0
---- !u!1 &573017014
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 573017015}
-  - component: {fileID: 573017016}
-  m_Layer: 0
-  m_Name: GameINITManager
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &573017015
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 573017014}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_Children: []
-  m_Father: {fileID: 0}
-  m_RootOrder: 2
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &573017016
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 573017014}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 48ba11cd1b8e6964c83a08a0c2ecf2b4, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  README: 'Assign @Start Scene of The Game To INIT GameStore
-
-    for InputActions: 
-    initialize instance, initIAEvents can be done later(enable/disable) etc'
 --- !u!1001 &672993656
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -608,7 +561,7 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 0}
-  m_RootOrder: 5
+  m_RootOrder: 4
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1104909725
 GameObject:
@@ -773,7 +726,7 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 0}
-  m_RootOrder: 7
+  m_RootOrder: 6
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &1160541228
 MonoBehaviour:
@@ -909,6 +862,50 @@ MonoBehaviour:
   MainCam: {fileID: 519420031}
   CanvasRectTransform: {fileID: 1560534448}
   TMFps: {fileID: 1479849462}
+--- !u!1 &1405554709
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1405554710}
+  - component: {fileID: 1405554711}
+  m_Layer: 0
+  m_Name: GameStore
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1405554710
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1405554709}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_RootOrder: 7
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1405554711
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1405554709}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bf53dbd839cae2544b71a3ef3cb6edd5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _inputActionAsset: {fileID: -944628639613478452, guid: 9bf84f7a7587c7443a5ffe9861125ba7, type: 3}
 --- !u!1 &1448709543
 GameObject:
   m_ObjectHideFlags: 0
@@ -938,7 +935,7 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 0}
-  m_RootOrder: 6
+  m_RootOrder: 5
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &1448709545
 MonoBehaviour:
@@ -1318,7 +1315,7 @@ RectTransform:
   - {fileID: 674666889001719821}
   - {fileID: 885683451}
   m_Father: {fileID: 0}
-  m_RootOrder: 4
+  m_RootOrder: 3
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 0}

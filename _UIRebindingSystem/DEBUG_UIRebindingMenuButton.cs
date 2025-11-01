@@ -14,7 +14,6 @@ namespace SPACE_UISystem.Rebinding
 
 		[SerializeField] GameObject _UIRebindingHolder;
 
-
 		private void Awake()
 		{
 			Debug.Log(C.method("Awake", this));
@@ -28,7 +27,5 @@ namespace SPACE_UISystem.Rebinding
 				this._UIRebindingHolder.toggle(false);
 			});
 		}
-
 	}
-
 }
