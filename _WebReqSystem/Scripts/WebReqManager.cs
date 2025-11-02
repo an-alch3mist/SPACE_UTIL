@@ -36,7 +36,7 @@ Call From External As:
 		public static WebReqManager instance;
 		private void Awake()
 		{
-			Debug.Log("Awake(): " + this);
+			Debug.Log(C.methodHere(this));
 			instance = this;
 
 			if(this.send_sendPayLoadJson_onAwake == true)

@@ -54,15 +54,12 @@ public enum GameDataType
 
 
 
-# preference to call externally
+## preference to call externally
 + T LOG.LoadGameData<T>(GameDataType.playerStats)
 + string LOG.LoadGameData(GameDataType.playerStats) // shall just return string of loaded content(return nothing if no file found)
 + void LOG.SaveGameData(GameDataType.playerStats, ClassName.ToJSON(prettify: true))
 
-
-
-
-# response:
+## response:
 ```cs
 using System;
 using System.IO;
@@ -296,3 +293,102 @@ public class GameDataManager : MonoBehaviour
     }
 }
 ```
+
+
+# Board
+Ah, you need a **deep clone**! For reference types (classes), copying the array elements just copies references, not the actual objects. Here's the solution:## How It Works 🔍
+
+### **1. Value Types** (int, char, float, structs)
+```csharp
+Board<int> board = new Board<int>((10, 10), 0);
+board[5, 5] = 100;
+
+Board<int> copy = board.clone;
+copy[5, 5] = 999;
+
+// ✅ board[5, 5] is still 100 (independent)
+```
+### **2. Reference Types Cloning with ICloneable**
+```csharp
+[System.Serializable]
+public class Tile : System.ICloneable
+{
+    public int health;
+    public string type;
+    
+    public object Clone()
+    {
+        return new Tile { health = this.health, type = this.type };
+    }
+}
+
+Board<Tile> board = new Board<Tile>((10, 10), null);
+board[5, 5] = new Tile { health = 100, type = "grass" };
+
+Board<Tile> copy = board.clone;
+copy[5, 5].health = 0;  // Modify copy
+
+// ✅ board[5, 5].health is still 100 (deep copy worked!)
+```
+### **3. Serializable Classes (JSON fallback)**
+```csharp
+[System.Serializable]
+public class Enemy
+{
+    public int health;
+    public List<string> inventory;
+}
+
+Board<Enemy> board = new Board<Enemy>((10, 10), null);
+board[5, 5] = new Enemy 
+{ 
+    health = 50, 
+    inventory = new List<string> { "sword", "shield" }
+};
+
+Board<Enemy> copy = board.clone;
+copy[5, 5].health = 0;
+copy[5, 5].inventory.Add("potion");
+
+// ✅ Original is unchanged (JSON serialization deep copied everything)
+```
+## Performance Considerations
+
+| Type | Method | Speed |
+|------|--------|-------|
+| `int`, `char`, `float` | Direct copy | ⚡ Fastest |
+| `string` | Direct copy (immutable) | ⚡ Fastest |
+| Class with `ICloneable` | Custom Clone() | ⚡ Fast |
+| `[Serializable]` class | JSON round-trip | 🐌 Slower (but safe) |
+## Recommended Pattern
+
+For best performance, implement `ICloneable` on your game classes:
+```csharp
+[System.Serializable]
+public class Cell : System.ICloneable
+{
+    public int value;
+    public List<int> data;
+    
+    public object Clone()
+    {
+        return new Cell 
+        { 
+            value = this.value,
+            data = new List<int>(this.data)  // Deep copy List
+        };
+    }
+}
+
+// Now clone is fast AND deep
+Board<Cell> board = new Board<Cell>((100, 100), new Cell());
+Board<Cell> copy = board.clone;  // ✅ Deep copy with ICloneable
+```
+
+This approach gives you:
+- ✅ **Deep cloning** for reference types
+- ✅ **Fast cloning** for value types  
+- ✅ **Automatic fallback** to JSON if no ICloneable
+- ✅ **Universal** - works with any type
+
+Perfect for game dev where you might clone boards for undo/redo, AI simulation, or save states! 🎮

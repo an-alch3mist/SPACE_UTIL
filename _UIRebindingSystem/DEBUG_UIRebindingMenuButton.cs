@@ -16,7 +16,7 @@ namespace SPACE_UISystem.Rebinding
 
 		private void Awake()
 		{
-			Debug.Log(C.method("Awake", this));
+			Debug.Log(C.methodHere(this));
 			this._settingOpenCustomRebinding.onClick.AddListener(() =>
 			{
 				this._UIRebindingHolder.toggle(true);

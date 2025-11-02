@@ -117,27 +117,21 @@ namespace SPACE_UTIL
 	#endregion
 
 	#region Board
+	#region Board_prev
 	/*
 		- depends on v2
 	*/
-	public class Board<T>
+	[System.Serializable]
+	class Board_prev<T>
 	{
 		public int w, h;
 		public v2 m, M;
 		public T[][] B;
 
-		#region for clone
-		T default_val;
-		#endregion
-
-		public Board(v2 size, T default_val)
+		public Board_prev(v2 size, T default_val)
 		{
 			this.w = size.x; this.h = size.y;
 			this.m = (0, 0); this.M = (size.x - 1, size.y - 1);
-
-			#region for clone
-			this.default_val = default_val;
-			#endregion
 
 			B = new T[this.h][];
 			for (int y = 0; y < this.h; y += 1)
@@ -150,13 +144,13 @@ namespace SPACE_UTIL
 
 		public T GT(v2 coord)
 		{
-			if (coord.in_range((0, 0), (w - 1, h - 1)) == false)
+			if (coord.inRange((0, 0), (w - 1, h - 1)) == false)
 				Debug.LogError($"{coord} not in range of Board range (0, 0) to ({w - 1}, {h - 1})");
 			return B[coord.y][coord.x];
 		}
 		public void ST(v2 coord, T val)
 		{
-			if (coord.in_range((0, 0), (w - 1, h - 1)) == false)
+			if (coord.inRange((0, 0), (w - 1, h - 1)) == false)
 				Debug.LogError($"{coord} not in range of Board range (0, 0) to ({w - 1}, {h - 1})");
 			B[coord.y][coord.x] = val;
 		}
@@ -174,14 +168,222 @@ namespace SPACE_UTIL
 		}
 
 		#region clone
+		public Board_prev<T> clone
+		{
+			get
+			{
+				Board_prev<T> new_B = new Board_prev<T>((this.w, this.h), this.GT(new v2(0, 0)));
+				for (int y = 0; y < this.h; y += 1)
+					for (int x = 0; x < this.w; x += 1)
+						new_B.B[y][x] = this.B[y][x];
+				return new_B;
+			}
+		}
+		#endregion
+	}
+	#endregion
+	/*
+		- depends on v2
+		- Serializable with flat array storage
+		- Maintains clean indexer syntax: board[x, y] or board[coord]
+		- Supports increment/decrement operations
+	*/
+	[System.Serializable]
+	public class Board<T>
+	{
+		public int w, h;
+		public v2 m, M;
+
+		// Flat array for serialization (JsonUtility compatible)
+		[SerializeField] private T[] B_flat;
+
+		// Cached jagged array for compatibility (lazy-loaded, non-serialized)
+		[System.NonSerialized] private T[][] B_cache;
+
+		#region Constructors
+		public Board(v2 size, T default_val)
+		{
+			this.w = size.x;
+			this.h = size.y;
+			this.m = (0, 0);
+			this.M = (size.x - 1, size.y - 1);
+
+			// Initialize flat array
+			B_flat = new T[w * h];
+			for (int i = 0; i < B_flat.Length; i += 1)
+				B_flat[i] = default_val;
+		}
+
+		// Constructor for deserialization (when loading from JSON)
+		public Board() { }
+		#endregion
+
+		#region Index Conversion
+		private int ToIndex(int x, int y) => y * w + x;
+		private int ToIndex(v2 coord) => coord.y * w + coord.x;
+		#endregion
+
+		#region Indexers - Clean Syntax!
+		/// <summary>
+		/// Access via: board[x, y] = value; or value = board[x, y];
+		/// Example: board[5, 3]++; board[2, 1] += 10;
+		/// </summary>
+		public T this[int x, int y]
+		{
+			get
+			{
+				if (!new v2(x, y).inRange((0, 0), (w - 1, h - 1)))
+					Debug.LogError($"({x}, {y}) not in range of Board (0, 0) to ({w - 1}, {h - 1})");
+				return B_flat[ToIndex(x, y)];
+			}
+			set
+			{
+				if (!new v2(x, y).inRange((0, 0), (w - 1, h - 1)))
+					Debug.LogError($"({x}, {y}) not in range of Board (0, 0) to ({w - 1}, {h - 1})");
+				B_flat[ToIndex(x, y)] = value;
+				InvalidateCache(); // Clear cache when modified
+			}
+		}
+
+		/// <summary>
+		/// Access via: board[coord] = value; or value = board[coord];
+		/// Example: board[(5, 3)]++; board[new v2(2, 1)] += 10;
+		/// </summary>
+		public T this[v2 coord]
+		{
+			get => this[coord.x, coord.y];
+			set => this[coord.x, coord.y] = value;
+		}
+		#endregion
+
+		#region Legacy API (GT/ST) - Kept for backwards compatibility
+		public T GT(v2 coord) => this[coord];
+		public void ST(v2 coord, T val) => this[coord] = val;
+		#endregion
+
+		#region Jagged Array Access - B[][] (lazy-loaded for compatibility)
+		/// <summary>
+		/// Legacy jagged array access: board.B[y][x]
+		/// NOTE: Cached and regenerated on-demand. Use indexers for better performance.
+		/// </summary>
+		public T[][] B
+		{
+			get
+			{
+				if (B_cache == null)
+				{
+					B_cache = new T[h][];
+					for (int y = 0; y < h; y++)
+					{
+						B_cache[y] = new T[w];
+						for (int x = 0; x < w; x++)
+							B_cache[y][x] = B_flat[ToIndex(x, y)];
+					}
+				}
+				return B_cache;
+			}
+		}
+
+		private void InvalidateCache() => B_cache = null;
+
+		/// <summary>
+		/// Sync jagged array changes back to flat array (call before saving if you used B[][])
+		/// </summary>
+		public void SyncFromJagged()
+		{
+			if (B_cache != null)
+			{
+				for (int y = 0; y < h; y++)
+					for (int x = 0; x < w; x++)
+						B_flat[ToIndex(x, y)] = B_cache[y][x];
+			}
+		}
+		#endregion
+
+		#region Helper Methods
+		public override string ToString()
+		{
+			string str = "";
+			for (int y = h - 1; y >= 0; y -= 1)
+			{
+				for (int x = 0; x < w; x += 1)
+					str += this[x, y];
+				str += '\n';
+			}
+			return str;
+		}
+
+		/// <summary>
+		/// Apply a function to modify a cell value in-place
+		/// Example: board.Modify((5, 3), val => val + 1);
+		/// </summary>
+		public void Modify(v2 coord, System.Func<T, T> modifier)
+		{
+			this[coord] = modifier(this[coord]);
+		}
+
+		/// <summary>
+		/// Apply a function to all cells
+		/// Example: board.ForEach((x, y, val) => Debug.Log($"{x},{y}: {val}"));
+		/// </summary>
+		public void ForEach(System.Action<int, int, T> action)
+		{
+			for (int y = 0; y < h; y++)
+				for (int x = 0; x < w; x++)
+					action(x, y, B_flat[ToIndex(x, y)]);
+		}
+
+		/// <summary>
+		/// Check if coordinate is within board bounds
+		/// </summary>
+		public bool InBounds(v2 coord) => coord.inRange((0, 0), (w - 1, h - 1));
+		public bool InBounds(int x, int y) => InBounds(new v2(x, y));
+		#endregion
+
+		#region Clone
+		/// <summary>
+		/// Creates a deep clone of the board.
+		/// For value types (int, char, etc.): Direct copy
+		/// For reference types (classes): Uses IClonable or serialization-based deep copy
+		/// </summary>
 		public Board<T> clone
 		{
 			get
 			{
-				Board<T> new_B = new Board<T>((this.w, this.h), this.default_val);
-				for (int y = 0; y < this.h; y += 1)
-					for (int x = 0; x < this.w; x += 1)
-						new_B.B[y][x] = this.B[y][x];
+				Board<T> new_B = new Board<T>((this.w, this.h), default(T));
+
+				// Check if T is a value type or string (immutable)
+				if (typeof(T).IsValueType || typeof(T) == typeof(string))
+				{
+					// Simple copy for value types
+					for (int i = 0; i < this.B_flat.Length; i++)
+						new_B.B_flat[i] = this.B_flat[i];
+				}
+				else
+				{
+					// Deep copy for reference types
+					for (int i = 0; i < this.B_flat.Length; i++)
+					{
+						T original = this.B_flat[i];
+
+						if (original == null)
+						{
+							new_B.B_flat[i] = default(T);
+						}
+						else if (original is System.ICloneable cloneable)
+						{
+							// If implements ICloneable, use it
+							new_B.B_flat[i] = (T)cloneable.Clone();
+						}
+						else
+						{
+							// Fallback: JSON-based deep copy (works for [Serializable] classes)
+							string json = JsonUtility.ToJson(original);
+							new_B.B_flat[i] = JsonUtility.FromJson<T>(json);
+						}
+					}
+				}
+
 				return new_B;
 			}
 		}
@@ -568,25 +770,25 @@ namespace SPACE_UTIL
 		public static Vector2 abs(Vector2 vec2) { return new Vector2(Mathf.Abs(vec2.x), Mathf.Abs(vec2.y)); }
 		public static v2 abs(v2 _v2) { return (abs(_v2.x), abs(_v2.y)); }
 
-		public static bool in_range(this float x, float m, float M)
+		public static bool inRange(this float x, float m, float M)
 		{
 			return x >= m && x <= M;
 		}
-		public static bool in_range(this Vector3 v, Vector3 m, Vector3 M)
+		public static bool inRange(this Vector3 v, Vector3 m, Vector3 M)
 		{
-			return C.in_range(v.x, m.x, M.x) &&
-					C.in_range(v.y, m.y, M.y) &&
-					C.in_range(v.z, m.z, M.z);
+			return C.inRange(v.x, m.x, M.x) &&
+					C.inRange(v.y, m.y, M.y) &&
+					C.inRange(v.z, m.z, M.z);
 		}
-		public static bool in_range(this Vector2 v, Vector2 m, Vector2 M)
+		public static bool inRange(this Vector2 v, Vector2 m, Vector2 M)
 		{
-			return C.in_range(v.x, m.x, M.x) &&
-					C.in_range(v.y, m.y, M.y);
+			return C.inRange(v.x, m.x, M.x) &&
+					C.inRange(v.y, m.y, M.y);
 		}
-		public static bool in_range(this v2 v, v2 m, v2 M)
+		public static bool inRange(this v2 v, v2 m, v2 M)
 		{
-			return C.in_range(v.x, m.x, M.x) &&
-					C.in_range(v.y, m.y, M.y);
+			return C.inRange(v.x, m.x, M.x) &&
+					C.inRange(v.y, m.y, M.y);
 		}
 
 		public static Vector3 normalizedZero(this Vector3 v, float e = (float)1E-4)
@@ -799,15 +1001,59 @@ namespace SPACE_UTIL
 			return string.Join(separator, STRING);
 		}
 
+		#endregion
+
+		#region string extension for Debug.Log
+		/*
+			str.colorTag
+				red: critical error
+				yellow: not so critical error
+				orange: exit events
+				lime: success root message inside a certain method
+				cyan: any other crucial message inside a method
+				gray: default Debug.Log color
+
+				white: when entering a certain method
+		*/
+
+		/// <summary>
+		/// Wraps string in Unity Rich Text color tags.
+		/// Usage: "Hello".colorTag("red") → "&lt;color=red&gt;Hello&lt;/color&gt;"
+		/// </summary>
 		public static string colorTag(this string str, string color = "white")
 		{
 			return $"<color={color}>{str}</color>";
 		}
 
-		public static string method(string method, object obj, string color = "white")
+		/// <summary>
+		/// Automatically gets caller's class and method name with built-in color.
+		/// Usage: Debug.Log(C.methodHere("done!", "cyan"));
+		/// Output: [UIRebindingSystem.Awake()]: done! (in cyan)
+		/// </summary>
+		public static string methodHere(
+			object obj = null,
+			string color = "white",
+			string adMssg = "",
+			[System.Runtime.CompilerServices.CallerMemberName] string memberName = "",
+			[System.Runtime.CompilerServices.CallerFilePath] string sourceFilePath = "")
+		{
+			string className = System.IO.Path.GetFileNameWithoutExtension(sourceFilePath);
+			if(obj != null)
+				return $"{memberName}() -> {className}.cs -> {obj.ToString()}, {adMssg}".colorTag(color);
+			else
+				return $"{memberName}() -> {className}.cs, {adMssg}".colorTag(color);
+		}
+
+		#region legacy
+		/// <summary>
+		/// Formats method name and object for logging.
+		/// Usage: C.method("Awake", this, "cyan") → "Awake(): UIRebindingSystem"
+		/// </summary>
+		static string method(string method, object obj, string color = "white")
 		{
 			return $"{method}(): {obj.ToString()}".colorTag(color);
-		}
+		} 
+		#endregion
 		#endregion
 
 		#region enum operations
@@ -884,7 +1130,7 @@ namespace SPACE_UTIL
 		// << animation approach for a given duration
 		*/
 		#endregion
-
+		
 		#region UI util
 		public static void setBtnTxt(this Button btn, string str)
 		{
@@ -893,7 +1139,7 @@ namespace SPACE_UTIL
 		#endregion
 
 		#region INFO
-		public static class SYS
+		public static class SysInfo
 		{
 			public static string id = SystemInfo.deviceUniqueIdentifier;
 			public static string device = SystemInfo.deviceModel.ToString();
@@ -1470,7 +1716,7 @@ namespace SPACE_UTIL
 		/// Attempts to retrieve an InputAction from an InputActionAsset using enum-style naming. (seperateor: "__")
 		/// Example: GameActionType.character__jump → actionMap: "character", action: "jump"
 		/// </summary>
-		public static UnityEngine.InputSystem.InputAction tryGet(this UnityEngine.InputSystem.InputActionAsset IAAsset, object actionType)
+		public static UnityEngine.InputSystem.InputAction tryGetAction(this UnityEngine.InputSystem.InputActionAsset IAAsset, object actionType)
 		{
 			string fullName = actionType.ToString();
 
@@ -1479,7 +1725,7 @@ namespace SPACE_UTIL
 
 			if (parts.Length != 2)
 			{
-				Debug.Log($"Invalid action format '{fullName}'. Expected format: 'actionMap__actionName' (e.g., 'character__jump')".colorTag("red"));
+				Debug.Log($"[IA.tryGetAction()] Invalid action format '{fullName}'. Expected format: 'actionMap__actionName' (e.g., 'character__jump')".colorTag("red"));
 				return null;
 			}
 
@@ -1490,7 +1736,7 @@ namespace SPACE_UTIL
 			var actionMap = IAAsset.FindActionMap(actionMapName);
 			if (actionMap == null)
 			{
-				Debug.Log($"ActionMap '{actionMapName}' not found in InputActionAsset: {IAAsset.name}".colorTag("red"));
+				Debug.Log($"[IA.tryGetAction()] ActionMap '{actionMapName}' not found in InputActionAsset: {IAAsset.name}".colorTag("red"));
 				return null;
 			}
 
@@ -1498,7 +1744,7 @@ namespace SPACE_UTIL
 			var action = actionMap.FindAction(actionName);
 			if (action == null)
 			{
-				Debug.Log($"Action '{actionName}' not found in ActionMap '{actionMapName}'".colorTag("red"));
+				Debug.Log($"[IA.tryGetAction()] Action '{actionName}' not found in ActionMap '{actionMapName}'".colorTag("red"));
 				return null;
 			}
 
@@ -1509,13 +1755,15 @@ namespace SPACE_UTIL
 		{
 			try
 			{
-				Debug.Log($"success tried parsing(if hash Id for binding value match) overriden bindings".colorTag("lime"));
+				Debug.Log(C.methodHere(color: "lime", adMssg: "success tried parsing(if hash Id for binding value match) overriden bindings"));
+				// Debug.Log($"[InputActionAsset.tryLoadBindingOverridesFromJson()] success tried parsing(if hash Id for binding value match) overriden bindings".colorTag("lime"));
 				// Load from Saved GameData
 				IAAsset.LoadBindingOverridesFromJson(overrideJSON);
 			}
 			catch (Exception)
 			{
-				Debug.Log($"error parsing overriden bindings so loaded default IA".colorTag("red"));
+				Debug.Log(C.methodHere(color: "red", adMssg: "error parsing overriden bindings so loaded default IA with no override."));
+				//Debug.Log($"[InputActionAsset.tryLoadBindingOverridesFromJson()] error parsing overriden bindings so loaded default IA".colorTag("red"));
 			}
 		}
 	}
@@ -1774,11 +2022,16 @@ namespace SPACE_UTIL
 			// string str = string.Join("\n\n", args);
 			//string timestamp = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff");
 			//string logEntry = $"[{timestamp}] {str}";
-			Debug.Log($"logged into file LOG.md: {str}".colorTag("lime"));
 			// File logging
-
-			try { System.IO.File.AppendAllText(LocLogFile, str + Environment.NewLine + Environment.NewLine); }
-			catch (Exception e) { Debug.Log($"[LOG.SaveLog()] Failed to write to log file: {e.Message}".colorTag("red")); }
+			try
+			{
+				Debug.Log(C.methodHere(color: "grey", adMssg: "success wiriting file"));
+				System.IO.File.AppendAllText(LocLogFile, str + Environment.NewLine + Environment.NewLine);
+			}
+			catch (Exception e)
+			{
+				Debug.Log(C.methodHere(color: "red", adMssg: "error wrinting to log file"));
+			}
 		}
 
 		public static void H(string header) { AddLog($"# {header} >>\n"); }
@@ -1797,7 +2050,7 @@ namespace SPACE_UTIL
 			// Scenario 1: File doesn't exist
 			if (!File.Exists(filePath))
 			{
-				Debug.Log($"[LOG.LoadGameData()] File not found: {filePath}. Returning default instance.".colorTag("yellow"));
+				Debug.Log(C.methodHere(null, "red", adMssg: $"File not found: {filePath}. Returning default instance."));
 				return new T();
 			}
 
@@ -1812,16 +2065,15 @@ namespace SPACE_UTIL
 				// If parsing failed (returns null or default)
 				if (data == null || EqualityComparer<T>.Default.Equals(data, default(T)))
 				{
-					Debug.Log($"[LOG] Failed to parse JSON from: {filePath}. Returning default instance.".colorTag("yellow"));
+					Debug.Log(C.methodHere(null, "red", adMssg: $"Failed to parse JSON from: {filePath}. Returning default instance."));
 					return new T();
 				}
-
-				Debug.Log($"[LOG.LoadGameData()] Successfully loaded: {filePath}");
+				Debug.Log(C.methodHere(null, "lime", adMssg: $"Successfully Loaded JSON from: {filePath}"));
 				return data;
 			}
 			catch (Exception e)
 			{
-				Debug.Log($"[LOG.LoadGameData()] Error loading {filePath}: {e.Message}. Returning default instance.".colorTag("red"));
+				Debug.Log(C.methodHere(null, "red", adMssg: $"Error loading {filePath}: {e.Message}. Returning default instance."));
 				return new T();
 			}
 		}
@@ -1836,19 +2088,19 @@ namespace SPACE_UTIL
 
 			if (!File.Exists(filePath))
 			{
-				Debug.Log($"[LOG.LoadGameData()] File not found: {filePath}. Returning empty string.".colorTag("yellow"));
+				Debug.Log(C.methodHere(null, "red", adMssg: $"File not found: {filePath}. Returning string.Empty."));
 				return string.Empty;
 			}
 
 			try
 			{
 				string content = File.ReadAllText(filePath);
-				Debug.Log($"[LOG.LoadGameData()] Successfully loaded raw content from: {filePath}");
+				Debug.Log(C.methodHere(null, "lime", adMssg: $"Successfully loaded raw content from: {filePath}"));
 				return content;
 			}
 			catch (Exception e)
 			{
-				Debug.Log($"[LOG.LoadGameData()] Error reading {filePath}: {e.Message}".colorTag("red"));
+				Debug.Log(C.methodHere(null, "red", adMssg: $"Error reading {filePath}: {e.Message}"));
 				return string.Empty;
 			}
 		}
@@ -1897,7 +2149,7 @@ namespace SPACE_UTIL
 
 		// Used As: LOG.SaveLog(LIST.ToTable(name = "LIST<> "))
 		#region ToTable
-		#region ad
+		#region ad helper
 		/// <summary>
 		/// Sanitizes a string by converting control characters and non-printable ASCII to readable representations
 		/// </summary>

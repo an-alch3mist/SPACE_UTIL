@@ -30,7 +30,9 @@ namespace SPACE_UTIL
 
 		private void Awake()
 		{
-			Debug.Log(C.method("Awake", this));
+			//Debug.Log(C.method("Awake", this));
+			Debug.Log(C.methodHere(this, "white"));
+
 			INPUT.Init(
 				MainCam: MainCam,
 				CanvasRectTransform: this.CanvasRectTransform

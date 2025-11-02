@@ -79,7 +79,7 @@ UIRebindingSystem( -> Attach {typeof(UIRebindingSystem).Name}.cs to UIRebindingS
 		#region Unity LifeCycle
 		private void OnEnable()
 		{
-			Debug.Log(C.method("OnEnable", this, "white"));
+			Debug.Log(C.methodHere(this, color: "white"));
 			this.IA = this._inputActionAsset;
 			if (this.IA == null)
 			{
@@ -112,14 +112,14 @@ UIRebindingSystem( -> Attach {typeof(UIRebindingSystem).Name}.cs to UIRebindingS
 		}
 		private void OnDisable()
 		{
-			Debug.Log(C.method("OnDisable", this, "orange"));
+			Debug.Log(C.methodHere(this, "orange"));
 
 			if (this.IA == null) return;
 			CancelActiveRebinding();
 		}
 		private void OnDestroy()
 		{
-			Debug.Log(C.method("OnDestroy", this, "orange"));
+			Debug.Log(C.methodHere(this, "orange"));
 
 			if (this.IA == null) return;
 			CancelActiveRebinding();
@@ -256,7 +256,7 @@ UIRebindingSystem( -> Attach {typeof(UIRebindingSystem).Name}.cs to UIRebindingS
 				}
 			}
 
-			Debug.Log("done with UIIAMapIteration()".colorTag("cyan"));
+			Debug.Log($"{typeof(UIRebindingSystem).Name}.UIMapIternation() done with UIIAMapIteration()".colorTag("cyan"));
 			LOG.AddLog(MAP_BindingpathBtn.ToTable(toString: true, name: "MAP<> BindingpathBtn"));
 		}
 
@@ -324,8 +324,11 @@ UIRebindingSystem( -> Attach {typeof(UIRebindingSystem).Name}.cs to UIRebindingS
 		#endregion
 
 		#region private API Crucial
+
+
 		IEnumerator PerformRebinding(InputAction action, int bindingIndex, Button button)
 		{
+			Debug.Log(C.methodHere(this));
 			activeRebindingButton = button;
 			// MODIFY: Store action and binding index instead of text string
 			// We'll use these to get the correct display text when needed
@@ -370,7 +373,7 @@ UIRebindingSystem( -> Attach {typeof(UIRebindingSystem).Name}.cs to UIRebindingS
 							path.Contains("/enter") ||
 							path.Contains("/numpadEnter"))
 						{
-							Debug.Log($"Intercepted cancel key: {control.path}".colorTag("orange"));
+							Debug.Log($"[{typeof(UIRebindingSystem).Name}.PerformRebinding()] .OnPotentialMatch Intercepted cancel key: {control.path}".colorTag("orange"));
 							op.Cancel();
 							return;
 						}
@@ -381,8 +384,8 @@ UIRebindingSystem( -> Attach {typeof(UIRebindingSystem).Name}.cs to UIRebindingS
 				.WithTimeout(10f)
 				.OnComplete((Action<InputActionRebindingExtensions.RebindingOperation>)(op =>
 				{
-					LOG.AddLog($".OnComplete() NewBinding: {action.bindings[bindingIndex].effectivePath}");
-					Debug.Log($".OnComplete() {action.bindings[bindingIndex].effectivePath}".colorTag("lime"));
+					LOG.AddLog($"[{typeof(UIRebindingSystem).Name}.PerformRebinding()] .OnComplete() NewBinding: {action.bindings[bindingIndex].effectivePath}");
+					Debug.Log($"[{typeof(UIRebindingSystem).Name}.PerformRebinding()] .OnComplete() {action.bindings[bindingIndex].effectivePath}".colorTag("cyan"));
 
 					// NEW: Clear duplicate bindings in the same action map
 					ClearDuplicateBindingsInActionMapOf(currAction: action, bindingIndex, this.MAP_BindingpathBtn);
@@ -407,13 +410,13 @@ UIRebindingSystem( -> Attach {typeof(UIRebindingSystem).Name}.cs to UIRebindingS
 					}
 					catch (Exception e)
 					{
-						Debug.Log($"Error disposing rebinding operation in OnComplete: {e.Message}".colorTag("yellow"));
+						Debug.Log($"[{typeof(UIRebindingSystem).Name}.PerformRebinding()] .OnComplete() Error disposing rebinding operation in OnComplete: {e.Message}".colorTag("red"));
 					}
 				}))
 				.OnCancel((Action<InputActionRebindingExtensions.RebindingOperation>)(op =>
 				{
 					LOG.AddLog(".OnCancel() with cancel key");
-					Debug.Log(".OnCancel()".colorTag("lime"));
+					Debug.Log(".OnCancel()".colorTag("orange"));
 
 					// MODIFY: Use helper method to restore button text based on current binding state
 					UpdateButtonText(button, action, bindingIndex);
@@ -430,11 +433,12 @@ UIRebindingSystem( -> Attach {typeof(UIRebindingSystem).Name}.cs to UIRebindingS
 
 					try
 					{
+						Debug.Log($"[{typeof(UIRebindingSystem).Name}.PerformRebinding()] .OnCancel() Success disposing rebinding operation in OnCancel".colorTag("orange"));
 						op?.Dispose();
 					}
 					catch (Exception e)
 					{
-						Debug.Log($"Error disposing rebinding operation in OnCancel: {e.Message}".colorTag("yellow"));
+						Debug.Log($"[{typeof(UIRebindingSystem).Name}.PerformRebinding()] .OnCancel() Error disposing rebinding operation in OnCancel: {e.Message}".colorTag("red"));
 					}
 				}))
 				.Start();
@@ -475,7 +479,7 @@ UIRebindingSystem( -> Attach {typeof(UIRebindingSystem).Name}.cs to UIRebindingS
 				return;
 
 			int clearedBindingCount = 0;
-			Debug.Log($"began ClearDuplicateBindingsInActionMapOf()".colorTag("white"));
+			Debug.Log($"began ClearDuplicateBindingsInActionMapOf()".colorTag("cyan"));
 			foreach (var otherAction in actionMap.actions)
 				for (int i2 = 0; i2 < otherAction.bindings.Count; i2 += 1)
 				{
@@ -503,7 +507,7 @@ UIRebindingSystem( -> Attach {typeof(UIRebindingSystem).Name}.cs to UIRebindingS
 					}
 				}
 
-			Debug.Log($"clearedCount: {clearedBindingCount}".colorTag("lime"));
+			Debug.Log($"clearedCount: {clearedBindingCount}".colorTag("cyan"));
 		}
 		/// <summary>
 		/// Reset ALL bindings in the entire InputActionAsset to defaults
@@ -512,7 +516,7 @@ UIRebindingSystem( -> Attach {typeof(UIRebindingSystem).Name}.cs to UIRebindingS
 		{
 			// Method 1: Reset the entire asset
 			IA.RemoveAllBindingOverrides();
-			Debug.Log("All input bindings reset to defaults! (note: not saved yet)".colorTag("green"));
+			Debug.Log("[UIRebindingSystem.ResetAllBindingsToDefault()] All input bindings reset to defaults! (note: not saved yet)".colorTag("lime"));
 
 			// Do not Save override until save was pressed
 			// Clear saved overrides
@@ -528,27 +532,14 @@ UIRebindingSystem( -> Attach {typeof(UIRebindingSystem).Name}.cs to UIRebindingS
 		private void SaveBindings()
 		{
 			string json = IA.SaveBindingOverridesAsJson();
-			LOG.SaveGameData(GameDataType.inputKeyBindings, json);
+			LOG.SaveGameData(GameDataType.inputKeyBindings, json); // GameDataType Situated Inside UIRebindingSystem Class
 
-			Debug.Log("Bindings saved!".colorTag("green"));
-			LOG.AddLog("Saved JSON:", "json");
-			LOG.AddLog(json, "");
+			Debug.Log("[UIRebindingSystem.SaveBindings()] Bindings saved! as json".colorTag("lime"));
+			LOG.AddLog(json, "json");
+			
 		}
 
-		/// <summary>
-		/// Load saved bindings (call this on game start)
-		/// </summary>
-		public void LoadSavedBindings()
-		{
-			// Assuming you have a method to load the saved JSON
-			string savedJson = LOG.LoadGameData(GameDataType.inputKeyBindings);
-
-			if (!string.IsNullOrEmpty(savedJson))
-			{
-				IA.LoadBindingOverridesFromJson(savedJson);
-				Debug.Log("Loaded saved bindings".colorTag("green"));
-			}
-		} 
+		// loading is done via IA.tryLoadBindingOverridesFromJson() to avoid corrupted Load
 		#endregion
 	}
 }

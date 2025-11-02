@@ -20,11 +20,11 @@ namespace SPACE_UISystem.Rebinding
 
 		private void Awake()
 		{
-			Debug.Log(C.method("Awake", this));
+			Debug.Log(C.methodHere(this));
 
 			var IA = this._inputActionAsset;
-			IA.tryGet(InputActionType.character__jump).started += (ctx) => { this.jump(); };
-			IA.tryGet(InputActionType.character__shoot).started += (ctx) => { this.shoot(); };
+			IA.tryGetAction(InputActionType.character__jump).started += (ctx) => { this.jump(); };
+			IA.tryGetAction(InputActionType.character__shoot).started += (ctx) => { this.shoot(); };
 		}
 
 		private void OnEnable() => _inputActionAsset.Enable();
