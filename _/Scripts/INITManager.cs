@@ -31,7 +31,7 @@ namespace SPACE_UTIL
 		private void Awake()
 		{
 			//Debug.Log(C.method("Awake", this));
-			Debug.Log(C.methodHere(this, "white"));
+			Debug.Log(C.method(this, "white"));
 
 			INPUT.Init(
 				MainCam: MainCam,

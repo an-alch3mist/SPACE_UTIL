@@ -16,7 +16,7 @@ namespace SPACE_UISystem.Rebinding.Game
 
 		private void Awake()
 		{
-			Debug.Log(C.methodHere(this));
+			Debug.Log(C.method(this));
 			this.LoadAll();
 		}
 

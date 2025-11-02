@@ -966,7 +966,6 @@ namespace SPACE_UTIL
 		{
 			return Regex.IsMatch(str, re, str_to_flags(flags));
 		}
-
 		/// <summary>
 		/// Replaces all occurrences of the regex pattern <paramref name="re"/> with <paramref name="replace_with"/>
 		/// Example: "Hello world123 test456".replace(@"\d+", "X", "gm") ⇒ "Hello worldX testX"
@@ -993,9 +992,7 @@ namespace SPACE_UTIL
 					.Replace("\v", "\\v");
 			return name + singleLine;
 		}
-
 		public static string repeat(this char _char, int count = 100) { return new string(_char, count); }
-
 		public static string join(this IEnumerable<string> STRING, string separator = ", ")
 		{
 			return string.Join(separator, STRING);
@@ -1020,6 +1017,7 @@ namespace SPACE_UTIL
 		/// Wraps string in Unity Rich Text color tags.
 		/// Usage: "Hello".colorTag("red") → "&lt;color=red&gt;Hello&lt;/color&gt;"
 		/// </summary>
+		
 		public static string colorTag(this string str, string color = "white")
 		{
 			return $"<color={color}>{str}</color>";
@@ -1027,33 +1025,127 @@ namespace SPACE_UTIL
 
 		/// <summary>
 		/// Automatically gets caller's class and method name with built-in color.
-		/// Usage: Debug.Log(C.methodHere("done!", "cyan"));
-		/// Output: [UIRebindingSystem.Awake()]: done! (in cyan)
+		/// C.method(this);
+		/// C.method(this, "white");
+		/// C.method("red", $"error somthng occured");
 		/// </summary>
-		public static string methodHere(
-			object obj = null,
+		// Object: includes GameObject, Component kind
+		public static string method(
+			UnityEngine.Object unityObject,
 			string color = "white",
 			string adMssg = "",
 			[System.Runtime.CompilerServices.CallerMemberName] string memberName = "",
 			[System.Runtime.CompilerServices.CallerFilePath] string sourceFilePath = "")
 		{
-			string className = System.IO.Path.GetFileNameWithoutExtension(sourceFilePath);
-			if(obj != null)
-				return $"{memberName}() -> {className}.cs -> {obj.ToString()}, {adMssg}".colorTag(color);
+			string fileName = System.IO.Path.GetFileNameWithoutExtension(sourceFilePath);
+			string className = "Unknown";
+
+			object obj = (object)unityObject;
+			if (obj != null)
+			{
+				// Handle both Type objects (from typeof) and instance objects
+				if (obj is Type type)
+				{
+					// Static class case: typeof(LOG) or typeof(LOG.SysInfo)
+					// Use FullName to get nested path, then remove namespace
+					className = type.FullName ?? type.Name;
+
+					// Remove namespace prefix (everything before last dot that's not part of nested class)
+					// e.g., "SPACE_UTIL.LOG+SysInfo" -> "LOG.SysInfo"
+					if (className.Contains("."))
+					{
+						int lastNamespaceIndex = className.LastIndexOf('.');
+						string classPart = className.Substring(lastNamespaceIndex + 1);
+
+						// Replace '+' with '.' for nested classes
+						classPart = classPart.Replace('+', '.');
+						className = classPart;
+					}
+					else
+					{
+						// No namespace, just replace '+' with '.'
+						className = className.Replace('+', '.');
+					}
+				}
+				else
+				{
+					// Instance case: this
+					Type instanceType = obj.GetType();
+					className = instanceType.FullName ?? instanceType.Name;
+
+					// Same namespace removal logic
+					if (className.Contains("."))
+					{
+						int lastNamespaceIndex = className.LastIndexOf('.');
+						string classPart = className.Substring(lastNamespaceIndex + 1);
+						classPart = classPart.Replace('+', '.');
+						className = classPart;
+					}
+					else
+					{
+						className = className.Replace('+', '.');
+					}
+				}
+			}
 			else
-				return $"{memberName}() -> {className}.cs, {adMssg}".colorTag(color);
+			{
+				// Auto-detect calling class using StackTrace
+				try
+				{
+					var stackTrace = new System.Diagnostics.StackTrace();
+					// Frame 0 = this method (C.method)
+					// Frame 1 = the method that called C.method (e.g., LOG.AddLog)
+					var callingFrame = stackTrace.GetFrame(1);
+					if (callingFrame != null)
+					{
+						var callingMethod = callingFrame.GetMethod();
+						if (callingMethod != null && callingMethod.DeclaringType != null)
+						{
+							Type declaringType = callingMethod.DeclaringType;
+							className = declaringType.FullName ?? declaringType.Name;
+
+							// Remove namespace
+							if (className.Contains("."))
+							{
+								int lastNamespaceIndex = className.LastIndexOf('.');
+								string classPart = className.Substring(lastNamespaceIndex + 1);
+								classPart = classPart.Replace('+', '.');
+								className = classPart;
+							}
+							else
+							{
+								className = className.Replace('+', '.');
+							}
+						}
+					}
+				}
+				catch
+				{
+					// Fallback to Unknown if stack trace fails
+					className = "Unknown";
+				}
+			}
+
+			if(obj == null)
+				return $"{memberName}() -> class: {className} -> file: {fileName}.cs -> // {adMssg} //".colorTag(color);
+			else
+				return $"{memberName}() -> class: {className} -> obj: {obj.ToString()} -> file: {fileName}.cs -> // {adMssg} //".colorTag(color);
 		}
 
-		#region legacy
 		/// <summary>
-		/// Formats method name and object for logging.
-		/// Usage: C.method("Awake", this, "cyan") → "Awake(): UIRebindingSystem"
+		/// Automatically gets caller's class and method name with built-in color.
+		/// C.method(this);
+		/// C.method(this, "white");
+		/// C.method("red", $"error somthng occured");
 		/// </summary>
-		static string method(string method, object obj, string color = "white")
+		public static string method(
+			string color = "lime",
+			string adMssg = "",
+			[System.Runtime.CompilerServices.CallerMemberName] string memberName = "",
+			[System.Runtime.CompilerServices.CallerFilePath] string sourceFilePath = "")
 		{
-			return $"{method}(): {obj.ToString()}".colorTag(color);
-		} 
-		#endregion
+			return method(unityObject: null, color, adMssg);
+		}
 		#endregion
 
 		#region enum operations
@@ -1141,6 +1233,11 @@ namespace SPACE_UTIL
 		#region INFO
 		public static class SysInfo
 		{
+			public static void method()
+			{
+				Debug.Log(C.method(color: "cyan", adMssg: "a method call"));
+			}
+
 			public static string id = SystemInfo.deviceUniqueIdentifier;
 			public static string device = SystemInfo.deviceModel.ToString();
 			public static string os = SystemInfo.operatingSystem.ToString();
@@ -1755,14 +1852,14 @@ namespace SPACE_UTIL
 		{
 			try
 			{
-				Debug.Log(C.methodHere(color: "lime", adMssg: "success tried parsing(if hash Id for binding value match) overriden bindings"));
+				Debug.Log(C.method(color: "lime", adMssg: "success tried parsing(if hash Id for binding value match) overriden bindings"));
 				// Debug.Log($"[InputActionAsset.tryLoadBindingOverridesFromJson()] success tried parsing(if hash Id for binding value match) overriden bindings".colorTag("lime"));
 				// Load from Saved GameData
 				IAAsset.LoadBindingOverridesFromJson(overrideJSON);
 			}
 			catch (Exception)
 			{
-				Debug.Log(C.methodHere(color: "red", adMssg: "error parsing overriden bindings so loaded default IA with no override."));
+				Debug.Log(C.method(color: "red", adMssg: "error parsing overriden bindings so loaded default IA with no override."));
 				//Debug.Log($"[InputActionAsset.tryLoadBindingOverridesFromJson()] error parsing overriden bindings so loaded default IA".colorTag("red"));
 			}
 		}
@@ -2025,12 +2122,12 @@ namespace SPACE_UTIL
 			// File logging
 			try
 			{
-				Debug.Log(C.methodHere(color: "grey", adMssg: "success wiriting file"));
+				Debug.Log(C.method(color: "grey", adMssg: "success wiriting file"));
 				System.IO.File.AppendAllText(LocLogFile, str + Environment.NewLine + Environment.NewLine);
 			}
 			catch (Exception e)
 			{
-				Debug.Log(C.methodHere(color: "red", adMssg: "error wrinting to log file"));
+				Debug.Log(C.method(color: "red", adMssg: "error wrinting to log file"));
 			}
 		}
 
@@ -2050,7 +2147,7 @@ namespace SPACE_UTIL
 			// Scenario 1: File doesn't exist
 			if (!File.Exists(filePath))
 			{
-				Debug.Log(C.methodHere(null, "red", adMssg: $"File not found: {filePath}. Returning default instance."));
+				Debug.Log(C.method(null, "red", adMssg: $"File not found: {filePath}. Returning default instance."));
 				return new T();
 			}
 
@@ -2065,15 +2162,15 @@ namespace SPACE_UTIL
 				// If parsing failed (returns null or default)
 				if (data == null || EqualityComparer<T>.Default.Equals(data, default(T)))
 				{
-					Debug.Log(C.methodHere(null, "red", adMssg: $"Failed to parse JSON from: {filePath}. Returning default instance."));
+					Debug.Log(C.method(null, "red", adMssg: $"Failed to parse JSON from: {filePath}. Returning default instance."));
 					return new T();
 				}
-				Debug.Log(C.methodHere(null, "lime", adMssg: $"Successfully Loaded JSON from: {filePath}"));
+				Debug.Log(C.method(null, "lime", adMssg: $"Successfully Loaded JSON from: {filePath}"));
 				return data;
 			}
 			catch (Exception e)
 			{
-				Debug.Log(C.methodHere(null, "red", adMssg: $"Error loading {filePath}: {e.Message}. Returning default instance."));
+				Debug.Log(C.method(null, "red", adMssg: $"Error loading {filePath}: {e.Message}. Returning default instance."));
 				return new T();
 			}
 		}
@@ -2088,19 +2185,19 @@ namespace SPACE_UTIL
 
 			if (!File.Exists(filePath))
 			{
-				Debug.Log(C.methodHere(null, "red", adMssg: $"File not found: {filePath}. Returning string.Empty."));
+				Debug.Log(C.method(null, "red", adMssg: $"File not found: {filePath}. Returning string.Empty."));
 				return string.Empty;
 			}
 
 			try
 			{
 				string content = File.ReadAllText(filePath);
-				Debug.Log(C.methodHere(null, "lime", adMssg: $"Successfully loaded raw content from: {filePath}"));
+				Debug.Log(C.method(null, "lime", adMssg: $"Successfully loaded raw content from: {filePath}"));
 				return content;
 			}
 			catch (Exception e)
 			{
-				Debug.Log(C.methodHere(null, "red", adMssg: $"Error reading {filePath}: {e.Message}"));
+				Debug.Log(C.method(null, "red", adMssg: $"Error reading {filePath}: {e.Message}"));
 				return string.Empty;
 			}
 		}

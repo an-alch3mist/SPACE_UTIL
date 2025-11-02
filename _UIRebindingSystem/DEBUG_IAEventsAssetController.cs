@@ -20,7 +20,7 @@ namespace SPACE_UISystem.Rebinding
 
 		private void Awake()
 		{
-			Debug.Log(C.methodHere(this));
+			Debug.Log(C.method(this));
 
 			var IA = this._inputActionAsset;
 			IA.tryGetAction(InputActionType.character__jump).started += (ctx) => { this.jump(); };

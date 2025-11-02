@@ -8,6 +8,11 @@ using SPACE_UTIL;
 namespace SPACE_DrawSystem
 {
 	
+	public static class DRAW
+	{
+		public static Transform DrawHolder;
+	}
+
 	/// <summary>
 	/// Create a new persistent line
 	/// Line.create(id: "somthng").setA(a).setB(b).setCol(color);
@@ -113,55 +118,14 @@ namespace SPACE_DrawSystem
 			return this;
 		}
 
-		// create's multiple line obj
-		static Transform DrawHolder;
-		static Dictionary<string, Line> MAP_LINE;
-		public static Line create(string id = "line", Color? color = null, float e = 1f / 50)
-		{
-			if (DrawHolder == null)
-			{
-				if (GameObject.Find("DrawHolder") != null)
-					GameObject.Find("DrawHolder").destroy();
-				DrawHolder = new GameObject("DrawHolder").transform;
-				Debug.Log("initialized DRAWHolder now".colorTag("lime"));
-			}
-			if(MAP_LINE == null)
-			{
-				MAP_LINE = new Dictionary<string, Line>();
-			}
-			if(MAP_LINE.ContainsKey(id) == false)
-			{
-				Line line = new Line();
-
-				line.aRef = Vector3.right * (float)1e6;
-				line.bRef = Vector3.right * (float)1e6 - Vector3.right * 0.01f;
-
-				line.lineObj = new GameObject($"{id}");
-				line.lineObj.transform.SetParent(DrawHolder);
-
-				line.lr = line.lineObj.AddComponent<LineRenderer>();
-				line.SetupLineRenderer(e, color ?? Color.red);
-				line.UpdatePositions();
-				MAP_LINE[id] = line;
-
-				return line;
-			}
-			return MAP_LINE[id];
-		}
-		// << ========================= CHAIN SYNTAX =============================== //
-
-		// ============================================================
-		// PUBLIC METHODS
-		// ============================================================
-
 		// when called as: this.line.init(name: "hoverLine") .setA(ray.origin).setB(ray.origin + ray.direction * rayDist); // still creating multiple gameObject Instance
 		public Line init(string name = "line", Color? color = null, float e = 1f / 50)
 		{
-			if (DrawHolder == null) // occurs first line
+			if (DRAW.DrawHolder == null) // occurs first line
 			{
 				if (GameObject.Find("DrawHolder") != null)
 					GameObject.Find("DrawHolder").destroy();
-				DrawHolder = new GameObject("DrawHolder").transform;
+				DRAW.DrawHolder = new GameObject("DrawHolder").transform;
 				Debug.Log("initialized DRAWHolder now".colorTag("lime"));
 			}
 			if (this.lineObj == null)  // occurs first call of a certain line
@@ -170,7 +134,7 @@ namespace SPACE_DrawSystem
 				this.bRef = Vector3.right * (float)1e6 - Vector3.right * 0.01f;
 
 				this.lineObj = new GameObject($"{name}");
-				this.lineObj.transform.SetParent(DrawHolder);
+				this.lineObj.transform.SetParent(DRAW.DrawHolder);
 
 				this.lr = this.lineObj.AddComponent<LineRenderer>();
 				this.SetupLineRenderer(e, color ?? Color.red);
@@ -178,6 +142,8 @@ namespace SPACE_DrawSystem
 			}
 			return this;
 		}
+
+		// << ========================= CHAIN SYNTAX =============================== //
 		// clear line vertex positionsm to somewhere far
 		public Line clear()
 		{

@@ -79,7 +79,7 @@ UIRebindingSystem( -> Attach {typeof(UIRebindingSystem).Name}.cs to UIRebindingS
 		#region Unity LifeCycle
 		private void OnEnable()
 		{
-			Debug.Log(C.methodHere(this, color: "white"));
+			Debug.Log(C.method(this, color: "white"));
 			this.IA = this._inputActionAsset;
 			if (this.IA == null)
 			{
@@ -112,14 +112,14 @@ UIRebindingSystem( -> Attach {typeof(UIRebindingSystem).Name}.cs to UIRebindingS
 		}
 		private void OnDisable()
 		{
-			Debug.Log(C.methodHere(this, "orange"));
+			Debug.Log(C.method(this, "orange"));
 
 			if (this.IA == null) return;
 			CancelActiveRebinding();
 		}
 		private void OnDestroy()
 		{
-			Debug.Log(C.methodHere(this, "orange"));
+			Debug.Log(C.method(this, "orange"));
 
 			if (this.IA == null) return;
 			CancelActiveRebinding();
@@ -328,7 +328,7 @@ UIRebindingSystem( -> Attach {typeof(UIRebindingSystem).Name}.cs to UIRebindingS
 
 		IEnumerator PerformRebinding(InputAction action, int bindingIndex, Button button)
 		{
-			Debug.Log(C.methodHere(this));
+			Debug.Log(C.method(this));
 			activeRebindingButton = button;
 			// MODIFY: Store action and binding index instead of text string
 			// We'll use these to get the correct display text when needed

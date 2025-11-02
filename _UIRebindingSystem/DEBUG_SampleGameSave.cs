@@ -12,7 +12,8 @@ namespace SPACE_UISystem.Rebinding.Game
 		private void OnEnable()
 		{
 			//Debug.Log(C.method("OnEnable", this));
-			Debug.Log(C.methodHere(this));
+			Debug.Log(C.method(this));
+			C.SysInfo.method();
 			StopAllCoroutines();
 			StartCoroutine(STIMULATE());
 		}
@@ -55,7 +56,7 @@ namespace SPACE_UISystem.Rebinding.Game
 		private void OnApplicationQuit()
 		{
 			// Debug.Log(C.method("OnApplicationQuit", this, "orange"));
-			Debug.Log(C.methodHere(color: "orange"));
+			Debug.Log(C.method(color: "orange"));
 		}
 
 	} 
