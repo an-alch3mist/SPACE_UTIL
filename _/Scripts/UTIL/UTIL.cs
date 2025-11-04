@@ -1,19 +1,19 @@
 ﻿using System;
 using System.Linq;
+using System.Text;
+using System.Text.RegularExpressions;
+using System.Reflection;
 using System.Collections;
 using System.Collections.Generic;
-using System.Text;
-using System.Reflection;
-using System.Text.RegularExpressions;
-
-using UnityEngine;
-using UnityEngine.EventSystems;
-using UnityEngine.UI;
-using UnityEngine.InputSystem;
-using TMPro;
 
 using System.Threading.Tasks;
 using System.IO;
+
+using UnityEngine;
+using UnityEngine.UI;
+using UnityEngine.InputSystem;
+using UnityEngine.EventSystems;
+using TMPro;
 
 namespace SPACE_UTIL
 {
@@ -686,23 +686,23 @@ namespace SPACE_UTIL
 		#endregion
 
 		#region float, vec3 operations
-		public static float clamp(float x, float min, float max, float e = 0f)
+		public static float clamp(this float x, float min, float max, double de = 0f)
 		{
-			if (x > max) return max - e;
-			if (x < min) return min + e;
+			if (x > max) return max - (float)de;
+			if (x < min) return min + (float)de;
 			return x;
 		}
-		public static Vector3 clamp(Vector3 v, Vector3 min, Vector3 max, float e = 0f)
+		public static Vector3 clamp(this Vector3 v, Vector3 min, Vector3 max, double de = 0f)
 		{
 			return new Vector3()
 			{
-				x = C.clamp(v.x, min.x, max.x, e),
-				y = C.clamp(v.y, min.y, max.y, e),
-				z = C.clamp(v.z, min.z, max.z, e),
+				x = C.clamp(v.x, min.x, max.x, de),
+				y = C.clamp(v.y, min.y, max.y, de),
+				z = C.clamp(v.z, min.z, max.z, de),
 			};
 		}
 
-		public static int round(float x)
+		public static int round(this float x)
 		{
 			if (x > 0f)
 			{
@@ -721,7 +721,7 @@ namespace SPACE_UTIL
 			}
 			return 0;
 		}
-		public static Vector3 round(Vector3 v)
+		public static Vector3 round(this Vector3 v)
 		{
 			return new Vector3()
 			{
@@ -731,15 +731,15 @@ namespace SPACE_UTIL
 			};
 		}
 
-		public static int floor(float x)
+		public static int floor(this float x)
 		{
 			return Mathf.FloorToInt(x);
 		}
-		public static int ceil(float x)
+		public static int ceil(this float x)
 		{
 			return Mathf.CeilToInt(x);
 		}
-		public static int sign(float x, float e = 1f / 100)
+		public static int sign(this float x, double e = 1e-3)
 		{
 			if (x <= e && x >= -e)
 				return 0;
@@ -747,7 +747,7 @@ namespace SPACE_UTIL
 			if (x > e) return +1;
 			else return -1;
 		}
-		public static int mod(int i, int length, int offset = 0)
+		public static int mod(this int i, int length, int offset = 0)
 		{
 			int new_i = (i + offset) % length;
 			if (new_i < 0) new_i += length;
@@ -755,20 +755,30 @@ namespace SPACE_UTIL
 		}
 
 		// less than 0.001f considered as zero
-		public static bool zero(this float x, float e = (float)1e-4)
+		public static float approxZero(this float x, double e = 1e-3)
+		{
+			if (x < e) return 0f;
+			return x;
+		}
+		public static Vector3 approxZero(this Vector3 v, double e = 1e-3)
+		{
+			return new Vector3(approxZero(v.x, e), approxZero(v.y, e), approxZero(v.z, e));
+		}
+
+		public static bool zero(this float x, double e = 1e-4)
 		{
 			return Mathf.Abs(x) < e;
 		}
-		public static bool zero(this Vector3 v, float e = (float)1e-4)
+		public static bool zero(this Vector3 v, double e = 1e-4)
 		{
 			return zero(v.x, e) && zero(v.y, e) && zero(v.z, e);
 		}
 
-		public static float abs(float x) { return Mathf.Abs(x); }
-		public static int abs(int x) { return Mathf.RoundToInt(Mathf.Abs(x)); }
-		public static Vector3 abs(Vector3 vec3) { return new Vector3(Mathf.Abs(vec3.x), Mathf.Abs(vec3.y), Mathf.Abs(vec3.z)); }
-		public static Vector2 abs(Vector2 vec2) { return new Vector2(Mathf.Abs(vec2.x), Mathf.Abs(vec2.y)); }
-		public static v2 abs(v2 _v2) { return (abs(_v2.x), abs(_v2.y)); }
+		public static float abs(this float x) { return Mathf.Abs(x); }
+		public static int abs(this int x) { return Mathf.RoundToInt(Mathf.Abs(x)); }
+		public static Vector3 abs(this Vector3 vec3) { return new Vector3(Mathf.Abs(vec3.x), Mathf.Abs(vec3.y), Mathf.Abs(vec3.z)); }
+		public static Vector2 abs(this Vector2 vec2) { return new Vector2(Mathf.Abs(vec2.x), Mathf.Abs(vec2.y)); }
+		public static v2 abs(this v2 _v2) { return (abs(_v2.x), abs(_v2.y)); }
 
 		public static bool inRange(this float x, float m, float M)
 		{
@@ -802,6 +812,49 @@ namespace SPACE_UTIL
 			return new Vector3(v.x, 0f, v.z);
 		}
 		#endregion
+
+		#region quaternion operations
+		/// <summary>
+		/// Usage: transform.localRotation = transform.localRotation.rotateAndClamp(axis, deltaAngle, min, max);
+		/// Example: blade.localRotation = blade.localRotation.rotateAndClamp(Vector3.right, deltaAngle: 10 * Time.deltaTime, -30f, 30f);
+		/// </summary>
+		/// still got the gimbal lock goin on:
+		/// better appraoch to clamp the angle via float, than .rotation = Quaternion.Euler(axis * angle)
+		//public static Quaternion rotateAndClamp(this Quaternion currentRotation, Vector3 localAxis, float deltaAngle, float minAngle, float maxAngle)
+		//{
+		//	// Extract current angle around the axis
+		//	Vector3 eulerAngles = currentRotation.eulerAngles;
+
+		//	// Determine which component to modify based on the dominant axis
+		//	if (Mathf.Abs(localAxis.x) > 0.5f)
+		//	{
+		//		float angle = normalizeAngle(eulerAngles.x);
+		//		angle = Mathf.Clamp(angle + deltaAngle, minAngle, maxAngle);
+		//		eulerAngles.x = angle;
+		//	}
+		//	else if (Mathf.Abs(localAxis.y) > 0.5f)
+		//	{
+		//		float angle = normalizeAngle(eulerAngles.y);
+		//		angle = Mathf.Clamp(angle + deltaAngle, minAngle, maxAngle);
+		//		eulerAngles.y = angle;
+		//	}
+		//	else if (Mathf.Abs(localAxis.z) > 0.5f)
+		//	{
+		//		float angle = normalizeAngle(eulerAngles.z);
+		//		angle = Mathf.Clamp(angle + deltaAngle, minAngle, maxAngle);
+		//		eulerAngles.z = angle;
+		//	}
+
+		//	return Quaternion.Euler(eulerAngles);
+		//}
+		//static float normalizeAngle(float angle)
+		//{
+		//	angle = angle % 360f;
+		//	if (angle > 180f) angle -= 360f;
+		//	return angle;
+		//}
+		
+			#endregion
 
 		#region string operations
 		public static string AbrrevatedNumber(int value)
@@ -1233,11 +1286,6 @@ namespace SPACE_UTIL
 		#region INFO
 		public static class SysInfo
 		{
-			public static void method()
-			{
-				Debug.Log(C.method(color: "cyan", adMssg: "a method call"));
-			}
-
 			public static string id = SystemInfo.deviceUniqueIdentifier;
 			public static string device = SystemInfo.deviceModel.ToString();
 			public static string os = SystemInfo.operatingSystem.ToString();
@@ -1246,6 +1294,45 @@ namespace SPACE_UTIL
 			public static string gpu = SystemInfo.graphicsDeviceName.ToString();
 			public static string gpu_ver = SystemInfo.graphicsDeviceVersion.ToString();
 			public static string time_stamp = System.DateTime.UtcNow.ToString("yyyy/MMMM/dd HH:mm:ss.fff").ToString();
+		}
+
+		public static class UnityInfo
+		{
+			public static string UnityLifeCycle = @"==== Unity Life Cycle ====
+INITIALIZATION PHASE
+├─ Awake()           → Called when script instance is loaded (even if disabled)
+├─ OnEnable()        → Called when object/component becomes enabled
+└─ Start()           → Called before first frame update (only if enabled)
+
+PHYSICS LOOP (Fixed Timestep - Default 0.02s)
+├─ FixedUpdate()     → Called at fixed intervals for physics
+└─ Internal Physics Update
+
+GAME LOOP (Per Frame)
+├─ Update()          → Called once per frame (main logic)
+├─ LateUpdate()      → Called after all Updates (cameras, follow systems)
+├─ Animation Events  → Triggered during animation playback
+└─ Animation Rigging → IK and rig calculations
+
+RENDERING
+├─ OnWillRenderObject()
+├─ OnPreCull()
+├─ OnBecameVisible() / OnBecameInvisible()
+├─ OnPreRender()
+├─ OnRenderObject()
+└─ OnPostRender()
+
+COLLISION/TRIGGER DETECTION
+├─ OnCollisionEnter/Stay/Exit()
+├─ OnTriggerEnter/Stay/Exit()
+├─ OnCollisionEnter2D/Stay2D/Exit2D()
+└─ OnTriggerEnter2D/Stay2D/Exit2D()
+
+DEINITIALIZATION PHASE
+├─ OnDisable()       → Called when object/component becomes disabled
+├─ OnDestroy()       → Called when object is destroyed
+└─ OnApplicationQuit() → Global, called before application quits
+==== Unity Life Cycle ====";
 		}
 		#endregion
 	}
@@ -2459,7 +2546,6 @@ namespace SPACE_UTIL
 	}
 	#endregion
 }
-
 
 namespace SPACE_prev
 {

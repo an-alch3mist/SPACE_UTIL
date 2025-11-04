@@ -13,7 +13,7 @@ namespace SPACE_UISystem.Rebinding.Game
 		{
 			//Debug.Log(C.method("OnEnable", this));
 			Debug.Log(C.method(this));
-			C.SysInfo.method();
+			// C.SysInfo.method();
 			StopAllCoroutines();
 			StartCoroutine(STIMULATE());
 		}
