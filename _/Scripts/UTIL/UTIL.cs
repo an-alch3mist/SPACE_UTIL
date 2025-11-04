@@ -747,6 +747,10 @@ namespace SPACE_UTIL
 			if (x > e) return +1;
 			else return -1;
 		}
+		public static float pow(this float x, float exp = 2)
+		{
+			return Mathf.Pow(x, exp);
+		}
 		public static int mod(this int i, int length, int offset = 0)
 		{
 			int new_i = (i + offset) % length;
