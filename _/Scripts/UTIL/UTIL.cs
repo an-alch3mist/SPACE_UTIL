@@ -767,7 +767,7 @@ namespace SPACE_UTIL
 		{
 			float newX = (x * 10.pow(digits)).round();
 			return newX * 1f / (10.pow(digits)); // int * float
-		}
+		} // floating inaccuracy still exist, roundDecimal useful just as a string
 
 		public static int floor(this float x)
 		{
@@ -793,6 +793,9 @@ namespace SPACE_UTIL
 		{
 			return ((float)x).pow().round();
 		}
+		/// <summary>
+		/// return: (x.abs().pow(exp)) * x.sign()
+		/// </summary>
 		public static float powSign(this float x, float exp = 2)
 		{
 			return Mathf.Pow(Mathf.Abs(x), exp) * x.sign();
