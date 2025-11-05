@@ -56,7 +56,7 @@ namespace SPACE_UISystem.Rebinding.Game
 		private void OnApplicationQuit()
 		{
 			// Debug.Log(C.method("OnApplicationQuit", this, "orange"));
-			Debug.Log(C.method(color: "orange"));
+			Debug.Log(C.method(this, color: "orange"));
 		}
 
 	} 

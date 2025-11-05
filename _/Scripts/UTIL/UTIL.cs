@@ -391,9 +391,40 @@ namespace SPACE_UTIL
 	}
 	#endregion
 
-	#region MonoInterfaceFinder
+	#region MonoInterfaceFinder For Modular Interface MonoBehaviour Approach
 	public static class MonoInterfaceFinder
 	{
+		// better approach example without MonoBehaviour: 
+		/* public interface ILogger
+		{
+			void AddLog(string str, string syntaxType = "");
+			void SaveGameData(object dataType, string jsonContent);
+		}
+
+		public class LOG : ILogger
+		{
+			private static LOG _instance;
+			public static LOG Instance => _instance ??= new LOG();
+
+			// Private constructor prevents external instantiation
+			private LOG() { }
+
+			// Now you can use both:
+			// 1. Static access: LOG.Instance.AddLog(...)
+			// 2. Interface finding: var logger = MonoInterfaceFinder.FindInterface<ILogger>();
+    
+			public void AddLog(string str, string syntaxType = "")
+			{
+				// ... implementation
+			}
+
+			public void SaveGameData(object dataType, string jsonContent)
+			{
+				// ... implementation
+			}
+		}
+		*/
+
 		/// <summary>
 		/// Find the first active MonoBehaviour in the scene that implements interface T.
 		/// Usage: var imono = UnityInterfaceFinder.FindInterface<IMono>();
@@ -706,18 +737,20 @@ namespace SPACE_UTIL
 		{
 			if (x > 0f)
 			{
-				int x_I = (int)x;
-				float frac = x - x_I;
-				if (frac > 0.5f) return x_I + 1;
-				else return x_I;
+				int xI = (int)x;
+				float frac = x - xI;
+				if (frac > 0.5f)
+					return xI + 1;
+				else return xI;
 
 			}
 			else if (x < 0f)
 			{
-				int x_I = (int)x;
-				float frac = x - x_I;
-				if (frac < -0.5f) return x_I - 1;
-				else return x_I;
+				int xI = (int)x;
+				float frac = x - xI;
+				if (frac < -0.5f)
+					return xI - 1;
+				else return xI;
 			}
 			return 0;
 		}
@@ -729,6 +762,11 @@ namespace SPACE_UTIL
 				y = C.round(v.y),
 				z = C.round(v.z),
 			};
+		}
+		public static float roundDecimal(this float x, int digits = 1)
+		{
+			float newX = (x * 10.pow(digits)).round();
+			return newX * 1f / (10.pow(digits)); // int * float
 		}
 
 		public static int floor(this float x)
@@ -750,6 +788,10 @@ namespace SPACE_UTIL
 		public static float pow(this float x, float exp = 2)
 		{
 			return Mathf.Pow(x, exp);
+		}
+		public static int pow(this int x, int exp = 2)
+		{
+			return Mathf.Pow(x, exp).round();
 		}
 		public static int mod(this int i, int length, int offset = 0)
 		{
@@ -858,7 +900,7 @@ namespace SPACE_UTIL
 		//	return angle;
 		//}
 		
-			#endregion
+		#endregion
 
 		#region string operations
 		public static string AbrrevatedNumber(int value)
@@ -895,7 +937,7 @@ namespace SPACE_UTIL
 			// default
 			return value.ToString();
 		}
-		public static string RoundDecimal(float val, int digits = 2)
+		public static string roundDecimalStr(float val, int digits = 2)
 		{
 			float new_val = (int)(val * Mathf.Pow(10, digits)) / (Mathf.Pow(10, digits));
 			return new_val.ToString();
@@ -928,7 +970,7 @@ namespace SPACE_UTIL
 		}
 
 		// ad essential >>
-		static RegexOptions str_to_flags(string flags)
+		static RegexOptions strToFlags(string flags)
 		{
 			RegexOptions options = RegexOptions.None;
 			if (!string.IsNullOrEmpty(flags))
@@ -989,7 +1031,7 @@ namespace SPACE_UTIL
 			if (str == null) return null;
 
 			// Always include ExplicitCapture by default for split
-			return Regex.Split(str.clean(), re, str_to_flags(flags));
+			return Regex.Split(str.clean(), re, strToFlags(flags));
 		}
 
 		/// <summary>
@@ -1002,7 +1044,7 @@ namespace SPACE_UTIL
 				return null;
 
 			// Always include global, multiline capture by default for split
-			var matches = Regex.Matches(str.clean(), re, str_to_flags(flags));
+			var matches = Regex.Matches(str.clean(), re, strToFlags(flags));
 			if (matches.Count == 0) return Array.Empty<string>();
 
 			return matches
@@ -1017,11 +1059,11 @@ namespace SPACE_UTIL
 		/// </summary>
 		public static bool fmatch(this char _char, string re, string flags = "g")
 		{
-			return Regex.IsMatch(_char.ToString(), re, str_to_flags(flags));
+			return Regex.IsMatch(_char.ToString(), re, strToFlags(flags));
 		}
 		public static bool fmatch(this string str, string re, string flags = "g")
 		{
-			return Regex.IsMatch(str, re, str_to_flags(flags));
+			return Regex.IsMatch(str, re, strToFlags(flags));
 		}
 		/// <summary>
 		/// Replaces all occurrences of the regex pattern <paramref name="re"/> with <paramref name="replace_with"/>
@@ -1033,7 +1075,7 @@ namespace SPACE_UTIL
 				return null;
 
 			// default flags: "gm"
-			return Regex.Replace(str.clean(), re, replace_with, str_to_flags(flags));
+			return Regex.Replace(str.clean(), re, replace_with, strToFlags(flags));
 		}
 
 		/// <summary>
@@ -1189,12 +1231,15 @@ namespace SPACE_UTIL
 				return $"{memberName}() -> class: {className} -> obj: {obj.ToString()} -> file: {fileName}.cs -> // {adMssg} //".colorTag(color);
 		}
 
+		// won't' work rather provide the Object null as parameter(instead of parameter default) to announce its location.
+		/*
 		/// <summary>
 		/// Automatically gets caller's class and method name with built-in color.
 		/// C.method(this);
 		/// C.method(this, "white");
 		/// C.method("red", $"error somthng occured");
 		/// </summary>
+		/// 
 		public static string method(
 			string color = "lime",
 			string adMssg = "",
@@ -1203,6 +1248,7 @@ namespace SPACE_UTIL
 		{
 			return method(unityObject: null, color, adMssg);
 		}
+		*/
 		#endregion
 
 		#region enum operations
@@ -1259,7 +1305,7 @@ namespace SPACE_UTIL
 		}
 		#endregion
 
-		#region Anim
+		#region Anim Asyc, IEnumerator
 		public static async Task delay(int ms = 1000)
 		{
 			await Task.Delay(ms);
@@ -1344,7 +1390,6 @@ DEINITIALIZATION PHASE
 	/*
 		- GameOnjectt/Transform Search
 		- Find Non Collision Spot 2D, 3D
-
 	*/
 	public static class U
 	{
@@ -1943,14 +1988,14 @@ DEINITIALIZATION PHASE
 		{
 			try
 			{
-				Debug.Log(C.method(color: "lime", adMssg: "success tried parsing(if hash Id for binding value match) overriden bindings"));
+				Debug.Log(C.method(null, color: "lime", adMssg: "success tried parsing(if hash Id for binding value match) overriden bindings"));
 				// Debug.Log($"[InputActionAsset.tryLoadBindingOverridesFromJson()] success tried parsing(if hash Id for binding value match) overriden bindings".colorTag("lime"));
 				// Load from Saved GameData
 				IAAsset.LoadBindingOverridesFromJson(overrideJSON);
 			}
 			catch (Exception)
 			{
-				Debug.Log(C.method(color: "red", adMssg: "error parsing overriden bindings so loaded default IA with no override."));
+				Debug.Log(C.method(null, color: "red", adMssg: "error parsing overriden bindings so loaded default IA with no override."));
 				//Debug.Log($"[InputActionAsset.tryLoadBindingOverridesFromJson()] error parsing overriden bindings so loaded default IA".colorTag("red"));
 			}
 		}
@@ -2167,13 +2212,13 @@ DEINITIALIZATION PHASE
 		LOG.LoadGameData<T>(json)
 		LOG.LoadGameData(str)
 	*/
-	// file LOG.INITIALIZE() not required, since EnsureAllDirectoryExists
+	// file LOG.INITIALIZE() not required, since EnsureAllDirectoryExists called at runTIme access(in both LoadGameData<>, SaveGameData)
 	public static class LOG
 	{
-		private static string LocRootPath => Application.dataPath;
-		private static string LocLogDirectory => Path.Combine(LocRootPath, "LOG");
-		private static string LocLogFile => Path.Combine(LocLogDirectory, "LOG.md");
-		private static string LocGameDataDirectory => Path.Combine(LocLogDirectory, "GameData");
+		private static string locRootPath => Application.dataPath;
+		private static string locLOGDirectory => Path.Combine(locRootPath, "LOG");
+		private static string locLOGFile => Path.Combine(locLOGDirectory, "LOG.md");
+		private static string locGameDataDirectory => Path.Combine(locLOGDirectory, "GameData");
 
 		#region private API
 		/// <summary>
@@ -2181,20 +2226,20 @@ DEINITIALIZATION PHASE
 		/// </summary>
 		private static void EnsureAllDirectoryExists()
 		{
-			if (!Directory.Exists(LocGameDataDirectory))
+			if (!Directory.Exists(locGameDataDirectory))
 			{
-				Directory.CreateDirectory(LocGameDataDirectory);
+				Directory.CreateDirectory(locGameDataDirectory);
 			}
 
-			if (!File.Exists(LocLogFile))
-				File.WriteAllText(LocLogFile, "# LOG.md created, perform LOG.SaveLog(str, format) to append text here:\n\n");
+			if (!File.Exists(locLOGFile))
+				File.WriteAllText(locLOGFile, "# LOG.md created, perform LOG.SaveLog(str, format) to append text here:\n\n");
 		}
 		/// <summary>
 		/// Gets the full file path for a given GameDataType
 		/// </summary>
 		public static string GetGameDataFilePath(string fileName)
 		{
-			return Path.Combine(LocGameDataDirectory, $"{fileName}.json");
+			return Path.Combine(locGameDataDirectory, $"{fileName}.json");
 		}
 		#endregion
 
@@ -2213,12 +2258,12 @@ DEINITIALIZATION PHASE
 			// File logging
 			try
 			{
-				Debug.Log(C.method(color: "grey", adMssg: "success wiriting file"));
-				System.IO.File.AppendAllText(LocLogFile, str + Environment.NewLine + Environment.NewLine);
+				Debug.Log(C.method(null, color: "grey", adMssg: "success wiriting file"));
+				System.IO.File.AppendAllText(locLOGFile, str + Environment.NewLine + Environment.NewLine);
 			}
 			catch (Exception e)
 			{
-				Debug.Log(C.method(color: "red", adMssg: "error wrinting to log file"));
+				Debug.Log(C.method(null, color: "red", adMssg: "error wrinting to log file"));
 			}
 		}
 
@@ -2305,11 +2350,11 @@ DEINITIALIZATION PHASE
 			try
 			{
 				File.WriteAllText(filePath, jsonContent);
-				Debug.Log($"[LOG.SaveGameData()] Successfully saved: {filePath}");
+				Debug.Log(C.method(null, "lime", $"success saving @ {filePath}")); // Debug.Log($"[LOG.SaveGameData()] Successfully saved: {filePath}");
 			}
 			catch (Exception e)
 			{
-				Debug.Log($"[LOG.SaveGameData()] Error saving {filePath}: {e.Message}".colorTag("red"));
+				Debug.Log(C.method(null, "red", $"error saving @ {filePath}")); // Debug.Log($"[LOG.SaveGameData()] Error saving {filePath}: {e.Message}".colorTag("red"));
 			}
 		}
 		#endregion
