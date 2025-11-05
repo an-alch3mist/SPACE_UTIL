@@ -128,7 +128,6 @@ namespace SPACE_DrawSystem
 
 		// when called as Line.create(id) .setA(ray.origin) .setN(ray.SetN);
 		public static Dictionary<string, Line> MAP_IdLine;
-
 		/// <summary>
 		/// try to get Line of given id, if doesn;t exist yet? create new one and return.
 		/// </summary>

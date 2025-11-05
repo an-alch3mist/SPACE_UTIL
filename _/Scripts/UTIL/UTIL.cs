@@ -791,7 +791,15 @@ namespace SPACE_UTIL
 		}
 		public static int pow(this int x, int exp = 2)
 		{
-			return Mathf.Pow(x, exp).round();
+			return ((float)x).pow().round();
+		}
+		public static float powSign(this float x, float exp = 2)
+		{
+			return Mathf.Pow(Mathf.Abs(x), exp) * x.sign();
+		}
+		public static int powSign(this int x, int exp = 2)
+		{
+			return ((float)x).powSign().round();
 		}
 		public static int mod(this int i, int length, int offset = 0)
 		{
