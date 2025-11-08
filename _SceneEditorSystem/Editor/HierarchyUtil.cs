@@ -84,13 +84,12 @@ namespace SPACE_UnityEditor
 			{ "canvas", new[] { "Canvas" } },
 			{ "cr", new[] { "CanvasRenderer", } },
 			{ "sr", new[] { "ScrollRect", } },
-			{ "img", new[] { "Image" } },
-			{ "txt", new[] { "Text" } },
 			{ "tmp", new[] { "TextMeshProUGUI", "TextMeshPro" } },
 			
 			// Common UI combinations
 			{ "btn", new[] { "Button", "Image" } },
 			{ "autoFit", new[] { "HorizontalLayoutGroup", "ContentSizeFitter" } },
+			{ "img", new[] { "Image" } },
 			
 			// Particles
 			{ "ps", new[] { "ParticleSystem" } },
