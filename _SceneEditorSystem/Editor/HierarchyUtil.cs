@@ -86,7 +86,7 @@ namespace SPACE_UnityEditor
 			
 			// Common UI combinations
 			{ "btn", new[] { "Button", "Image" } },
-			{ "autoFitBtn", new[] { "Button", "Image", "ContentSizeFitter", "HorizontalLayoutGroup" } },
+			{ "autoFit", new[] { "HorizontalLayoutGroup", "ContentSizeFitter" } },
 			
 			// Particles
 			{ "ps", new[] { "ParticleSystem" } },
