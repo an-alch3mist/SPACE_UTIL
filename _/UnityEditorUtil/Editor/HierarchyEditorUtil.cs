@@ -18,8 +18,8 @@ namespace SPACE_UnityEditor
 	public static class CopyHierarchyToClipboard
 	{
 		// Adjustable indentation settings
-		private const string branch_char = "├ ";
-		private const string last_branch_char = "└ ";
+		private const string branch_char = "├ "; // ──
+		private const string last_branch_char = "└ "; // ──
 		private const string vertical_line = "│ ";
 		private const string empty_indent_space = "  ";
 
@@ -197,6 +197,14 @@ namespace SPACE_UnityEditor
 				sb.AppendLine("================================");
 				sb.AppendLine();
 			}
+			if (USE_ASSET_TYPE_ABBREVIATIONS == true)
+			{
+				sb.AppendLine("=== Asset Type Abbreviations ===");
+				foreach (var kvp in ASSET_TYPE_ABBREVIATIONS)
+					sb.AppendLine($"{kvp.Value} = {kvp.Key}");
+				sb.AppendLine("================================");
+				sb.AppendLine();
+			}
 
 			// Root level with metadata
 			string rootMeta = GetGameObjectMetadata(root);
@@ -371,6 +379,14 @@ namespace SPACE_UnityEditor
 				{
 					sb.AppendLine($"{kvp.Key} = {string.Join(" | ", kvp.Value)}");
 				}
+				sb.AppendLine("================================");
+				sb.AppendLine();
+			}
+			if (USE_ASSET_TYPE_ABBREVIATIONS == true)
+			{
+				sb.AppendLine("=== Asset Type Abbreviations ===");
+				foreach (var kvp in ASSET_TYPE_ABBREVIATIONS)
+					sb.AppendLine($"{kvp.Value} = {kvp.Key}");
 				sb.AppendLine("================================");
 				sb.AppendLine();
 			}
