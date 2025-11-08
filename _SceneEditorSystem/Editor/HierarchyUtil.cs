@@ -75,11 +75,15 @@ namespace SPACE_UnityEditor
 			// Audio
 			{ "asrc", new[] { "AudioSource" } },
 			{ "alstn", new[] { "AudioListener" } },
+
+			{ "txt", new[] { "TextAsset" } },
 			
 			// Rendering
 			{ "cam", new[] { "Camera" } },
 			{ "lit", new[] { "Light" } },
 			{ "canvas", new[] { "Canvas" } },
+			{ "cr", new[] { "CanvasRenderer", } },
+			{ "sr", new[] { "ScrollRect", } },
 			{ "img", new[] { "Image" } },
 			{ "txt", new[] { "Text" } },
 			{ "tmp", new[] { "TextMeshProUGUI", "TextMeshPro" } },
