@@ -2237,11 +2237,13 @@ DEINITIALIZATION PHASE
 		/// </summary>
 		private static void EnsureAllDirectoryExists()
 		{
+			// LOG/GameData
 			if (!Directory.Exists(locGameDataDirectory))
 			{
 				Directory.CreateDirectory(locGameDataDirectory);
 			}
 
+			// LOG/LOG.md
 			if (!File.Exists(locLOGFile))
 				File.WriteAllText(locLOGFile, "# LOG.md created, perform LOG.SaveLog(str, format) to append text here:\n\n");
 		}
