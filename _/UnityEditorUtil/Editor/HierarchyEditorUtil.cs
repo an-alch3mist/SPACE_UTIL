@@ -78,7 +78,7 @@ namespace SPACE_UnityEditor
 			
 			// Rendering
 			{ "cam", new[] { "Camera" } },
-			{ "lit", new[] { "Light" } },
+			{ "lgt", new[] { "Light" } },
 			{ "canvas", new[] { "Canvas" } },
 			{ "cr", new[] { "CanvasRenderer", } },
 			{ "sr", new[] { "ScrollRect", } },
@@ -88,15 +88,17 @@ namespace SPACE_UnityEditor
 			{ "btnO", new[] { "Button", "Image", "Outline" } },
 			{ "btn", new[] { "Button", "Image" } },
 			{ "img", new[] { "Image" } },
-			{ "autoFit", new[] { "HorizontalLayoutGroup", "ContentSizeFitter" } },
+			{ "autoFitH", new[] { "HorizontalLayoutGroup", "ContentSizeFitter" } },
+			{ "autoFitV", new[] { "VerticalLayoutGroup", "ContentSizeFitter" } },
+			{ "autoFit", new[] { "ContentSizeFitter" } },
 			
 			// Particles
 			{ "ps", new[] { "ParticleSystem" } },
 			{ "psr", new[] { "ParticleSystemRenderer" } },
 			
 			// Other
-			{ "trail", new[] { "TrailRenderer" } },
-			{ "line", new[] { "LineRenderer" } },
+			{ "tr", new[] { "TrailRenderer" } },
+			{ "lr", new[] { "LineRenderer" } },
 		};
 
 		// Toggle for using abbreviations (can be disabled for full component names)
