@@ -75,8 +75,6 @@ namespace SPACE_UnityEditor
 			// Audio
 			{ "asrc", new[] { "AudioSource" } },
 			{ "alstn", new[] { "AudioListener" } },
-
-			{ "txt", new[] { "TextAsset" } },
 			
 			// Rendering
 			{ "cam", new[] { "Camera" } },
@@ -89,8 +87,8 @@ namespace SPACE_UnityEditor
 			// Common UI combinations
 			{ "btnO", new[] { "Button", "Image", "Outline" } },
 			{ "btn", new[] { "Button", "Image" } },
-			{ "autoFit", new[] { "HorizontalLayoutGroup", "ContentSizeFitter" } },
 			{ "img", new[] { "Image" } },
+			{ "autoFit", new[] { "HorizontalLayoutGroup", "ContentSizeFitter" } },
 			
 			// Particles
 			{ "ps", new[] { "ParticleSystem" } },
@@ -103,9 +101,9 @@ namespace SPACE_UnityEditor
 
 		// Toggle for using abbreviations (can be disabled for full component names)
 		private const bool USE_COMPONENT_ABBREVIATIONS = true;
-		private const bool USE_SCALE_SHORTHAND = true;  // Use "1.0" instead of "(1.00,1.00,1.00)" for uniform scales
+		private const bool USE_PREFAB_SCALE_SHORTHAND = true;  // Use "1.0" instead of "(1.00,1.00,1.00)" for uniform scales
 		private const bool USE_ASSET_TYPE_ABBREVIATIONS = true;  // Abbreviate asset type names
-		private const bool USE_UNIFORM_BOUNDS_SHORTHAND = true;  // Use "0.04u" instead of "0.04×0.04×0.04"
+		private const bool USE_UNIFORM_MESH_BOUNDS_SHORTHAND = true;  // Use "0.04u" instead of "0.04×0.04×0.04"
 
 		// Asset type abbreviations
 		private static readonly System.Collections.Generic.Dictionary<string, string> ASSET_TYPE_ABBREVIATIONS =
@@ -118,7 +116,8 @@ namespace SPACE_UnityEditor
 			{ "AnimClip", "anim" },
 			{ "Audio", "audio" },
 			{ "Script", "cs" },
-			{ "Scene", "scene" }
+			{ "Scene", "scene" },
+			{ "TextAsset", "txt" },
 		};
 
 		// Shader name abbreviations (common Unity shaders)
@@ -131,7 +130,7 @@ namespace SPACE_UnityEditor
 			{ "Universal Render Pipeline/Baked Lit", "URP/BakedLit" },
 			{ "Universal Render Pipeline/Particles/Lit", "URP/Particles/Lit" },
 			{ "Universal Render Pipeline/Particles/Unlit", "URP/Particles/Unlit" },
-			{ "Standard", "Std" },
+			{ "Standard", "std" },
 			{ "Standard (Specular setup)", "Std/Spec" },
 			{ "Autodesk Interactive", "AutodeskInt" },
 			{ "Unlit/Color", "Unlit/Col" },
@@ -257,7 +256,7 @@ namespace SPACE_UnityEditor
 		/// </summary>
 		private static string FormatScale(Vector3 scale)
 		{
-			if (!USE_SCALE_SHORTHAND)
+			if (!USE_PREFAB_SCALE_SHORTHAND)
 				return $"scale:({scale.x:F2},{scale.y:F2},{scale.z:F2})";
 
 			// Check if scale is uniform (all components equal within small epsilon)
@@ -591,6 +590,18 @@ namespace SPACE_UnityEditor
 				return $"({typeStr} | {script.GetClass()?.Name ?? "unknown"})";
 			}
 
+			// TextAsset (plain text / .txt / .md / etc)
+			if (asset is TextAsset textAsset)
+			{
+				string typeStr = AbbreviateAssetType("TextAsset");
+				// show length or first N chars if you like, or show extension:
+				string ext = Path.GetExtension(assetPath);
+				if (string.IsNullOrEmpty(ext)) ext = ".txt";
+				// return $"({typeStr} | {ext} | {textAsset.text?.Length ?? 0} chars)";
+				return $"({typeStr})";
+			}
+
+
 			// Scene
 			if (assetPath.EndsWith(".unity"))
 			{
@@ -607,7 +618,7 @@ namespace SPACE_UnityEditor
 		/// </summary>
 		private static string FormatBounds(Vector3 size)
 		{
-			if (!USE_UNIFORM_BOUNDS_SHORTHAND)
+			if (!USE_UNIFORM_MESH_BOUNDS_SHORTHAND)
 				return $"bounds:{size.x:F2}×{size.y:F2}×{size.z:F2}";
 
 			// Check if bounds are uniform (cube-like)
