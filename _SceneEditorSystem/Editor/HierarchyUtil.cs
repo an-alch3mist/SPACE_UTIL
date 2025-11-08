@@ -87,8 +87,8 @@ namespace SPACE_UnityEditor
 			{ "tmp", new[] { "TextMeshProUGUI", "TextMeshPro" } },
 			
 			// Common UI combinations
-			{ "btn", new[] { "Button", "Image" } },
 			{ "btnO", new[] { "Button", "Image", "Outline" } },
+			{ "btn", new[] { "Button", "Image" } },
 			{ "autoFit", new[] { "HorizontalLayoutGroup", "ContentSizeFitter" } },
 			{ "img", new[] { "Image" } },
 			
