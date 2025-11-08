@@ -88,6 +88,7 @@ namespace SPACE_UnityEditor
 			
 			// Common UI combinations
 			{ "btn", new[] { "Button", "Image" } },
+			{ "btnO", new[] { "Button", "Image", "Outline" } },
 			{ "autoFit", new[] { "HorizontalLayoutGroup", "ContentSizeFitter" } },
 			{ "img", new[] { "Image" } },
 			
