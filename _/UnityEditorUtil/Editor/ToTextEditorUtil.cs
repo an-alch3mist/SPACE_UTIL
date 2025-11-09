@@ -856,7 +856,7 @@ namespace SPACE_UnityEditor
 		private static string GetTransitionInfo(UnityEditor.Animations.AnimatorStateTransition trans)
 		{
 			string conditionsStr = GetTransitionConditions(trans.conditions);
-			string timing = $"exit:{trans.exitTime:F2} | dur:{trans.duration:F2}s";
+			string timing = $"exitTime:{trans.exitTime:F2} | transition:{trans.duration:F2}s";
 
 			if (!trans.hasExitTime && trans.conditions.Length > 0)
 			{
