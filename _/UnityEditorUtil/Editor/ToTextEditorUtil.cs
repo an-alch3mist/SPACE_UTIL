@@ -179,36 +179,31 @@ namespace SPACE_UnityEditor
 			return Selection.activeGameObject != null;
 		}
 
-		/// <summary>
-		/// Builds a formatted scene hierarchy string with GameObject metadata.
-		/// </summary>
+
+		#region new
+		// Modified sections to track and display only used abbreviations
+
+		// Add these helper classes at the top of the CopyAsText class:
+		private class AbbreviationTracker
+		{
+			public System.Collections.Generic.HashSet<string> usedComponentAbbreviations =
+				new System.Collections.Generic.HashSet<string>();
+			public System.Collections.Generic.HashSet<string> usedAssetTypeAbbreviations =
+				new System.Collections.Generic.HashSet<string>();
+		}
+
+		// Replace BuildSceneHierarchyString method:
 		private static string BuildSceneHierarchyString(GameObject root)
 		{
 			StringBuilder sb = new StringBuilder();
+			AbbreviationTracker tracker = new AbbreviationTracker();
 
-			// Add legend at the top if abbreviations are enabled
-			if (USE_COMPONENT_ABBREVIATIONS)
-			{
-				sb.AppendLine("=== Component Abbreviations ===");
-				foreach (var kvp in COMPONENT_ABBREVIATIONS)
-				{
-					sb.AppendLine($"{kvp.Key} = {string.Join(" | ", kvp.Value)}");
-				}
-				sb.AppendLine("================================");
-				sb.AppendLine();
-			}
-			if (USE_ASSET_TYPE_ABBREVIATIONS == true)
-			{
-				sb.AppendLine("=== Asset Type Abbreviations ===");
-				foreach (var kvp in ASSET_TYPE_ABBREVIATIONS)
-					sb.AppendLine($"{kvp.Value} = {kvp.Key}");
-				sb.AppendLine("================================");
-				sb.AppendLine();
-			}
+			// First pass: build hierarchy and track used abbreviations
+			StringBuilder hierarchySb = new StringBuilder();
 
 			// Root level with metadata
-			string rootMeta = GetGameObjectMetadata(root);
-			sb.AppendLine($"./{root.name}/{rootMeta}");
+			string rootMeta = GetGameObjectMetadata(root, tracker);
+			hierarchySb.AppendLine($"./{root.name}/{rootMeta}");
 
 			// Process children
 			Transform rootTransform = root.transform;
@@ -218,11 +213,389 @@ namespace SPACE_UnityEditor
 			{
 				bool isLastChild = (i == childCount - 1);
 				Transform child = rootTransform.GetChild(i);
-				BuildSceneHierarchyRecursive(child, "", isLastChild, sb);
+				BuildSceneHierarchyRecursive(child, "", isLastChild, hierarchySb, tracker);
 			}
+
+			// Now add legends with only used abbreviations
+			if (USE_COMPONENT_ABBREVIATIONS && tracker.usedComponentAbbreviations.Count > 0)
+			{
+				sb.AppendLine("=== Component Abbreviations ===");
+				foreach (var kvp in COMPONENT_ABBREVIATIONS)
+				{
+					if (tracker.usedComponentAbbreviations.Contains(kvp.Key))
+					{
+						sb.AppendLine($"{kvp.Key} = {string.Join(" | ", kvp.Value)}");
+					}
+				}
+				sb.AppendLine("================================");
+				sb.AppendLine();
+			}
+
+			if (USE_ASSET_TYPE_ABBREVIATIONS && tracker.usedAssetTypeAbbreviations.Count > 0)
+			{
+				sb.AppendLine("=== Asset Type Abbreviations ===");
+				foreach (var kvp in ASSET_TYPE_ABBREVIATIONS)
+				{
+					if (tracker.usedAssetTypeAbbreviations.Contains(kvp.Value))
+					{
+						sb.AppendLine($"{kvp.Value} = {kvp.Key}");
+					}
+				}
+				sb.AppendLine("================================");
+				sb.AppendLine();
+			}
+
+			// Append the actual hierarchy
+			sb.Append(hierarchySb.ToString());
 
 			return sb.ToString();
 		}
+
+		// Replace BuildSceneHierarchyRecursive method:
+		private static void BuildSceneHierarchyRecursive(Transform current, string prefix, bool isLast,
+			StringBuilder sb, AbbreviationTracker tracker)
+		{
+			string branchChar = isLast ? last_branch_char : branch_char;
+			string metadata = GetGameObjectMetadata(current.gameObject, tracker);
+
+			sb.AppendLine($"{prefix}{branchChar}{current.name} {metadata}");
+
+			string childPrefix = prefix + (isLast ? empty_indent_space : vertical_line);
+
+			int childCount = current.childCount;
+			for (int i = 0; i < childCount; i++)
+			{
+				bool isLastChild = (i == childCount - 1);
+				Transform child = current.GetChild(i);
+				BuildSceneHierarchyRecursive(child, childPrefix, isLastChild, sb, tracker);
+			}
+		}
+
+		// Replace GetGameObjectMetadata method:
+		private static string GetGameObjectMetadata(GameObject go, AbbreviationTracker tracker = null)
+		{
+			Vector3 scale = go.transform.localScale;
+			string scaleStr = FormatScale(scale);
+
+			Component[] components = go.GetComponents<Component>();
+			var componentNames = components
+				.Where(c => c != null && !(c is Transform))
+				.Select(c => c.GetType().Name)
+				.ToList();
+
+			string componentsStr = AbbreviateComponents(componentNames, tracker);
+
+			return $"({scaleStr} | {componentsStr})";
+		}
+
+		// Replace AbbreviateComponents method:
+		private static string AbbreviateComponents(System.Collections.Generic.List<string> componentNames,
+			AbbreviationTracker tracker = null)
+		{
+			if (componentNames.Count == 0)
+				return "no components";
+
+			if (!USE_COMPONENT_ABBREVIATIONS)
+				return string.Join(", ", componentNames);
+
+			var abbreviated = new System.Collections.Generic.List<string>();
+			var remaining = new System.Collections.Generic.List<string>(componentNames);
+
+			// Try to match component patterns
+			foreach (var kvp in COMPONENT_ABBREVIATIONS)
+			{
+				bool allMatch = kvp.Value.All(comp => remaining.Contains(comp));
+
+				if (allMatch)
+				{
+					abbreviated.Add(kvp.Key);
+
+					// Track this abbreviation if tracker is provided
+					if (tracker != null)
+					{
+						tracker.usedComponentAbbreviations.Add(kvp.Key);
+					}
+
+					foreach (string comp in kvp.Value)
+					{
+						remaining.Remove(comp);
+					}
+				}
+			}
+
+			// Add remaining unmatched components
+			abbreviated.AddRange(remaining);
+
+			return abbreviated.Count > 0 ? string.Join(", ", abbreviated) : "no components";
+		}
+
+		// Replace BuildAssetHierarchyString method:
+		private static string BuildAssetHierarchyString(string assetPath, Object rootAsset)
+		{
+			StringBuilder sb = new StringBuilder();
+			AbbreviationTracker tracker = new AbbreviationTracker();
+
+			// First pass: build hierarchy and track used abbreviations
+			StringBuilder hierarchySb = new StringBuilder();
+
+			// Check if it's a folder
+			if (AssetDatabase.IsValidFolder(assetPath))
+			{
+				hierarchySb.AppendLine($"./{Path.GetFileName(assetPath)}/");
+				BuildFolderHierarchy(assetPath, "", hierarchySb, tracker);
+			}
+			else
+			{
+				// Single asset - show with sub-assets
+				string metadata = GetAssetMetadata(rootAsset, assetPath, tracker);
+				hierarchySb.AppendLine($"./{rootAsset.name} {metadata}");
+
+				// Load all sub-assets (for FBX, prefabs, etc.)
+				Object[] subAssets = AssetDatabase.LoadAllAssetRepresentationsAtPath(assetPath);
+
+				for (int i = 0; i < subAssets.Length; i++)
+				{
+					bool isLast = (i == subAssets.Length - 1);
+					string branchChar = isLast ? last_branch_char : branch_char;
+					string subMeta = GetAssetMetadata(subAssets[i], assetPath, tracker);
+
+					hierarchySb.AppendLine($"{branchChar}{subAssets[i].name} {subMeta}");
+				}
+
+				// For prefabs, also show internal GameObject hierarchy
+				if (rootAsset is GameObject prefabRoot)
+				{
+					hierarchySb.AppendLine($"{branch_char}[Prefab Contents]");
+					BuildPrefabHierarchy(prefabRoot, vertical_line, hierarchySb, tracker);
+				}
+			}
+
+			// Now add legends with only used abbreviations
+			if (USE_COMPONENT_ABBREVIATIONS && tracker.usedComponentAbbreviations.Count > 0)
+			{
+				sb.AppendLine("=== Component Abbreviations ===");
+				foreach (var kvp in COMPONENT_ABBREVIATIONS)
+				{
+					if (tracker.usedComponentAbbreviations.Contains(kvp.Key))
+					{
+						sb.AppendLine($"{kvp.Key} = {string.Join(" | ", kvp.Value)}");
+					}
+				}
+				sb.AppendLine("================================");
+				sb.AppendLine();
+			}
+
+			if (USE_ASSET_TYPE_ABBREVIATIONS && tracker.usedAssetTypeAbbreviations.Count > 0)
+			{
+				sb.AppendLine("=== Asset Type Abbreviations ===");
+				foreach (var kvp in ASSET_TYPE_ABBREVIATIONS)
+				{
+					if (tracker.usedAssetTypeAbbreviations.Contains(kvp.Value))
+					{
+						sb.AppendLine($"{kvp.Value} = {kvp.Key}");
+					}
+				}
+				sb.AppendLine("================================");
+				sb.AppendLine();
+			}
+
+			// Append the actual hierarchy
+			sb.Append(hierarchySb.ToString());
+
+			return sb.ToString();
+		}
+
+		// Replace BuildFolderHierarchy method:
+		private static void BuildFolderHierarchy(string folderPath, string prefix, StringBuilder sb,
+			AbbreviationTracker tracker)
+		{
+			string[] entries = Directory.GetFileSystemEntries(folderPath);
+			var filtered = entries
+				.Where(e => !e.EndsWith(".meta"))
+				.Where(e => !ShouldIgnoreEntry(e))
+				.ToArray();
+
+			for (int i = 0; i < filtered.Length; i++)
+			{
+				bool isLast = (i == filtered.Length - 1);
+				string branchChar = isLast ? last_branch_char : branch_char;
+				string entryName = Path.GetFileName(filtered[i]);
+
+				if (Directory.Exists(filtered[i]))
+				{
+					// Subfolder
+					sb.AppendLine($"{prefix}{branchChar}{entryName}/");
+					string childPrefix = prefix + (isLast ? empty_indent_space : vertical_line);
+					BuildFolderHierarchy(filtered[i], childPrefix, sb, tracker);
+				}
+				else
+				{
+					// File
+					Object asset = AssetDatabase.LoadAssetAtPath<Object>(filtered[i]);
+					string metadata = asset != null ? GetAssetMetadata(asset, filtered[i], tracker) : "";
+					sb.AppendLine($"{prefix}{branchChar}{entryName} {metadata}");
+
+					// Show sub-assets (meshes, animations in FBX)
+					if (asset != null)
+					{
+						Object[] subAssets = AssetDatabase.LoadAllAssetRepresentationsAtPath(filtered[i]);
+						string childPrefix = prefix + (isLast ? empty_indent_space : vertical_line);
+
+						for (int j = 0; j < subAssets.Length; j++)
+						{
+							bool isLastSub = (j == subAssets.Length - 1);
+							string subBranch = isLastSub ? last_branch_char : branch_char;
+							string subMeta = GetAssetMetadata(subAssets[j], filtered[i], tracker);
+							sb.AppendLine($"{childPrefix}{subBranch}{subAssets[j].name} {subMeta}");
+						}
+					}
+				}
+			}
+		}
+
+		// Replace BuildPrefabHierarchy method:
+		private static void BuildPrefabHierarchy(GameObject prefabRoot, string prefix, StringBuilder sb,
+			AbbreviationTracker tracker)
+		{
+			Transform rootTransform = prefabRoot.transform;
+			int childCount = rootTransform.childCount;
+
+			for (int i = 0; i < childCount; i++)
+			{
+				bool isLast = (i == childCount - 1);
+				Transform child = rootTransform.GetChild(i);
+				BuildPrefabHierarchyRecursive(child, prefix, isLast, sb, tracker);
+			}
+		}
+
+		// Replace BuildPrefabHierarchyRecursive method:
+		private static void BuildPrefabHierarchyRecursive(Transform current, string prefix, bool isLast,
+			StringBuilder sb, AbbreviationTracker tracker)
+		{
+			string branchChar = isLast ? last_branch_char : branch_char;
+			string metadata = GetGameObjectMetadata(current.gameObject, tracker);
+
+			sb.AppendLine($"{prefix}{branchChar}{current.name} {metadata}");
+
+			string childPrefix = prefix + (isLast ? empty_indent_space : vertical_line);
+
+			int childCount = current.childCount;
+			for (int i = 0; i < childCount; i++)
+			{
+				bool isLastChild = (i == childCount - 1);
+				Transform child = current.GetChild(i);
+				BuildPrefabHierarchyRecursive(child, childPrefix, isLastChild, sb, tracker);
+			}
+		}
+
+		// Replace GetAssetMetadata method:
+		private static string GetAssetMetadata(Object asset, string assetPath, AbbreviationTracker tracker = null)
+		{
+			if (asset == null) return "(unknown)";
+
+			// Mesh
+			if (asset is Mesh mesh)
+			{
+				Bounds bounds = mesh.bounds;
+				string boundsStr = FormatBounds(bounds.size);
+				string typeStr = AbbreviateAssetType("Mesh", tracker);
+				return $"({typeStr} | {boundsStr} | v:{mesh.vertexCount})";
+			}
+
+			// Animation Clip
+			if (asset is AnimationClip clip)
+			{
+				string typeStr = AbbreviateAssetType("AnimClip", tracker);
+				return $"({typeStr} | {clip.length:F2}s | {clip.frameRate:F0}fps)";
+			}
+
+			// Audio Clip
+			if (asset is AudioClip audio)
+			{
+				string typeStr = AbbreviateAssetType("Audio", tracker);
+				return $"({typeStr} | {audio.length:F2}s | {audio.channels}ch)";
+			}
+
+			// Texture
+			if (asset is Texture2D tex)
+			{
+				string typeStr = AbbreviateAssetType("Texture", tracker);
+				return $"({typeStr} | {tex.width}×{tex.height} | {tex.format})";
+			}
+
+			// Material
+			if (asset is Material mat)
+			{
+				string typeStr = AbbreviateAssetType("Material", tracker);
+				string shaderName = AbbreviateShaderName(mat.shader.name);
+				return $"({typeStr} | {shaderName})";
+			}
+
+			// Prefab (GameObject)
+			if (asset is GameObject go)
+			{
+				Vector3 scale = go.transform.localScale;
+				string scaleStr = FormatScale(scale);
+
+				Component[] components = go.GetComponents<Component>();
+				var componentNames = components
+					.Where(c => c != null && !(c is Transform))
+					.Select(c => c.GetType().Name)
+					.ToList();
+
+				string componentsStr = AbbreviateComponents(componentNames, tracker);
+				string typeStr = AbbreviateAssetType("Prefab", tracker);
+
+				return $"({typeStr} | {scaleStr} | {componentsStr})";
+			}
+
+			// Script/MonoScript
+			if (asset is MonoScript script)
+			{
+				string typeStr = AbbreviateAssetType("Script", tracker);
+				return $"({typeStr} | {script.GetClass()?.Name ?? "unknown"})";
+			}
+
+			// TextAsset (plain text / .txt / .md / etc)
+			if (asset is TextAsset textAsset)
+			{
+				string typeStr = AbbreviateAssetType("TextAsset", tracker);
+				return $"({typeStr})";
+			}
+
+			// Scene
+			if (assetPath.EndsWith(".unity"))
+			{
+				string typeStr = AbbreviateAssetType("Scene", tracker);
+				return $"({typeStr})";
+			}
+
+			// Generic fallback
+			return $"({asset.GetType().Name})";
+		}
+
+		// Replace AbbreviateAssetType method:
+		private static string AbbreviateAssetType(string typeName, AbbreviationTracker tracker = null)
+		{
+			if (!USE_ASSET_TYPE_ABBREVIATIONS)
+				return typeName;
+
+			string abbreviated = ASSET_TYPE_ABBREVIATIONS.ContainsKey(typeName)
+				? ASSET_TYPE_ABBREVIATIONS[typeName]
+				: typeName;
+
+			// Track this abbreviation if tracker is provided and it was abbreviated
+			if (tracker != null && ASSET_TYPE_ABBREVIATIONS.ContainsKey(typeName))
+			{
+				tracker.usedAssetTypeAbbreviations.Add(abbreviated);
+			}
+
+			return abbreviated;
+		}
+		#endregion
+
+
+
 
 		private static void BuildSceneHierarchyRecursive(Transform current, string prefix, bool isLast, StringBuilder sb)
 		{
@@ -364,67 +737,6 @@ namespace SPACE_UnityEditor
 			return Selection.activeObject != null;
 		}
 
-		/// <summary>
-		/// Builds asset hierarchy for folders and complex assets (FBX, Prefabs, etc.)
-		/// </summary>
-		private static string BuildAssetHierarchyString(string assetPath, Object rootAsset)
-		{
-			StringBuilder sb = new StringBuilder();
-
-			// Add legend at the top if abbreviations are enabled
-			if (USE_COMPONENT_ABBREVIATIONS)
-			{
-				sb.AppendLine("=== Component Abbreviations ===");
-				foreach (var kvp in COMPONENT_ABBREVIATIONS)
-				{
-					sb.AppendLine($"{kvp.Key} = {string.Join(" | ", kvp.Value)}");
-				}
-				sb.AppendLine("================================");
-				sb.AppendLine();
-			}
-			if (USE_ASSET_TYPE_ABBREVIATIONS == true)
-			{
-				sb.AppendLine("=== Asset Type Abbreviations ===");
-				foreach (var kvp in ASSET_TYPE_ABBREVIATIONS)
-					sb.AppendLine($"{kvp.Value} = {kvp.Key}");
-				sb.AppendLine("================================");
-				sb.AppendLine();
-			}
-
-			// Check if it's a folder
-			if (AssetDatabase.IsValidFolder(assetPath))
-			{
-				sb.AppendLine($"./{Path.GetFileName(assetPath)}/");
-				BuildFolderHierarchy(assetPath, "", sb);
-			}
-			else
-			{
-				// Single asset - show with sub-assets
-				string metadata = GetAssetMetadata(rootAsset, assetPath);
-				sb.AppendLine($"./{rootAsset.name} {metadata}");
-
-				// Load all sub-assets (for FBX, prefabs, etc.)
-				Object[] subAssets = AssetDatabase.LoadAllAssetRepresentationsAtPath(assetPath);
-
-				for (int i = 0; i < subAssets.Length; i++)
-				{
-					bool isLast = (i == subAssets.Length - 1);
-					string branchChar = isLast ? last_branch_char : branch_char;
-					string subMeta = GetAssetMetadata(subAssets[i], assetPath);
-
-					sb.AppendLine($"{branchChar}{subAssets[i].name} {subMeta}");
-				}
-
-				// For prefabs, also show internal GameObject hierarchy
-				if (rootAsset is GameObject prefabRoot)
-				{
-					sb.AppendLine($"{branch_char}[Prefab Contents]");
-					BuildPrefabHierarchy(prefabRoot, vertical_line, sb);
-				}
-			}
-
-			return sb.ToString();
-		}
 
 		/// <summary>
 		/// Recursively builds folder hierarchy, excluding .meta files and ignored folders/files.
