@@ -778,26 +778,32 @@ namespace SPACE_UnityEditor
 				}
 			}
 
+			// Default state indicator
+			if (stateMachine.defaultState != null)
+			{
+				//sb.AppendLine($"{prefix}Entry → {stateMachine.defaultState.name}(The Default State)");
+				sb.AppendLine($"{prefix}Entry:");
+				sb.AppendLine($"{prefix}  {last_branch_char}({"default transition"}) → {stateMachine.defaultState.name}(The Default State)");
+			}
+
 			// Any State transitions
 			if (stateMachine.anyStateTransitions.Length > 0)
 			{
 				sb.AppendLine($"{prefix}Any State:");
+				int transI = 0;
 				foreach (var trans in stateMachine.anyStateTransitions)
 				{
 					string transInfo = GetTransitionInfo(trans);
 					string destName = trans.destinationState != null ? trans.destinationState.name : trans.destinationStateMachine?.name ?? "Unknown";
-					sb.AppendLine($"{prefix}  {branch_char}{transInfo} → {destName}");
+					string _branchChar = (transI == stateMachine.anyStateTransitions.Length - 1) ? last_branch_char : branch_char;
+					sb.AppendLine($"{prefix}  {_branchChar}{transInfo} → {destName}");
+					transI += 1;
 				}
 			}
 
-			// Default state indicator
-			if (stateMachine.defaultState != null)
-			{
-				sb.AppendLine($"{prefix}Default State: {stateMachine.defaultState.name}");
-			}
 
 			// States
-			sb.AppendLine($"{prefix}States ({stateMachine.states.Length}):");
+			sb.AppendLine($"{prefix}States Info ({stateMachine.states.Length}):");
 			for (int i = 0; i < stateMachine.states.Length; i++)
 			{
 				var childState = stateMachine.states[i];
@@ -805,16 +811,22 @@ namespace SPACE_UnityEditor
 				bool isLast = (i == stateMachine.states.Length - 1);
 				string branchChar = isLast ? last_branch_char : branch_char;
 
-				// State info
-				string motionName = state.motion != null ? state.motion.name : "(no motion)";
-				string stateInfo = $"{state.name} | Motion: {motionName} | Speed: {state.speed:F2}x";
+				// Check if motion is a BlendTree
+				string motionInfo = GetMotionInfo(state.motion);
+				string stateInfo = $"{state.name} | {motionInfo} | Speed: {state.speed:F2}x";
 				if (state == stateMachine.defaultState)
 					stateInfo += " [DEFAULT]";
 
 				sb.AppendLine($"{prefix}{branchChar}{stateInfo}");
 
-				// Transitions from this state
 				string childPrefix = prefix + (isLast ? empty_indent_space : vertical_line);
+				// If it's a blend tree, show its structure
+				if (state.motion is UnityEditor.Animations.BlendTree blendTree)
+				{
+					BuildBlendTreeHierarchy(blendTree, childPrefix + "  ", sb);
+				}
+
+				// Transitions from this state
 				if (state.transitions.Length > 0)
 				{
 					for (int j = 0; j < state.transitions.Length; j++)
@@ -847,6 +859,70 @@ namespace SPACE_UnityEditor
 					string childPrefix = prefix + (isLast ? empty_indent_space : vertical_line);
 					BuildStateMachineHierarchy(childSM.stateMachine, childPrefix + "  ", sb);
 				}
+			}
+		}
+
+		/// <summary>
+		/// Gets motion information, detecting blend trees.
+		/// </summary>
+		private static string GetMotionInfo(Motion motion)
+		{
+			if (motion == null)
+				return "Motion: (no motion)";
+
+			if (motion is UnityEditor.Animations.BlendTree blendTree)
+			{
+				string blendType = GetBlendTreeTypeString(blendTree.blendType);
+				return $"BlendTree: {motion.name} ({blendType})";
+			}
+
+			return $"Motion: {motion.name}";
+		}
+
+		/// <summary>
+		/// Recursively builds blend tree hierarchy showing all child motions.
+		/// </summary>
+		private static void BuildBlendTreeHierarchy(UnityEditor.Animations.BlendTree blendTree, string prefix, StringBuilder sb)
+		{
+			sb.AppendLine($"{prefix}├ BlendParameter: {blendTree.blendParameter}" +
+				(blendTree.blendType == UnityEditor.Animations.BlendTreeType.Simple1D ? "" : $", {blendTree.blendParameterY}"));
+
+			var children = blendTree.children;
+			for (int i = 0; i < children.Length; i++)
+			{
+				var child = children[i];
+				bool isLast = (i == children.Length - 1);
+				string branchChar = isLast ? last_branch_char : branch_char;
+
+				string motionName = child.motion != null ? child.motion.name : "(null)";
+				string thresholdInfo = blendTree.blendType == UnityEditor.Animations.BlendTreeType.Simple1D
+					? $"threshold:{child.threshold:F2}"
+					: $"pos:({child.position.x:F2},{child.position.y:F2})";
+
+				sb.AppendLine($"{prefix}{branchChar}[{thresholdInfo}] {motionName} (speed:{child.timeScale:F2}x)");
+
+				// If child is also a blend tree, recurse
+				if (child.motion is UnityEditor.Animations.BlendTree childBlendTree)
+				{
+					string childPrefix = prefix + (isLast ? empty_indent_space : vertical_line);
+					BuildBlendTreeHierarchy(childBlendTree, childPrefix + "  ", sb);
+				}
+			}
+		}
+
+		/// <summary>
+		/// Converts blend tree type to readable string.
+		/// </summary>
+		private static string GetBlendTreeTypeString(UnityEditor.Animations.BlendTreeType blendType)
+		{
+			switch (blendType)
+			{
+				case UnityEditor.Animations.BlendTreeType.Simple1D: return "1D";
+				case UnityEditor.Animations.BlendTreeType.SimpleDirectional2D: return "2D Directional";
+				case UnityEditor.Animations.BlendTreeType.FreeformDirectional2D: return "2D Freeform Directional";
+				case UnityEditor.Animations.BlendTreeType.FreeformCartesian2D: return "2D Freeform Cartesian";
+				case UnityEditor.Animations.BlendTreeType.Direct: return "Direct";
+				default: return blendType.ToString();
 			}
 		}
 
