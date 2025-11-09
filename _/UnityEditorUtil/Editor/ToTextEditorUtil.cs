@@ -15,7 +15,7 @@ namespace SPACE_UnityEditor
 	/// - Project Assets: Right-click any asset → "Copy Asset Hierarchy as Text"
 	/// Includes detailed metadata for meshes, prefabs, audio clips, animations, etc.
 	/// </summary>
-	public static class CopyHierarchyToClipboard
+	public static class CopyAsText
 	{
 		// Adjustable indentation settings
 		private const string branch_char = "├ "; // ──
@@ -164,7 +164,7 @@ namespace SPACE_UnityEditor
 			// Log to file using UTIL.cs LOG system
 			try
 			{
-				LOG.AddLog(hierarchyStr, syntaxType: "scene-hierarchy");
+				LOG.AddLog(hierarchyStr, syntaxType: "sceneGameObject-hierarchy");
 				Debug.Log($"[CopyHierarchy] Copied hierarchy of '{selected.name}' to clipboard and saved to LOG.md".colorTag("lime"));
 			}
 			catch (System.Exception e)
@@ -349,7 +349,7 @@ namespace SPACE_UnityEditor
 			// Log to file
 			try
 			{
-				LOG.AddLog(hierarchyStr, syntaxType: "project-hierarchy");
+				LOG.AddLog(hierarchyStr, syntaxType: "projectFolder-hierarchy");
 				Debug.Log($"[CopyHierarchy] Copied asset hierarchy of '{selected.name}' to clipboard and saved to LOG.md".colorTag("lime"));
 			}
 			catch (System.Exception e)
@@ -677,6 +677,273 @@ namespace SPACE_UnityEditor
 			return SHADER_ABBREVIATIONS.ContainsKey(shaderName)
 				? SHADER_ABBREVIATIONS[shaderName]
 				: shaderName;
+		}
+
+		#endregion
+
+		#region Animator Controller Hierarchy
+
+		[MenuItem("Assets/Copy Animator Controller Hierarchy", false, 21)]
+		private static void CopyAnimatorControllerHierarchy()
+		{
+			Object selected = Selection.activeObject;
+
+			if (selected == null || !(selected is UnityEditor.Animations.AnimatorController))
+			{
+				Debug.Log("[CopyHierarchy] No Animator Controller selected!".colorTag("yellow"));
+				return;
+			}
+
+			UnityEditor.Animations.AnimatorController controller = selected as UnityEditor.Animations.AnimatorController;
+			string hierarchyStr = BuildAnimatorControllerString(controller);
+
+			// Copy to clipboard
+			EditorGUIUtility.systemCopyBuffer = hierarchyStr;
+
+			// Log to file
+			try
+			{
+				LOG.AddLog(hierarchyStr, syntaxType: "animatorController-hierarchy");
+				Debug.Log($"[CopyHierarchy] Copied Animator Controller '{controller.name}' to clipboard and saved to LOG.md".colorTag("lime"));
+			}
+			catch (System.Exception e)
+			{
+				Debug.Log($"[CopyHierarchy] Failed to log animator controller: {e.Message}".colorTag("red"));
+			}
+		}
+
+		[MenuItem("Assets/Copy Animator Controller Hierarchy", true)]
+		private static bool ValidateCopyAnimatorControllerHierarchy()
+		{
+			return Selection.activeObject is UnityEditor.Animations.AnimatorController;
+		}
+
+		/// <summary>
+		/// Builds a formatted string representation of an Animator Controller.
+		/// </summary>
+		private static string BuildAnimatorControllerString(UnityEditor.Animations.AnimatorController controller)
+		{
+			StringBuilder sb = new StringBuilder();
+
+			sb.AppendLine($"=== Animator Controller: {controller.name} ===");
+			sb.AppendLine();
+
+			// Parameters
+			sb.AppendLine("Parameters:");
+			if (controller.parameters.Length == 0)
+			{
+				sb.AppendLine("  (none)");
+			}
+			else
+			{
+				foreach (var param in controller.parameters)
+				{
+					string typeStr = GetParameterTypeString(param.type);
+					string defaultVal = GetParameterDefaultValue(param);
+					sb.AppendLine($"  {param.name} ({typeStr}) = {defaultVal}");
+				}
+			}
+			sb.AppendLine();
+
+			// Layers
+			sb.AppendLine($"Layers ({controller.layers.Length}):");
+			for (int i = 0; i < controller.layers.Length; i++)
+			{
+				var layer = controller.layers[i];
+				sb.AppendLine($"{branch_char}Layer {i}: {layer.name}");
+				sb.AppendLine($"{vertical_line}  Weight: {layer.defaultWeight:F2} | Blending: {layer.blendingMode} | IK: {layer.iKPass} | Sync: {(layer.syncedLayerIndex >= 0 ? $"Layer {layer.syncedLayerIndex}" : "None")}");
+				sb.AppendLine();
+
+				BuildStateMachineHierarchy(layer.stateMachine, vertical_line, sb);
+				sb.AppendLine();
+			}
+
+			return sb.ToString();
+		}
+
+		/// <summary>
+		/// Recursively builds state machine hierarchy with states and transitions.
+		/// </summary>
+		private static void BuildStateMachineHierarchy(UnityEditor.Animations.AnimatorStateMachine stateMachine, string prefix, StringBuilder sb)
+		{
+			// Entry transitions
+			if (stateMachine.entryTransitions.Length > 0)
+			{
+				sb.AppendLine($"{prefix}Entry:");
+				foreach (var trans in stateMachine.entryTransitions)
+				{
+					string conditionsStr = GetTransitionConditions(trans.conditions);
+					string destName = trans.destinationState != null ? trans.destinationState.name : trans.destinationStateMachine?.name ?? "Unknown";
+					sb.AppendLine($"{prefix}  {branch_char}[{conditionsStr}] → {destName}");
+				}
+			}
+
+			// Any State transitions
+			if (stateMachine.anyStateTransitions.Length > 0)
+			{
+				sb.AppendLine($"{prefix}Any State:");
+				foreach (var trans in stateMachine.anyStateTransitions)
+				{
+					string transInfo = GetTransitionInfo(trans);
+					string destName = trans.destinationState != null ? trans.destinationState.name : trans.destinationStateMachine?.name ?? "Unknown";
+					sb.AppendLine($"{prefix}  {branch_char}{transInfo} → {destName}");
+				}
+			}
+
+			// Default state indicator
+			if (stateMachine.defaultState != null)
+			{
+				sb.AppendLine($"{prefix}Default State: {stateMachine.defaultState.name}");
+			}
+
+			// States
+			sb.AppendLine($"{prefix}States ({stateMachine.states.Length}):");
+			for (int i = 0; i < stateMachine.states.Length; i++)
+			{
+				var childState = stateMachine.states[i];
+				var state = childState.state;
+				bool isLast = (i == stateMachine.states.Length - 1);
+				string branchChar = isLast ? last_branch_char : branch_char;
+
+				// State info
+				string motionName = state.motion != null ? state.motion.name : "(no motion)";
+				string stateInfo = $"{state.name} | Motion: {motionName} | Speed: {state.speed:F2}x";
+				if (state == stateMachine.defaultState)
+					stateInfo += " [DEFAULT]";
+
+				sb.AppendLine($"{prefix}{branchChar}{stateInfo}");
+
+				// Transitions from this state
+				string childPrefix = prefix + (isLast ? empty_indent_space : vertical_line);
+				if (state.transitions.Length > 0)
+				{
+					for (int j = 0; j < state.transitions.Length; j++)
+					{
+						var trans = state.transitions[j];
+						bool isLastTrans = (j == state.transitions.Length - 1);
+						string transBranch = isLastTrans ? last_branch_char : branch_char;
+
+						string transInfo = GetTransitionInfo(trans);
+						string destName = trans.isExit ? "Exit" :
+							(trans.destinationState != null ? trans.destinationState.name :
+							trans.destinationStateMachine?.name ?? "Unknown");
+
+						sb.AppendLine($"{childPrefix}{transBranch}{transInfo} → {destName}");
+					}
+				}
+			}
+
+			// Sub-state machines
+			if (stateMachine.stateMachines.Length > 0)
+			{
+				sb.AppendLine($"{prefix}Sub-State Machines ({stateMachine.stateMachines.Length}):");
+				for (int i = 0; i < stateMachine.stateMachines.Length; i++)
+				{
+					var childSM = stateMachine.stateMachines[i];
+					bool isLast = (i == stateMachine.stateMachines.Length - 1);
+					string branchChar = isLast ? last_branch_char : branch_char;
+
+					sb.AppendLine($"{prefix}{branchChar}[StateMachine] {childSM.stateMachine.name}");
+					string childPrefix = prefix + (isLast ? empty_indent_space : vertical_line);
+					BuildStateMachineHierarchy(childSM.stateMachine, childPrefix + "  ", sb);
+				}
+			}
+		}
+
+		/// <summary>
+		/// Gets formatted transition information including conditions and timing.
+		/// </summary>
+		private static string GetTransitionInfo(UnityEditor.Animations.AnimatorStateTransition trans)
+		{
+			string conditionsStr = GetTransitionConditions(trans.conditions);
+			string timing = $"exit:{trans.exitTime:F2} | dur:{trans.duration:F2}s";
+
+			if (!trans.hasExitTime && trans.conditions.Length > 0)
+			{
+				return $"[{conditionsStr}] ({timing})";
+			}
+			else if (trans.hasExitTime && trans.conditions.Length > 0)
+			{
+				return $"[{conditionsStr}] ({timing})";
+			}
+			else if (trans.hasExitTime)
+			{
+				return $"[auto] ({timing})";
+			}
+			else
+			{
+				return $"[immediate] ({timing})";
+			}
+		}
+
+		/// <summary>
+		/// Gets transition conditions as formatted string.
+		/// </summary>
+		private static string GetTransitionConditions(UnityEditor.Animations.AnimatorCondition[] conditions)
+		{
+			if (conditions.Length == 0)
+				return "no conditions";
+
+			var conditionStrings = new System.Collections.Generic.List<string>();
+			foreach (var condition in conditions)
+			{
+				string modeStr = GetConditionModeString(condition.mode);
+				string valueStr = condition.mode == UnityEditor.Animations.AnimatorConditionMode.If ||
+								 condition.mode == UnityEditor.Animations.AnimatorConditionMode.IfNot
+					? ""
+					: $" {condition.threshold}";
+
+				conditionStrings.Add($"{condition.parameter} {modeStr}{valueStr}");
+			}
+
+			return string.Join(" && ", conditionStrings);
+		}
+
+		/// <summary>
+		/// Converts parameter type enum to readable string.
+		/// </summary>
+		private static string GetParameterTypeString(UnityEngine.AnimatorControllerParameterType type)
+		{
+			switch (type)
+			{
+				case UnityEngine.AnimatorControllerParameterType.Float: return "float";
+				case UnityEngine.AnimatorControllerParameterType.Int: return "int";
+				case UnityEngine.AnimatorControllerParameterType.Bool: return "bool";
+				case UnityEngine.AnimatorControllerParameterType.Trigger: return "trigger";
+				default: return type.ToString();
+			}
+		}
+
+		/// <summary>
+		/// Gets parameter default value as string.
+		/// </summary>
+		private static string GetParameterDefaultValue(UnityEngine.AnimatorControllerParameter param)
+		{
+			switch (param.type)
+			{
+				case UnityEngine.AnimatorControllerParameterType.Float: return param.defaultFloat.ToString("F2");
+				case UnityEngine.AnimatorControllerParameterType.Int: return param.defaultInt.ToString();
+				case UnityEngine.AnimatorControllerParameterType.Bool: return param.defaultBool.ToString().ToLower();
+				case UnityEngine.AnimatorControllerParameterType.Trigger: return "false";
+				default: return "unknown";
+			}
+		}
+
+		/// <summary>
+		/// Converts condition mode enum to operator string.
+		/// </summary>
+		private static string GetConditionModeString(UnityEditor.Animations.AnimatorConditionMode mode)
+		{
+			switch (mode)
+			{
+				case UnityEditor.Animations.AnimatorConditionMode.If: return "= true";
+				case UnityEditor.Animations.AnimatorConditionMode.IfNot: return "= false";
+				case UnityEditor.Animations.AnimatorConditionMode.Greater: return ">";
+				case UnityEditor.Animations.AnimatorConditionMode.Less: return "<";
+				case UnityEditor.Animations.AnimatorConditionMode.Equals: return "==";
+				case UnityEditor.Animations.AnimatorConditionMode.NotEqual: return "!=";
+				default: return mode.ToString();
+			}
 		}
 
 		#endregion

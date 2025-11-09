@@ -2083,6 +2083,7 @@ DEINITIALIZATION PHASE
 			Resources.UnloadUnusedAssets();
 		}
 
+		#region ad
 		/// <summary>
 		/// Gets cache statistics for debugging.
 		/// </summary>
@@ -2112,7 +2113,7 @@ DEINITIALIZATION PHASE
 
 			return result;
 		}
-
+		
 		/// <summary>
 		/// Logs the Resources folder structure based on cached resources.
 		/// Shows a tree view of all loaded resources organized by folder.
@@ -2157,7 +2158,6 @@ DEINITIALIZATION PHASE
 
 			return result;
 		}
-
 		#region getHeirarchy Helper
 		private static string GetExtension(UnityEngine.Object obj)
 		{
@@ -2209,7 +2209,8 @@ DEINITIALIZATION PHASE
 			}
 
 			return result;
-		} 
+		}
+		#endregion 
 		#endregion
 		#endregion
 	} 
