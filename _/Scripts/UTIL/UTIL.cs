@@ -1868,7 +1868,7 @@ DEINITIALIZATION PHASE
 
 	public static class ExtensionAnimator
 	{
-		public static void trySetBool(this Animator animator, object parameterType, bool val)
+		public static bool trySetBool(this Animator animator, object parameterType, bool val)
 		{
 			string paramName = parameterType.ToString();
 
@@ -1878,11 +1878,12 @@ DEINITIALIZATION PHASE
 				if (param.name == paramName && param.type == AnimatorControllerParameterType.Bool)
 				{
 					animator.SetBool(paramName, val);
-					return;
+					return true;
 				}
 			}
 
 			Debug.Log($"Bool parameter '{paramName}' not found in Animator".colorTag("red"));
+			return false;
 		}
 		public static bool tryGetBool(this Animator animator, object parameterType)
 		{
@@ -1901,7 +1902,7 @@ DEINITIALIZATION PHASE
 			return false;
 		}
 
-		public static void trySetTrigger(this Animator animator, object parameterType) // -> rename reFactor
+		public static bool trySetTrigger(this Animator animator, object parameterType) // -> rename reFactor
 		{
 			string paramName = parameterType.ToString();
 
@@ -1911,14 +1912,15 @@ DEINITIALIZATION PHASE
 				if (param.name == paramName && param.type == AnimatorControllerParameterType.Trigger)
 				{
 					animator.SetTrigger(paramName);
-					return;
+					return true;
 				}
 			}
 
 			Debug.Log($"Trigger parameter '{paramName}' not found in Animator".colorTag("red"));
+			return false;
 		}
 
-		public static void trySetFloat(this Animator animator, object parameterType, float val)
+		public static bool trySetFloat(this Animator animator, object parameterType, float val)
 		{
 			string paramName = parameterType.ToString();
 
@@ -1928,11 +1930,12 @@ DEINITIALIZATION PHASE
 				if (param.name == paramName && param.type == AnimatorControllerParameterType.Float)
 				{
 					animator.SetFloat(paramName, val);
-					return;
+					return true;
 				}
 			}
 
 			Debug.Log($"Float parameter '{paramName}' not found in Animator".colorTag("red"));
+			return false;
 		}
 		public static float tryGetFloat(this Animator animator, object parameterType)
 		{
