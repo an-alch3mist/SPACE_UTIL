@@ -1057,19 +1057,26 @@ namespace SPACE_UnityEditor
 			}
 			sb.AppendLine();
 
-			// Layers
-			sb.AppendLine($"Layers ({controller.layers.Length}):");
+			// Animation Layers
+			sb.AppendLine($"Animation Layers ({controller.layers.Length}):");
 			for (int i = 0; i < controller.layers.Length; i++)
 			{
 				var layer = controller.layers[i];
-				sb.AppendLine($"{branch_char}Layer {i}: {layer.name}");
-				sb.AppendLine($"{vertical_line}  Weight: {layer.defaultWeight:F2} | Blending: {layer.blendingMode} | IK: {layer.iKPass} | Sync: {(layer.syncedLayerIndex >= 0 ? $"Layer {layer.syncedLayerIndex}" : "None")}");
+				bool isLastLayer = (i == controller.layers.Length - 1);
+				string layerBranch = isLastLayer ? last_branch_char : branch_char;
+
+				sb.AppendLine($"{layerBranch}-> Layer {i}: {layer.name}");
+
+				// Determine the prefix for content inside this layer
+				string layerContentPrefix = isLastLayer ? empty_indent_space : vertical_line;
+
+				sb.AppendLine($"{layerContentPrefix}  Weight: {layer.defaultWeight:F2} | Blending: {layer.blendingMode} | IK: {layer.iKPass} | Sync: {(layer.syncedLayerIndex >= 0 ? $"Layer {layer.syncedLayerIndex}" : "None")}");
 				sb.AppendLine();
 
-				BuildStateMachineHierarchy(layer.stateMachine, vertical_line, sb);
+				// Pass the proper prefix so all content is indented under this layer
+				BuildStateMachineHierarchy(layer.stateMachine, layerContentPrefix + "  ", sb);
 				sb.AppendLine();
 			}
-
 			return sb.ToString();
 		}
 
@@ -1244,7 +1251,11 @@ namespace SPACE_UnityEditor
 		private static string GetTransitionInfo(UnityEditor.Animations.AnimatorStateTransition trans)
 		{
 			string conditionsStr = GetTransitionConditions(trans.conditions);
-			string timing = $"exitTime:{trans.exitTime:F2} | transition:{trans.duration:F2}s";
+
+			// Add checkbox indicator for hasExitTime
+			string exitTimeCheckbox = trans.hasExitTime ? "☑" : "☐";
+
+			string timing = $"hasExitTime:{exitTimeCheckbox} | exitTime:{trans.exitTime:F2} | transition duration:{trans.duration:F2}s";
 
 			if (!trans.hasExitTime && trans.conditions.Length > 0)
 			{

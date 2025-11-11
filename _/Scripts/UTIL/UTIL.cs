@@ -1901,7 +1901,7 @@ DEINITIALIZATION PHASE
 			return false;
 		}
 
-		public static void TrySetTrigger(this Animator animator, object parameterType)
+		public static void trySetTrigger(this Animator animator, object parameterType) // -> rename reFactor
 		{
 			string paramName = parameterType.ToString();
 
