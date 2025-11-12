@@ -1127,16 +1127,11 @@ namespace SPACE_UTIL
 		/// Wraps string in Unity Rich Text color tags.
 		/// Usage: "Hello".colorTag("red") → "&lt;color=red&gt;Hello&lt;/color&gt;"
 		/// </summary>
-		
-		public static string colorTag(this string str, string color = "white")
+		public static string colorTag(this string str, string color = "red")
 		{
 			return $"<color={color}>{str}</color>";
 		}
-		public static string colorTag(this string str, object obj)
-		{
-			return str.colorTag(obj.ToString());
-		}
-
+		
 		/// <summary>
 		/// Automatically gets caller's class and method name with built-in color.
 		/// C.method(this);
@@ -1983,16 +1978,14 @@ DEINITIALIZATION PHASE
 			return (T[])Enum.GetValues(typeof(T));
 		}
 
-		public static bool checkAllParamExistInAnimatorController<T>(this Animator animator) where T : struct
+		public static void checkAllParamExistInAnimatorController<T>(this Animator animator) where T : struct
 		{
 			foreach (var param in (T[])Enum.GetValues(typeof(T)))
 			{
-				if (animator.tryGetTrigger(param) || animator.tryGetBool(param, out bool val_0) || animator.tryGetFloat(param, out float val_1))
-					return false;
-				Debug.Log($"{param} exist in {animator}".colorTag("cyan"));
+				bool exist = animator.tryGetTrigger(param) || animator.tryGetBool(param, out bool val_0) || animator.tryGetFloat(param, out float val_1);
+				if (exist)
+					Debug.Log($"found {param} existance in {animator}".colorTag("cyan"));
 			}
-
-			return true;
 		}
 	}
 
