@@ -1132,6 +1132,10 @@ namespace SPACE_UTIL
 		{
 			return $"<color={color}>{str}</color>";
 		}
+		public static string colorTag(this string str, object obj)
+		{
+			return str.colorTag(obj.ToString());
+		}
 
 		/// <summary>
 		/// Automatically gets caller's class and method name with built-in color.
@@ -1885,7 +1889,7 @@ DEINITIALIZATION PHASE
 			Debug.Log($"Bool parameter '{paramName}' not found in Animator".colorTag("red"));
 			return false;
 		}
-		public static bool tryGetBool(this Animator animator, object parameterType)
+		public static bool tryGetBool(this Animator animator, object parameterType, out bool val)
 		{
 			string paramName = parameterType.ToString();
 
@@ -1894,15 +1898,17 @@ DEINITIALIZATION PHASE
 			{
 				if (param.name == paramName && param.type == AnimatorControllerParameterType.Bool)
 				{
-					return animator.GetBool(paramName);
+					val = animator.GetBool(paramName);
+					return true;
 				}
 			}
 
 			Debug.Log($"Bool parameter '{paramName}' not found in Animator".colorTag("red"));
+			val = false;
 			return false;
 		}
 
-		public static bool trySetTrigger(this Animator animator, object parameterType) // -> rename reFactor
+		public static bool trySetTrigger(this Animator animator, object parameterType) 
 		{
 			string paramName = parameterType.ToString();
 
@@ -1912,6 +1918,22 @@ DEINITIALIZATION PHASE
 				if (param.name == paramName && param.type == AnimatorControllerParameterType.Trigger)
 				{
 					animator.SetTrigger(paramName);
+					return true;
+				}
+			}
+
+			Debug.Log($"Trigger parameter '{paramName}' not found in Animator".colorTag("red"));
+			return false;
+		}
+		public static bool tryGetTrigger(this Animator animator, object parameterType)// just to log exist ? 
+		{
+			string paramName = parameterType.ToString();
+
+			// Check if parameter exists
+			foreach (AnimatorControllerParameter param in animator.parameters)
+			{
+				if (param.name == paramName && param.type == AnimatorControllerParameterType.Trigger)
+				{
 					return true;
 				}
 			}
@@ -1937,7 +1959,7 @@ DEINITIALIZATION PHASE
 			Debug.Log($"Float parameter '{paramName}' not found in Animator".colorTag("red"));
 			return false;
 		}
-		public static float tryGetFloat(this Animator animator, object parameterType)
+		public static bool tryGetFloat(this Animator animator, object parameterType, out float val)
 		{
 			string paramName = parameterType.ToString();
 
@@ -1946,12 +1968,31 @@ DEINITIALIZATION PHASE
 			{
 				if (param.name == paramName && param.type == AnimatorControllerParameterType.Float)
 				{
-					return animator.GetFloat(paramName);
+					val = animator.GetFloat(paramName);
+					return true;
 				}
 			}
 
 			Debug.Log($"Float parameter '{paramName}' not found in Animator".colorTag("red"));
-			return 0f;
+			val = -1f;
+			return false;
+		}
+
+		public static T[] getEnumValues<T>() where T : struct
+		{
+			return (T[])Enum.GetValues(typeof(T));
+		}
+
+		public static bool checkAllParamExistInAnimatorController<T>(this Animator animator) where T : struct
+		{
+			foreach (var param in (T[])Enum.GetValues(typeof(T)))
+			{
+				if (animator.tryGetTrigger(param) || animator.tryGetBool(param, out bool val_0) || animator.tryGetFloat(param, out float val_1))
+					return false;
+				Debug.Log($"{param} exist in {animator}".colorTag("cyan"));
+			}
+
+			return true;
 		}
 	}
 
