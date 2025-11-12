@@ -1903,7 +1903,7 @@ DEINITIALIZATION PHASE
 			return false;
 		}
 
-		public static bool trySetTrigger(this Animator animator, object parameterType) 
+		public static bool trySetTrigger(this Animator animator, object parameterType)
 		{
 			string paramName = parameterType.ToString();
 
@@ -1913,22 +1913,6 @@ DEINITIALIZATION PHASE
 				if (param.name == paramName && param.type == AnimatorControllerParameterType.Trigger)
 				{
 					animator.SetTrigger(paramName);
-					return true;
-				}
-			}
-
-			Debug.Log($"Trigger parameter '{paramName}' not found in Animator".colorTag("red"));
-			return false;
-		}
-		public static bool tryGetTrigger(this Animator animator, object parameterType)// just to log exist ? 
-		{
-			string paramName = parameterType.ToString();
-
-			// Check if parameter exists
-			foreach (AnimatorControllerParameter param in animator.parameters)
-			{
-				if (param.name == paramName && param.type == AnimatorControllerParameterType.Trigger)
-				{
 					return true;
 				}
 			}
@@ -1982,9 +1966,18 @@ DEINITIALIZATION PHASE
 		{
 			foreach (var param in (T[])Enum.GetValues(typeof(T)))
 			{
-				bool exist = animator.tryGetTrigger(param) || animator.tryGetBool(param, out bool val_0) || animator.tryGetFloat(param, out float val_1);
-				if (exist)
-					Debug.Log($"found {param} existance in {animator}".colorTag("cyan"));
+				bool exists = false;
+				// search >>
+				foreach (var animParam in animator.parameters)
+					if (param.ToString() == animParam.name)
+					{
+						exists = true;
+						Debug.Log($"found {param} existance in {animator}".colorTag("cyan"));
+						break;
+					}
+				// << search
+				if (exists == false)
+					Debug.Log($"not found {param} existance in {animator}".colorTag("red"));
 			}
 		}
 	}
@@ -2046,6 +2039,14 @@ DEINITIALIZATION PHASE
 				Debug.Log(C.method(null, color: "red", adMssg: "error parsing overriden bindings so loaded default IA with no override."));
 				//Debug.Log($"[InputActionAsset.tryLoadBindingOverridesFromJson()] error parsing overriden bindings so loaded default IA".colorTag("red"));
 			}
+		}
+	}
+
+	public static class ExtentionAd
+	{
+		public static bool contains(this LayerMask layerMask, GameObject other)
+		{
+			return ((layerMask.value & (1 << other.layer)) == 0);
 		}
 	}
 	#endregion
