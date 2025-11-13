@@ -1867,6 +1867,10 @@ DEINITIALIZATION PHASE
 
 	public static class ExtensionAnimator
 	{
+		/*
+			if(animator.trySet....(.doorOpen, true))
+				Debug.Log("Door Opening Set in animator");
+		*/
 		public static bool trySetBool(this Animator animator, object parameterType, bool val)
 		{
 			string paramName = parameterType.ToString();
@@ -1957,9 +1961,40 @@ DEINITIALIZATION PHASE
 			return false;
 		}
 
-		public static T[] getEnumValues<T>() where T : struct
+		public static bool trySetInt(this Animator animator, object parameterType, int val)
 		{
-			return (T[])Enum.GetValues(typeof(T));
+			string paramName = parameterType.ToString();
+
+			// Check if parameter exists
+			foreach (AnimatorControllerParameter param in animator.parameters)
+			{
+				if (param.name == paramName && param.type == AnimatorControllerParameterType.Int)
+				{
+					animator.SetInteger(paramName, val);
+					return true;
+				}
+			}
+
+			Debug.Log($"Int parameter '{paramName}' not found in Animator".colorTag("red"));
+			return false;
+		}
+		public static bool tryGetInt(this Animator animator, object parameterType, out int val)
+		{
+			string paramName = parameterType.ToString();
+
+			// Check if parameter exists
+			foreach (AnimatorControllerParameter param in animator.parameters)
+			{
+				if (param.name == paramName && param.type == AnimatorControllerParameterType.Int)
+				{
+					val = animator.GetInteger(paramName);
+					return true;
+				}
+			}
+
+			Debug.Log($"Int parameter '{paramName}' not found in Animator".colorTag("red"));
+			val = -1;
+			return false;
 		}
 
 		public static void checkAllParamExistInAnimatorController<T>(this Animator animator) where T : struct
