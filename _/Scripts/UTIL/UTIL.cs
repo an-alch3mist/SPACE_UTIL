@@ -711,9 +711,45 @@ namespace SPACE_UTIL
 		}
 		public static Transform PrefabHolder;
 
-		#region constant
+		#region CONSTANT
 		public static float e = 1f / 100;
 		public static float pi = Mathf.PI;
+		#region colorStr
+		public static class colorStr
+		{
+			// --- Whitish / Light Colors ---
+			public const string white = "#FFFFFF"; // keep pure
+			public const string silver = "#C8C8C8"; // softened from C0C0C0
+			public const string lightblue = "#7EC9F8"; // softer, less neon
+			public const string aqua = "#4FEFFB"; // reduced sharpness
+			public const string cyan = "#4FEFFB";
+
+			// --- Cool / Blue-Green Colors ---
+			public const string darkblue = "#0A1A6F"; // deeper, calmer
+			public const string navy = "#0F2740"; // improved readability
+			public const string teal = "#26B7A3"; // less harsh than 1ABC9C
+			public const string blue = "#4EA3FF"; // softened from 3498FF
+
+			// warning
+			public const string yellow = "#FFE55C"; // warmer, softer than FF EA 00
+
+			// --- Greenish / Yellowish Colors ---
+			public const string lime = "#6DFF6D"; // softer lime, still bright
+			public const string olive = "#AFC265"; // easier on eyes
+			public const string green = "#44FF44"; // softer, less pure neon
+
+			// exit case
+			public const string orange = "#FF9C33"; // friendlier orange
+
+			// --- Warm / Reddish / Orange Colors ---
+			public const string brown = "#B07149"; // warmer + more readable
+			public const string maroon = "#C05474"; // softened, easier on eyes
+			public const string red = "#FF5C5C"; // less aggressive than FF4444
+			public const string purple = "#C48BFF"; // smoother purple
+			public const string fuchsia = "#FF66FF"; // softened magenta
+			public const string magenta = "#FF66FF";
+		} 
+		#endregion
 		#endregion
 
 		#region float, vec3 operations
@@ -1395,7 +1431,46 @@ DEINITIALIZATION PHASE
 ==== Unity Life Cycle ====";
 		}
 		#endregion
+
+
+
 	}
+
+	public enum ColorType
+	{
+		// --- Whitish / Light Colors ---
+		white,
+		silver,
+		lightblue,
+		aqua,      // (same as cyan)
+		cyan,      // (same as aqua)
+
+		// --- Cool / Blue-Green Colors ---
+		darkblue,
+		navy,
+		teal,
+		blue,
+
+		// warning
+		yellow,
+
+		// --- Greenish / Yellowish Colors ---
+		lime,
+		olive,
+		green,
+
+		// exit case
+		orange,
+
+		// --- Warm / Reddish / Orange Colors ---
+		brown,
+		maroon,
+		red,
+		purple,
+		fuchsia,   // (same as magenta)
+		magenta    // (same as fuchsia)
+	}
+
 
 	/*
 		- GameOnjectt/Transform Search
