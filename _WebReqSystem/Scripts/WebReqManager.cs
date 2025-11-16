@@ -11,7 +11,7 @@ namespace SPACE_WebReqSystem
 {
 	/*
 		Call From External As:
-			WebReqManager.Discord.SendPayLoadJson_SysSpec();					   [done]
+			WebReqManager.Discord.SendPayLoadJson_SysSpec();					 [done]
 			WebReqManager.Discord.SendPayLoadJson_Feedback(string Feedback_str); [done]
 	*/
 	public class WebReqManager : MonoBehaviour
@@ -19,10 +19,8 @@ namespace SPACE_WebReqSystem
 		[TextArea(minLines: 3, maxLines: 10)]
 		[SerializeField] string README = $@"0. Attach {typeof(WebReqManager).Name} to Empty Obj in Scene
 1. Set The webhook_url @(loaded from {typeof(_Secure).Name}.webhook_url), webhook_profile_url[SerilizeField]
-Call From External As:
-	2. {typeof(WebReqManager).Name}.Discord.SendPayLoadJson_SysSpec();
-	2. {typeof(WebReqManager).Name}.Discord.SendPayLoadJson_Feedback(string Feedback_str);";
-
+2. Call From External As:
+	{typeof(WebReqManager).Name}.Discord.SendPayLoadJson(feedBackStr: {"`== feedBack ==`"});";
 
 		[Header("Discord")]
 		[TextArea(minLines: 3, maxLines: 5)]
@@ -31,18 +29,18 @@ Call From External As:
 		[TextArea(minLines: 3, maxLines: 10)]
 		[SerializeField] public string webhook_profile_url = "https://media.discordapp.net/attachments/1380909082298421410/1380909111918723144/cunning-anime-hacker-modern-female-ninja-with-long-dark-brown-hair-brown-eyes-epic-b_983420-159985.png?ex=68459754&is=684445d4&hm=c0966cf03a4e4e052fbcafd9c285ca682b4d3598f3e499b805c798cf44ea1b84&=&format=webp&quality=lossless&width=814&height=814";
 		[Space(5)]
-		[SerializeField] bool send_sendPayLoadJson_onAwake = false;
+		[SerializeField] bool _sendDiscordPayLoadJsonOnAwake = false;
 
 		public static WebReqManager instance;
 		private void Awake()
 		{
 			Debug.Log(C.method(this));
 			instance = this;
-
-			if(this.send_sendPayLoadJson_onAwake == true)
-				WebReqManager.Discord.SendPayLoadJson_SysSpec();
+			if (this._sendDiscordPayLoadJsonOnAwake == true)
+			{
+				WebReqManager.Discord.SendPayLoadJson(feedBackStr: "`== feedBack ==`");
+			}
 		}
-
 		// depend on WebReqSystemManager.instance serilize field config
 		#region SendPayLoadJson
 		public static void SendPayLoadJson(string url, byte[] data)
@@ -76,7 +74,20 @@ Call From External As:
 			*/
 			#endregion
 
-			public static void SendPayLoadJson_SysSpec()
+			/// <summary>
+			/// Sends a payload JSON to the Discord webhook with feedback and system specs.
+			/// <param name="feedBackStr">The feedback string to send. Supports Discord rich text formatting.</param>
+			/// <param name="alongWithSysSpec">Whether to include system specs in the payload. Default is true.</param>
+			/// <para>Discord Rich Text Formatting Guide:</para>
+			/// <para>• ### heading: #3# text</para>
+			/// <para>• **Bold**: **text**</para>
+			/// <para>• __Underline__: __text__</para>
+			/// <para>• ||Spoiler||: ||text||</para>
+			/// <para>• `code`: `text`</para>
+			/// <para>• *Italic*: *text*</para>
+			/// <para>• ~~Strikethrough~~: ~~text~~</para>
+			/// </summary>
+			public static void SendPayLoadJson(string feedBackStr = "", bool alongWithSysSpec = true)
 			{
 				// depends on WebReqSystemManager instance
 				string webhook_url = WebReqManager.instance.webhook_url;
@@ -87,7 +98,7 @@ Call From External As:
 				string webhook_profile_url = WebReqManager.instance.webhook_profile_url;
 
 				#region data collected
-				string id = SystemInfo.deviceUniqueIdentifier;
+				string id = C_Helper.getDeviceId;
 				string get_sys_spec_md()
 				{
 					// Collect each spec into a bullet‐point line:
@@ -116,7 +127,7 @@ Call From External As:
 					sb.AppendLine($"• **GPU:** `{gpu} {gpu_version}`");
 					sb.AppendLine($"• **RAM:** `{ramMB} MB`");
 					sb.AppendLine(); // extra blank line at the end
-					sb.AppendLine($"• **Gmt:** `{TimeZoneInfo.Local.GetUtcOffset(DateTime.Now).ToString()}`");
+					sb.AppendLine($"• **Gmt/Lang:** `{TimeZoneInfo.Local.GetUtcOffset(DateTime.Now).ToString()}`/`{Application.systemLanguage}`");
 					return sb.ToString();
 				}
 				string footer_str = $"{Application.productName} by {Application.companyName}";
@@ -152,115 +163,15 @@ Call From External As:
 
 				#endregion
 
-				// Wrap it in the root payload
+				// Wrap It In The Root Payload
 				DiscordPayLoad discordPayLoad = new DiscordPayLoad
 				{
 					username = JapaneseNameGenerator.ConvertToJapaneseName(id),
 					avatar_url = webhook_profile_url,
-					content = "",
-					embeds = new List<Embed> { embed },
+					content = feedBackStr,
+					embeds = (alongWithSysSpec) ? new List<Embed> { embed } : new List<Embed>() { },
 				};
-
-				WebReqManager.SendPayLoadJson(
-					webhook_url,
-					discordPayLoad.ToJson().ToBytes()
-				);
-			}
-
-			#region /// <summary>
-			/// <summary>
-			/// Sends a payload JSON to the Discord webhook with feedback and system specs.
-			/// <param name="Feedback_str">The feedback string to send. Supports Discord rich text formatting.</param>
-			/// <param name="AlongWithSysSpec">Whether to include system specs in the payload. Default is true.</param>
-			/// <para>Discord Rich Text Formatting Guide:</para>
-			/// <para>• ### heading: #3# text</para>
-			/// <para>• **Bold**: **text**</para>
-			/// <para>• __Underline__: __text__</para>
-			/// <para>• ||Spoiler||: ||text||</para>
-			/// <para>• `code`: `text`</para>
-			/// <para>• *Italic*: *text*</para>
-			/// <para>• ~~Strikethrough~~: ~~text~~</para>
-			/// </summary>
-			#endregion
-			public static void SendPayLoadJson_Feedback(string Feedback_str = "", bool AlongWithSysSpec = true)
-			{
-				// depends on WebReqSystemManager instance
-				string webhook_url = WebReqManager.instance.webhook_url;
-				string webhook_profile_url = WebReqManager.instance.webhook_profile_url;
-
-				#region data collected
-				string id = SystemInfo.deviceUniqueIdentifier;
-				string get_sys_spec_md()
-				{
-					// Collect each spec into a bullet‐point line:
-					string os = SystemInfo.operatingSystem;
-					string cpu = SystemInfo.processorType;
-					int cores = SystemInfo.processorCount;
-					int ramMB = SystemInfo.systemMemorySize;
-					string gpu = SystemInfo.graphicsDeviceName;
-					string gpu_version = SystemInfo.graphicsDeviceVersion;
-					string unityVer = Application.unityVersion;
-					string device = SystemInfo.deviceModel;
-					string screen = $"{Screen.currentResolution.width}×{Screen.currentResolution.height}";
-					string dpi = $"{Screen.dpi}";
-
-					// Build a Markdown list. Each line starts with "• " (Discord will render as a bullet).
-					var sb = new System.Text.StringBuilder();
-					sb.AppendLine("**System Specs:**");
-					sb.AppendLine();
-					sb.AppendLine($"• **Uid:** `{id}`");
-					sb.AppendLine($"• **OS:** `{os}`");
-					sb.AppendLine($"• **Device:** `{device}`");
-					sb.AppendLine($"• **Resolution:** `{screen} {dpi}(dpi)`");
-					sb.AppendLine($"• **CPU:** `{cpu} ({cores} cores)`");
-					sb.AppendLine($"• **GPU:** `{gpu} {gpu_version}`");
-					sb.AppendLine($"• **RAM:** `{ramMB} MB`");
-					sb.AppendLine(); // extra blank line at the end
-					sb.AppendLine($"• **Gmt:** `{TimeZoneInfo.Local.GetUtcOffset(DateTime.Now).ToString()}`");
-					return sb.ToString();
-				}
-				string footer_str = $"{Application.productName} by {Application.companyName}";
-				#endregion
-				/*
-					study source: https://gist.github.com/Birdie0/78ee79402a4301b1faf412ab5f1cdcf9
-				*/
-
-				// Construct one Embed object
-				#region embed
-				Embed embed = new Embed
-				{
-					author = new Author
-					{
-						name = "System Reporter",
-						url = null, // optional link
-						icon_url = webhook_profile_url,
-					},
-					title = "",
-					url = null, // optional
-					description = get_sys_spec_md(),
-					color = 0x72D7F1, // decimal 7506394
-					fields = null,     // no fields—everything is in description
-					thumbnail = null,     // optional
-					image = null,     // optional
-					footer = new Footer
-					{
-						text = footer_str,
-						icon_url = webhook_profile_url,
-					},
-					timestamp = System.DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ss.fffZ")
-				};
-
-				#endregion
-
-				// Wrap it in the root payload
-				DiscordPayLoad discordPayLoad = new DiscordPayLoad
-				{
-					username = JapaneseNameGenerator.ConvertToJapaneseName(id),
-					avatar_url = webhook_profile_url,
-					content = Feedback_str,
-					embeds = (AlongWithSysSpec)? new List<Embed> { embed } : new List<Embed>(),
-				};
-
+				// 
 				WebReqManager.SendPayLoadJson(
 					webhook_url,
 					discordPayLoad.ToJson().ToBytes()
@@ -308,7 +219,6 @@ Call From External As:
 			}
 			*/
 			#endregion
-
 			#region Json Payload Root -> C# [System.Serializable] Class Heierarchy
 			// ─── 1) Root payload ───────────────────────────────────────────────
 			[Serializable]
@@ -379,13 +289,52 @@ Call From External As:
 		}
 	}
 
-	// json extensions
-	static class C_JsonExtension
+	static class C_Helper
 	{
+		#region device id with webgl guid
+		static string playerPrefsWebGlDeviceId = "playerPrefsWebGlDeviceId";
+		public static string getDeviceId
+		{
+			get
+			{
+#if UNITY_WEBGL && !UNITY_EDITOR
+				// For WebGL, generate or retrieve stored ID
+				if (!PlayerPrefs.HasKey(playerPrefsWebGlDeviceId))
+				{
+					// Generate new UUID
+					string newId = System.Guid.NewGuid().ToString();
+					PlayerPrefs.SetString(playerPrefsWebGlDeviceId, newId);
+					PlayerPrefs.Save(); 
+					return newId;
+				}
+				return PlayerPrefs.GetString(playerPrefsWebGlDeviceId);
+#else
+				// For native platforms, use system ID
+				if (SystemInfo.deviceUniqueIdentifier == "n/a") // n/a fall back
+				{
+					if (!PlayerPrefs.HasKey(playerPrefsWebGlDeviceId))
+					{
+						// Generate new UUID
+						string newId = System.Guid.NewGuid().ToString();
+						PlayerPrefs.SetString(playerPrefsWebGlDeviceId, newId);
+						PlayerPrefs.Save();
+						return newId;
+					}
+					return PlayerPrefs.GetString(playerPrefsWebGlDeviceId);
+				}
+				else
+				{
+					return SystemInfo.deviceUniqueIdentifier;
+				}
+#endif
+			}
+		}
+		#endregion
 		/*
 			[System.Serializable]object.ToJson() -> string
 			str.FromJson<T>() -> T
 		*/
+		// json extensions
 		#region json operations
 		/// <summary>
 		/// Convert A Serielizable (object) To JSON (string).

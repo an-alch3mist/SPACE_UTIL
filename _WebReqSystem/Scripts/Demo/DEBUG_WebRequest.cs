@@ -21,7 +21,7 @@ namespace SPACE_WebReqSystem
 			this.feedBackPanel.leafNameStartsWith("submit").GetComponent<Button>() // todo path submit > text > 
 				.onClick.AddListener(() => 
 				{
-					WebReqManager.Discord.SendPayLoadJson_Feedback(
+					WebReqManager.Discord.SendPayLoadJson(
 					this.feedBackPanel.leafNameStartsWith("inp").GetComponent<TMP_InputField>().text);
 				});
 
@@ -34,7 +34,7 @@ namespace SPACE_WebReqSystem
 		{
 			if (INPUT.M.InstantDown(2))
 				// WebReqSystemManager.Discord.SendPayLoadJson_SysSpec();
-				WebReqManager.Discord.SendPayLoadJson_Feedback(this.Feedback_str);
+				WebReqManager.Discord.SendPayLoadJson(this.Feedback_str);
 		}
 	}
 }
