@@ -748,7 +748,7 @@ namespace SPACE_UTIL
 			public const string purple = "#C48BFF"; // smoother purple
 			public const string fuchsia = "#FF66FF"; // softened magenta
 			public const string magenta = "#FF66FF";
-		} 
+		}
 		#endregion
 		#endregion
 
@@ -946,7 +946,7 @@ namespace SPACE_UTIL
 		//	if (angle > 180f) angle -= 360f;
 		//	return angle;
 		//}
-		
+
 		#endregion
 
 		#region string operations
@@ -1167,7 +1167,7 @@ namespace SPACE_UTIL
 		{
 			return $"<color={color}>{str}</color>";
 		}
-		
+
 		/// <summary>
 		/// Automatically gets caller's class and method name with built-in color.
 		/// C.method(this);
@@ -1271,7 +1271,7 @@ namespace SPACE_UTIL
 				}
 			}
 
-			if(obj == null)
+			if (obj == null)
 				return $"{memberName}() -> class: {className} -> file: {fileName}.cs -> // {adMssg} //".colorTag(color);
 			else
 				return $"{memberName}() -> class: {className} -> obj: {obj.ToString()} -> file: {fileName}.cs -> // {adMssg} //".colorTag(color);
@@ -1371,7 +1371,7 @@ namespace SPACE_UTIL
 		// << animation approach for a given duration
 		*/
 		#endregion
-		
+
 		#region UI util
 		public static void setBtnTxt(this Button btn, string str)
 		{
@@ -1705,6 +1705,377 @@ DEINITIALIZATION PHASE
 	#endregion
 
 	#region Ext
+	public static class ExtensionGameObjectHierarchy
+	{
+		/// <summary>
+		/// Chainable query wrapper for GameObject hierarchy traversal
+		/// Usage: gameObject.Q().leaf("trigger").leaf("outside").gf()
+		/// Usage: gameObject.Q().leaf("anim trigger", spaceSep: true).gf()
+		/// </summary>
+		public class HierarchyQuery
+		{
+			private List<Transform> currentMatches;
+			private int currentDepth;
+			private GameObject root;
+
+			public HierarchyQuery(GameObject root)
+			{
+				this.root = root;
+				currentMatches = new List<Transform> { root.transform };
+				currentDepth = 0;
+			}
+
+			/// <summary>
+			/// Match children @level 1 whose name contains the pattern.
+			/// spaceSep: false → matches "triggercollider" with "trigger"
+			/// spaceSep: true  → matches "anim trigger box" with "trigger" (word boundary)
+			/// indiependent of C.match, C.split ....
+			/// </summary>
+			public HierarchyQuery leaf(string pattern, bool spaceSep = false, bool ignoreCase = true)
+			{
+				var newMatches = new List<Transform>();
+				string lowerPattern = pattern;
+				if (ignoreCase == true)
+					lowerPattern = pattern.ToLower();
+
+				foreach (var parent in currentMatches)
+				{
+					for (int i = 0; i < parent.childCount; i++)
+					{
+						Transform child = parent.GetChild(i);
+						string childName = child.name.ToLower();
+
+						bool matches = false;
+
+						if (spaceSep)
+						{
+							// Word boundary matching: split both by spaces and check
+							string[] childWords = childName.Split(' ');
+							string[] patternWords = lowerPattern.Split(' ');
+
+							// All pattern words must exist somewhere in child name
+							matches = patternWords.All(patternWord =>
+								childWords.Any(childWord => childWord.Contains(patternWord))
+							);
+						}
+						else
+						{
+							// Simple substring match (original behavior)
+							matches = childName.Contains(lowerPattern);
+						}
+
+						if (matches)
+						{
+							newMatches.Add(child);
+						}
+					}
+				}
+
+				currentMatches = newMatches;
+				currentDepth++;
+				return this;
+			}
+
+			/// <summary>
+			/// Deep search: find descendants at any depth matching the pattern
+			/// </summary>
+			public HierarchyQuery deep(string pattern, bool spaceSep = false)
+			{
+				var newMatches = new List<Transform>();
+
+				foreach (var parent in currentMatches)
+				{
+					DeepSearchRecursive(parent, pattern.ToLower(), spaceSep, newMatches);
+				}
+
+				currentMatches = newMatches;
+				return this;
+			}
+			private void DeepSearchRecursive(Transform current, string lowerPattern, bool spaceSep, List<Transform> results)
+			{
+				string childName = current.name.ToLower();
+				bool matches = false;
+
+				if (spaceSep)
+				{
+					string[] childWords = childName.Split(' ');
+					string[] patternWords = lowerPattern.Split(' ');
+					matches = patternWords.All(patternWord =>
+						childWords.Any(childWord => childWord.Contains(patternWord))
+					);
+				}
+				else
+				{
+					matches = childName.Contains(lowerPattern);
+				}
+
+				if (matches)
+				{
+					results.Add(current);
+				}
+
+				for (int i = 0; i < current.childCount; i++)
+				{
+					DeepSearchRecursive(current.GetChild(i), lowerPattern, spaceSep, results);
+				}
+			}
+
+			/// <summary>
+			/// Filter results by component type
+			/// </summary>
+			public HierarchyQuery with<T>() where T : Component
+			{
+				currentMatches = currentMatches.Where(t => t.GetComponent<T>() != null).ToList();
+				return this;
+			}
+			#region ad -> not required
+			/// <summary>
+			/// Match children using exact name (case-insensitive) -> not required
+			/// </summary> // 
+			public HierarchyQuery exact(string exactName)
+			{
+				var newMatches = new List<Transform>();
+
+				foreach (var parent in currentMatches)
+				{
+					for (int i = 0; i < parent.childCount; i++)
+					{
+						Transform child = parent.GetChild(i);
+						if (child.name.ToLower() == exactName.ToLower())
+						{
+							newMatches.Add(child);
+						}
+					}
+				}
+
+				currentMatches = newMatches;
+				currentDepth++;
+				return this;
+			} 
+			#endregion
+
+			#region Terminators (get results)
+
+			/// <summary>
+			/// Get First: Returns the first matched GameObject (or null)
+			/// </summary>
+			public GameObject gf()
+			{
+				if (currentMatches.Count == 0)
+					Debug.Log(C.method(null, "red", adMssg: $"currentMatches: {0}"));
+
+				return currentMatches.Count > 0 ? currentMatches[0].gameObject : null;
+			}
+
+			/// <summary>
+			/// Get First Transform
+			/// </summary>
+			public Transform gft()
+			{
+				return currentMatches.Count > 0 ? currentMatches[0] : null;
+			}
+
+			/// <summary>
+			/// Get All: Returns all matched GameObjects
+			/// </summary>
+			public List<GameObject> gall()
+			{
+				return currentMatches.Select(t => t.gameObject).ToList();
+			}
+
+			/// <summary>
+			/// Get All Transforms
+			/// </summary>
+			public List<Transform> gallt()
+			{
+				return new List<Transform>(currentMatches);
+			}
+
+			/// <summary>
+			/// Get First Component
+			/// </summary>
+			public T gc<T>() where T : Component
+			{
+				var obj = gf();
+				return obj != null ? obj.GetComponent<T>() : null;
+			}
+
+			/// <summary>
+			/// Get All Components
+			/// </summary>
+			public List<T> gcall<T>() where T : Component
+			{
+				return currentMatches
+					.Select(t => t.GetComponent<T>())
+					.Where(c => c != null)
+					.ToList();
+			}
+
+			/// <summary>
+			/// Count: Returns number of matches
+			/// </summary>
+			public int count()
+			{
+				return currentMatches.Count;
+			}
+
+			/// <summary>
+			/// Depth: Returns the query depth (how many .leaf() calls were made)
+			/// </summary>
+			public int depth()
+			{
+				return currentDepth;
+			}
+
+			/// <summary>
+			/// Exists: Check if any matches were found
+			/// </summary>
+			public bool exists()
+			{
+				return currentMatches.Count > 0;
+			}
+
+			/// <summary>
+			/// string: return all matched full path
+			/// </summary>
+			public string log(string label = "Query Results")
+			{
+				string str = "";
+				str += ($"=== {label} (Count: {currentMatches.Count}, Depth: {currentDepth}) ===\n");
+				foreach (var t in currentMatches)
+				{
+					str += ($"  - {t.name} @ {t.getFullPath()}");
+				}
+				return str;
+			}
+
+			#endregion
+		}
+
+		/// <summary>
+		/// Start a chainable query on this GameObject
+		/// </summary>
+		public static HierarchyQuery Q(this GameObject gameObject)
+		{
+			return new HierarchyQuery(gameObject);
+		}
+
+		/// <summary>
+		/// Start a chainable query on this Component's GameObject
+		/// </summary>
+		public static HierarchyQuery Q(this Component component)
+		{
+			return new HierarchyQuery(component.gameObject);
+		}
+
+		/// <summary>
+		/// return the full path of given gameObject
+		/// </summary>
+		/// <param name="transform"></param>
+		/// <returns></returns>
+		public static string getFullPath(this GameObject gameObject)
+		{
+			Transform curr = gameObject.transform;
+			string path = curr.name;
+			while (curr.parent != null)
+			{
+				curr = curr.parent;
+				path = curr.name + "/" + path;
+			}
+			return path;
+		}
+		public static string getFullPath(this Component component)
+		{
+			return component.gameObject.getFullPath();
+		}
+	}
+
+	/* ============ USAGE EXAMPLES ============
+
+	=== Basic Usage ===
+	// Simple substring match (default behavior)
+	GameObject trigger = door.Q().leaf("trigger").gf();
+	// Matches: "trigger box", "door trigger", "triggercollider"
+
+	// Word-boundary matching with spaceSep
+	GameObject animTrigger = door.Q().leaf("anim trigger", spaceSep: true).gf();
+	// Matches: "door anim trigger collider box"
+	// Does NOT match: "door animtrigger box" (no space before trigger)
+
+	=== Your Original Hierarchy ===
+	// ./doorHingedSimple/
+	// ├ trigger/
+	// │ ├ door outside trigger
+	// │ └ door inside trigger
+
+	// Get outside trigger (substring match)
+	GameObject outside = doorHingedSimple.Q()
+		.leaf("trigger")
+		.leaf("outside")
+		.gf();
+
+	// Get inside trigger with component
+	BoxCollider insideCollider = doorHingedSimple.Q()
+		.leaf("trigger")
+		.leaf("inside")
+		.gc<BoxCollider>();
+
+	=== Space-Separated Matching ===
+	// GameObject names:
+	// - "door anim trigger collider box"  ✅ matches with spaceSep: true
+	// - "door animtriggercollider box"     ❌ does not match (no spaces)
+	// - "door trigger animation box"       ✅ matches (all words present)
+
+	GameObject spacedMatch = parent.Q()
+		.leaf("anim trigger", spaceSep: true)
+		.gf();
+
+	=== Advanced Queries ===
+	// Deep search with space separation
+	List<GameObject> allAnimTriggers = root.Q()
+		.deep("anim trigger", spaceSep: true)
+		.gall();
+
+	// Find all triggers with colliders
+	List<BoxCollider> triggerColliders = door.Q()
+		.leaf("trigger")
+		.with<BoxCollider>()
+		.gcall<BoxCollider>();
+
+	// Check if exists before accessing
+	if (door.Q().leaf("handle").exists())
+	{
+		var handle = door.Q().leaf("handle").gf();
+		// Safe to use handle
+	}
+
+	=== Debugging ===
+	// See what matched
+	door.Q()
+		.leaf("trigger")
+		.debug("All Triggers")
+		.gall();
+
+	// Output:
+	// === All Triggers (Count: 2, Depth: 1) ===
+	//   - door outside trigger @ doorHingedSimple/trigger/door outside trigger
+	//   - door inside trigger @ doorHingedSimple/trigger/door inside trigger
+
+	=== Comparison: spaceSep false vs true ===
+	// GameObject name: "door anim trigger collider box"
+
+	door.Q().leaf("trigger").gf();                    // ✅ Matches (substring)
+	door.Q().leaf("trigger", spaceSep: true).gf();   // ✅ Matches (word exists)
+
+	door.Q().leaf("anim trigger").gf();              // ❌ No match (needs exact substring "anim trigger")
+	door.Q().leaf("anim trigger", spaceSep: true).gf(); // ✅ Matches (both words exist)
+
+	// GameObject name: "door animtrigger box"
+	door.Q().leaf("trigger").gf();                    // ✅ Matches (substring)
+	door.Q().leaf("anim trigger", spaceSep: true).gf(); // ❌ No match (no space separation)
+
+	*/
+
 	public static class ExtensionGameObjectOrComponent
 	{
 		#region .leafNameStartsWith, .leafQuery, .getLeavesGen1, .getDepthLeafNameStartingWith
@@ -1861,7 +2232,7 @@ DEINITIALIZATION PHASE
 		public static IEnumerable<T> GCLeaves<T>(this Component component) where T : Component
 		{
 			return component.gameObject.GCLeaves<T>();
-		} 
+		}
 		#endregion
 
 		#region .clearLeaves, .toggleLeaves, .toggle
@@ -1908,35 +2279,6 @@ DEINITIALIZATION PHASE
 			return component.gameObject.toggle(value);
 		}
 
-		#endregion
-
-		#region .getHierarchyString
-		/// <summary>
-		/// Get full hierarchy structure as a string for logging/debugging
-		/// </summary>
-		public static string getHierarchyString(this GameObject gameObject, int selfDepth = 0)
-		{
-			StringBuilder sb = new StringBuilder();
-			BuildHierarchyString(gameObject, selfDepth, sb);
-			return sb.ToString();
-		}
-		private static void BuildHierarchyString(GameObject gameObject, int depth, StringBuilder sb)
-		{
-			string indent = new string(' ', depth * 2);
-			sb.AppendLine($"{indent}{gameObject.name}");
-
-			for (int i0 = 0; i0 < gameObject.transform.childCount; i0 += 1)
-			{
-				Transform child = gameObject.transform.GetChild(i0);
-				BuildHierarchyString(child.gameObject, depth + 1, sb);
-			}
-		}
-
-		// Component overloads
-		public static string getHierarchyString(this Component component, int selfDepth = 0)
-		{
-			return component.gameObject.getHierarchyString(selfDepth);
-		} 
 		#endregion
 	}
 
@@ -2261,7 +2603,7 @@ DEINITIALIZATION PHASE
 
 			return result;
 		}
-		
+
 		/// <summary>
 		/// Logs the Resources folder structure based on cached resources.
 		/// Shows a tree view of all loaded resources organized by folder.
@@ -2358,10 +2700,10 @@ DEINITIALIZATION PHASE
 
 			return result;
 		}
-		#endregion 
 		#endregion
 		#endregion
-	} 
+		#endregion
+	}
 	#endregion
 
 	#region LOG
