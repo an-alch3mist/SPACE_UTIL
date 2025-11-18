@@ -18,6 +18,7 @@ using TMPro;
 namespace SPACE_UTIL
 {
 	#region v2
+	// creation of v2:
 	// v2 a = new v2(0, 0)
 	// v2 b = (1, 2)
 	[System.Serializable]
@@ -54,18 +55,23 @@ namespace SPACE_UTIL
 		public static implicit operator v2((int, int) tuple) => new v2(tuple.Item1, tuple.Item2);
 
 		#region getDIR(bool)
-		public static List<v2> getDIR(bool diagonal = false)
+		/// <summary>
+		/// get List of v2 in all 4 direction, with (optional) if diagonal required.
+		/// </summary>
+		/// <param name="includeDiagonal"></param>
+		/// <returns></returns>
+		public static List<v2> getDIR(bool includeDiagonal = false)
 		{
 			List<v2> DIR = new List<v2>();
 
 			DIR.Add((+1, 0));
-			if (diagonal == true) DIR.Add((+1, +1));
+			if (includeDiagonal == true) DIR.Add((+1, +1));
 			DIR.Add((0, +1));
-			if (diagonal == true) DIR.Add((-1, +1));
+			if (includeDiagonal == true) DIR.Add((-1, +1));
 			DIR.Add((-1, 0));
-			if (diagonal == true) DIR.Add((-1, -1));
+			if (includeDiagonal == true) DIR.Add((-1, -1));
 			DIR.Add((0, -1));
-			if (diagonal == true) DIR.Add((+1, -1));
+			if (includeDiagonal == true) DIR.Add((+1, -1));
 
 			return DIR;
 		}
@@ -949,6 +955,7 @@ namespace SPACE_UTIL
 
 		#endregion
 
+		// TODO: str.fuzzy("cube") extension, (might be similar to str.Contains("somthng"); built-in)
 		#region string operations
 		public static string AbrrevatedNumber(int value)
 		{
@@ -1468,12 +1475,11 @@ DEINITIALIZATION PHASE
 		magenta    // (same as fuchsia)
 	}
 
-	/*
-		- GameOnjectt/Transform Search
-		- Find Non Collision Spot 2D, 3D
-	*/
 	public static class U
 	{
+		/*
+			- Find Non Collision Spot 2D, 3D
+		*/
 		#region ad CanPlaceObject ? at a give pos, _prefab.collider, rotationY
 		// CanPlaceBuilding.... pos2D, gameObject with a collider2D 
 		#region CanPlaceObject2D(Vector2 pos2D, GameObject gameObject, int rotationZ = 0)
@@ -1700,9 +1706,16 @@ DEINITIALIZATION PHASE
 	}
 	#endregion
 
-	#region Ext
+	#region Extension
+	
 	public static class ExtensionHierarchyQuery
 	{
+		// gameObject.Q().up<T>().gf<T>() 
+		// gameObject.Q().upCompoGf<T>().value = somthng;
+
+		// gameObject.Q().downNamed("trigger").gf<T>(); // -> this approach of downNamed exclude self, in other words chaining of multiple search cannot be done in just .downNamed .where filtering out is required(a fuzzy search for string is required) so that .where( gameObj => gameObj.Name.fuzzy("cube", sepSpace: false)) 
+		// gameObject.Q().deepDownNamed("trigger").all(); 
+
 		/// <summary>
 		/// Fluent API for querying Unity GameObjects in the hierarchy.
 		/// Usage: gameObject.Q().downNamed("door").deepDown<Rigidbody>().where(go => go.activeSelf).all()
@@ -2670,6 +2683,7 @@ DEINITIALIZATION PHASE
 			return ((layerMask.value & (1 << other.layer)) == 0);
 		}
 	}
+
 	#endregion
 
 	#region R
@@ -3271,6 +3285,7 @@ DEINITIALIZATION PHASE
 
 namespace SPACE_prev
 {
+	// for DRAW prev legacy -> now its SPACE_DrawSystem(with chainable creation during runtime(with id blocking))
 	#region ad DRAW_prev
 	public static class DRAW_prev
 	{
@@ -3298,7 +3313,7 @@ namespace SPACE_prev
 			DRAW_prev.Line(lerp(a, b, t) - nX * (s * 1.6f) + nY * s, lerp(a, b, t), e);
 			DRAW_prev.Line(lerp(a, b, t) - nX * (s * 1.6f) - nY * s, lerp(a, b, t), e);
 		}
-		
+
 		static Vector3 lerp(Vector3 a, Vector3 b, float t)
 		{
 			Vector3 n = b - a;
