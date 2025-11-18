@@ -196,7 +196,7 @@ UIRebindingSystem( -> Attach {typeof(UIRebindingSystem).Name}.cs to UIRebindingS
 				GameObject headerRow = GameObject.Instantiate(this._templateRowPrefab, this._contentScrollViewTr); headerRow.transform.destroyLeaves();
 
 				// Create a non-clickable label button for the action map name
-				Button headerBtn = GameObject.Instantiate(this._buttonPrefab, headerRow.transform).GC<Button>();
+				Button headerBtn = GameObject.Instantiate(this._buttonPrefab, headerRow.transform).gc<Button>();
 				headerBtn.setBtnTxt($"== {actionMap.name.ToUpper()} ==");
 				headerBtn.interactable = false; // Make it non-interactive
 
@@ -211,7 +211,7 @@ UIRebindingSystem( -> Attach {typeof(UIRebindingSystem).Name}.cs to UIRebindingS
 
 					// button to show case action
 					newRowTr = GameObject.Instantiate(this._templateRowPrefab, this._contentScrollViewTr).transform; newRowTr.destroyLeaves();
-					GameObject.Instantiate(this._buttonPrefab, newRowTr).GC<Button>().setBtnTxt(action.name);
+					GameObject.Instantiate(this._buttonPrefab, newRowTr).gc<Button>().setBtnTxt(action.name);
 
 					for (int i2 = 0; i2 < action.bindings.Count; i2 += 1)
 					{
@@ -228,7 +228,7 @@ UIRebindingSystem( -> Attach {typeof(UIRebindingSystem).Name}.cs to UIRebindingS
 						}
 
 						// Create button with rebinding functionality
-						Button btn = GameObject.Instantiate(this._buttonPrefab, newRowTr).GC<Button>();
+						Button btn = GameObject.Instantiate(this._buttonPrefab, newRowTr).gc<Button>();
 						this.MAP_BindingpathBtn[GetUniqueBindingPath(action, bindingIndex: i2)] = btn;
 						#region ad
 						btn.gameObject.name += GetUniqueBindingPath(action, bindingIndex: i2); 
