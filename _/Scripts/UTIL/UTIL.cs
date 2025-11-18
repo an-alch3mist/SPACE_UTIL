@@ -1911,13 +1911,61 @@ DEINITIALIZATION PHASE
 
 			#endregion
 
+			#region Direct Component Retrieval - Decendents/Ancestors
+
+			/// <summary>
+			/// Finds the first descendant component T at shallowest depth (BFS).
+			/// Equivalent to: down<T>().gf<T>()
+			/// </summary>
+			/// <typeparam name="T"></typeparam>
+			/// <returns>T</returns>
+			public T downCompo<T>() where T : Component
+			{
+				return down<T>().gf<T>();
+			}
+
+			/// <summary>
+			/// Finds all descendant components T (DFS).
+			/// Equivalent to: deepDown<T>().all<T>()
+			/// </summary>
+			/// <typeparam name="T"></typeparam>
+			/// <returns>T</returns>
+			public List<T> deepDownCompo<T>() where T : Component
+			{
+				return deepDown<T>().all<T>();
+			}
+
+			/// <summary>
+			/// Finds the first ancestor component T.
+			/// Equivalent to: up<T>().gf<T>()
+			/// </summary>
+			/// <typeparam name="T"></typeparam>
+			/// <returns>T</returns>
+			public T upCompo<T>() where T : Component
+			{
+				return up<T>().gf<T>();
+			}
+
+			/// <summary>
+			/// Finds all ancestor components T.
+			/// Equivalent to: deepUp<T>().all<T>()
+			/// </summary>
+			/// <typeparam name="T"></typeparam>
+			/// <returns>T</returns>
+			public List<T> deepUpCompo<T>() where T : Component
+			{
+				return deepUp<T>().all<T>();
+			}
+
+			#endregion
+
 			#region Filter GameObject Method
 
 			/// <summary>
 			/// Filters current results using a predicate.
 			/// Must be called after a query method (downNamed, deepDown, etc.).
 			/// </summary>
-			public HierarchyQuery where(Func<GameObject, bool> predicate) 
+			public HierarchyQuery where(Func<GameObject, bool> predicate)
 			{
 				if (!hasExecutedQuery)
 				{
@@ -1943,50 +1991,95 @@ DEINITIALIZATION PHASE
 
 			#endregion
 
-			#region Terminators
+			#region Terminators  GameObject/Component Extraction
 
 			/// <summary>
-			/// Returns the first result GameObject, or null if none found.
+			/// Returns the first result GameObject.
 			/// </summary>
 			public GameObject gf()
 			{
 				if (!hasExecutedQuery)
 				{
-					Debug.Log("[HierarchyQuery] gf() called without a prior query. Use downNamed/deepDown/up etc. first.".colorTag("yellow"));
+					Debug.Log("[HierarchyQuery] gf() called without a prior query.".colorTag("yellow"));
 					return null;
 				}
-
 				return results.Count > 0 ? results[0] : null;
 			}
 
 			/// <summary>
-			/// Returns the last result GameObject, or null if none found.
+			/// Returns the first result's component T, or null if not found.
+			/// Usage: transform.Q().up<Canvas>().gf<Canvas>()
+			/// </summary>
+			public T gf<T>() where T : Component
+			{
+				GameObject go = gf();
+				return go != null ? go.GetComponent<T>() : null;
+			}
+
+			/// <summary>
+			/// Returns the last result GameObject.
 			/// </summary>
 			public GameObject gl()
 			{
 				if (!hasExecutedQuery)
 				{
-					Debug.Log("[HierarchyQuery] gl() called without a prior query. Use downNamed/deepDown/up etc. first.".colorTag("yellow"));
+					Debug.Log("[HierarchyQuery] gl() called without a prior query.".colorTag("yellow"));
 					return null;
 				}
-
 				return results.Count > 0 ? results[results.Count - 1] : null;
 			}
 
 			/// <summary>
-			/// Returns all result GameObjects as a new defensive copy list.
+			/// Returns the last result's component T, or null if not found.
+			/// Usage: transform.Q().deepDown<Rigidbody>().gl<Rigidbody>()
+			/// </summary>
+			public T gl<T>() where T : Component
+			{
+				GameObject go = gl();
+				return go != null ? go.GetComponent<T>() : null;
+			}
+
+			/// <summary>
+			/// Returns all result GameObjects.
 			/// </summary>
 			public List<GameObject> all()
 			{
 				if (!hasExecutedQuery)
 				{
-					Debug.Log("[HierarchyQuery] all() called without a prior query. Use downNamed/deepDown/up etc. first.".colorTag("yellow"));
+					Debug.Log("[HierarchyQuery] all() called without a prior query.".colorTag("yellow"));
 					return new List<GameObject>();
 				}
-
-				// Return defensive copy
 				return new List<GameObject>(results);
 			}
+
+			/// <summary>
+			/// Returns all results as a list of component T (skips GameObjects without T).
+			/// Usage: transform.Q().deepDown<Collider>().all<Collider>()
+			/// </summary>
+			public List<T> all<T>() where T : Component
+			{
+				if (!hasExecutedQuery)
+				{
+					Debug.Log("[HierarchyQuery] all<T>() called without a prior query.".colorTag("yellow"));
+					return new List<T>();
+				}
+
+				var components = new List<T>(results.Count);
+				for (int i = 0; i < results.Count; i++)
+				{
+					if (results[i] != null)
+					{
+						T comp = results[i].GetComponent<T>();
+						if (comp != null)
+							components.Add(comp);
+					}
+				}
+				return components;
+			}
+
+			#endregion
+
+			#region ad Terminators
 
 			/// <summary>
 			/// Returns the count of results.
