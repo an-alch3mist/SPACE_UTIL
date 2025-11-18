@@ -1919,7 +1919,7 @@ DEINITIALIZATION PHASE
 			/// </summary>
 			/// <typeparam name="T"></typeparam>
 			/// <returns>T</returns>
-			public T downCompo<T>() where T : Component
+			public T downCompoGf<T>() where T : Component
 			{
 				return down<T>().gf<T>();
 			}
@@ -1930,7 +1930,7 @@ DEINITIALIZATION PHASE
 			/// </summary>
 			/// <typeparam name="T"></typeparam>
 			/// <returns>T</returns>
-			public List<T> deepDownCompo<T>() where T : Component
+			public List<T> deepDownCompoAll<T>() where T : Component
 			{
 				return deepDown<T>().all<T>();
 			}
@@ -1941,7 +1941,7 @@ DEINITIALIZATION PHASE
 			/// </summary>
 			/// <typeparam name="T"></typeparam>
 			/// <returns>T</returns>
-			public T upCompo<T>() where T : Component
+			public T upCompoGf<T>() where T : Component
 			{
 				return up<T>().gf<T>();
 			}
@@ -1952,7 +1952,7 @@ DEINITIALIZATION PHASE
 			/// </summary>
 			/// <typeparam name="T"></typeparam>
 			/// <returns>T</returns>
-			public List<T> deepUpCompo<T>() where T : Component
+			public List<T> deepUpCompoAll<T>() where T : Component
 			{
 				return deepUp<T>().all<T>();
 			}
