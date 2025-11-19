@@ -1151,6 +1151,83 @@ namespace SPACE_UTIL
 			return string.Join(separator, STRING);
 		}
 
+		#region pad
+		/// <summary>
+		/// Centers a string with optional spacing, padding with the specified character.
+		/// Example: "hello".padCenter(17, '=', addSpacing: true) → "===== hello ====="
+		/// </summary>
+		public static string padCenter(this string str, int totalWidth, char paddingChar = ' ', bool addSpacing = true)
+		{
+			if (str == null)
+				str = "";
+
+			if (str.Length >= totalWidth)
+				return str;
+
+			// Add spacing around the string if requested
+			if (addSpacing && paddingChar != ' ')
+			{
+				str = " " + str + " ";
+				if (str.Length >= totalWidth)
+					return str;
+			}
+
+			int totalPadding = totalWidth - str.Length;
+			int leftPadding = totalPadding / 2;
+			int rightPadding = totalPadding - leftPadding;
+
+			return new string(paddingChar, leftPadding) + str + new string(paddingChar, rightPadding);
+		}
+
+		/// <summary>
+		/// Right-aligns a string with optional spacing, padding on the left with the specified character.
+		/// Example: "hello".padLeft(15, '=', addSpacing: true) → "========== hello"
+		/// </summary>
+		public static string padLeft(this string str, int totalWidth, char paddingChar = ' ', bool addSpacing = false)
+		{
+			if (str == null)
+				str = "";
+
+			if (str.Length >= totalWidth)
+				return str;
+
+			// Add spacing before the string if requested
+			if (addSpacing && paddingChar != ' ')
+			{
+				str = " " + str;
+				if (str.Length >= totalWidth)
+					return str;
+			}
+
+			int totalPadding = totalWidth - str.Length;
+			return new string(paddingChar, totalPadding) + str;
+		}
+
+		/// <summary>
+		/// Left-aligns a string with optional spacing, padding on the right with the specified character.
+		/// Example: "hello".padRight(15, '=', addSpacing: true) → "hello =========="
+		/// </summary>
+		public static string padRight(this string str, int totalWidth, char paddingChar = ' ', bool addSpacing = false)
+		{
+			if (str == null)
+				str = "";
+
+			if (str.Length >= totalWidth)
+				return str;
+
+			// Add spacing after the string if requested
+			if (addSpacing && paddingChar != ' ')
+			{
+				str = str + " ";
+				if (str.Length >= totalWidth)
+					return str;
+			}
+
+			int totalPadding = totalWidth - str.Length;
+			return str + new string(paddingChar, totalPadding);
+		}
+		#endregion
+
 		#endregion
 
 		#region string extension for Debug.Log
@@ -3170,173 +3247,6 @@ DEINITIALIZATION PHASE
 		#endregion
 
 		// Used As: LOG.SaveLog(LIST.ToTable(name = "LIST<> "))
-		#region ToTable_prev
-		/// <summary>
-		/// <paramref name="toString"/>: by default false, if true each row is logged based on simple value.ToString().flat()
-		/// Produces a simple ASCII "table" of all public/instance/private fields of each element in <paramref name="list"/>.
-		/// If a field's value is any IEnumerable (but not a string), prints its item‐count instead of ToString().
-		/// Now handles control characters and non-printable ASCII safely for text file output.
-		/// </summary>
-		// LIST<> or HASH<> or Q<> or MAP<>
-		private static string ToTable_prev<T>(this IEnumerable<T> list, bool toString = false, string name = "LIST<>")
-		{
-			if (list == null)
-				return "_list/hash/map/queue is null_";
-
-			var items = list.ToList();
-			if (items.Count == 0)
-				return "_list/hash/map/queue got no elem_";
-
-			// @ - if toString enabled
-			#region toString enabled for Dictionary Values
-			if (toString == true)
-			{
-				string str = "";
-				string header = $"* {name} Count: {list.Count()}";
-
-				// Calculate column widths based on field names and all item‐values
-				int cw = header.Length;
-				foreach (var e in list)
-				{
-					string flatValue = SanitizeForTextOutput(e.ToString().flat());
-					int width = flatValue.Length;
-					cw = Mathf.Max(cw, width);
-				}
-				// extra padding for column width
-
-				// Build the header row ("field names")
-				// push right by cw and 1 beyond, add a left padding of 1 more
-				str = header.PadRight(cw + 1).PadLeft(cw + 2);
-
-				// Separator line (e.g. "------+-------+------")
-				str += '\n' + new string('-', cw + 2) + '\n';
-
-				// Each Row
-				foreach (var e in list)
-				{
-					string sanitizedValue = SanitizeForTextOutput(e.ToString().flat());
-					str += sanitizedValue.PadRight(cw + 1).PadLeft(cw + 2) + '\n';
-				}
-				return str;
-			}
-			#endregion
-
-			// @ if toString disabled
-			#region toString disabled
-			var sb = new StringBuilder();
-			var type = typeof(T);
-
-			// Gather all fields (public, instance, non-public)
-			var fields = type.GetFields(
-				BindingFlags.Public | BindingFlags.Instance | BindingFlags.NonPublic
-			);
-
-			// Helper: get a "display string" for a field‐value.
-			// If it's IEnumerable (and not a string), show "TypeName: count"; otherwise, ToString()/"null".
-			string RenderElemValue(object val)
-			{
-				if (val == null)
-					return "null";
-
-				// If it's a string, treat it as a scalar and sanitize it:
-				if (val is string s)
-					return SanitizeForTextOutput(s);
-
-				// If it's any other IEnumerable, count its elements and prepend the collection type name:
-				if (val is IEnumerable enumerable)
-				{
-					int count = 0; foreach (var _ in enumerable) count += 1;
-
-					// Determine type name:
-					var tVal = val.GetType();
-					string typeName;
-
-					if (tVal.IsArray)
-						typeName = "[]";
-					else if (tVal.IsGenericType)
-						// e.g. List`1 → "List", HashSet`1 → "HashSet", Queue`1 → "Queue"
-						typeName = tVal.GetGenericTypeDefinition().Name.Split('`')[0];
-					else
-						typeName = tVal.Name;
-
-					return $"{typeName}: {count}";
-				}
-
-				// Otherwise, fallback to ToString() and sanitize:
-				return SanitizeForTextOutput(val.ToString());
-			}
-
-			// pri~ for private field
-			// sta~ for static field
-			//  ~  for otherwise which also include public field
-			string GetPrefixedFieldName(FieldInfo fieldInfo)
-			{
-				string rawName = fieldInfo.Name;
-				if (fieldInfo.IsPrivate) rawName = "pri~" + rawName;
-				else if (fieldInfo.IsStatic) rawName = "sta~" + rawName;
-				else rawName = "~" + rawName;
-				return rawName;
-			}
-
-			// 1) Calculate column widths based on field names and all item‐values
-			var columnWidths = new int[fields.Length];
-			for (int i = 0; i < fields.Length; i += 1)
-			{
-				// base width = field name length
-				columnWidths[i] = GetPrefixedFieldName(fields[i]).Length;
-
-				// check each item's value in that field
-				foreach (var item in items)
-				{
-					var rawValue = fields[i].GetValue(item);
-					string disp = RenderElemValue(rawValue);
-					columnWidths[i] = Math.Max(columnWidths[i], disp.Length); // alter columnWidth when higher width string is found in the column val
-				}
-
-				columnWidths[i] += 2; // add some padding
-			}
-
-			// 2) Build the header row ("field names")
-			sb.AppendLine(
-				string.Join(" | ",
-					fields.Select((f, idx) =>
-					{
-						string header = GetPrefixedFieldName(f);
-						return header.PadRight(columnWidths[idx]);
-					})
-			));
-
-			// 3) Separator line (e.g. "------+-------+------")
-			for (int i = 0; i < fields.Length; i += 1)
-			{
-				sb.Append(new string('-', columnWidths[i]));
-				if (i < fields.Length - 1)
-					sb.Append("-+-");
-			}
-			sb.AppendLine();
-
-			// 4) Rows: for each item, render each field's value (or "count" for IEnumerable)
-			foreach (var item in items)
-			{
-				var rowValues = fields.Select((f, idx) =>
-				{
-					object rawValue = f.GetValue(item);
-					string text = RenderElemValue(rawValue);
-					return text.PadRight(columnWidths[idx]);
-				});
-
-				sb.AppendLine(string.Join(" | ", rowValues));
-			}
-
-			return $"# {name}:\n" + sb.ToString();
-			#endregion
-		}
-		#endregion
-	}
-
-	// new ToTable: (TODO: merge with previous partial LOG)
-	public static partial class LOG
-	{
 		#region ToTable with Properties Support
 
 		/// <summary>
@@ -3436,15 +3346,16 @@ DEINITIALIZATION PHASE
 			if (items.Count == 0)
 				return "_list/hash/map/queue got no elem_";
 
+			string nameCountHeader = $"* {name} Count: {list.Count()}";
+
 			// @ - if toString enabled
 			#region toString enabled
 			if (toString == true)
 			{
 				string str = "";
-				string header = $"* {name} Count: {list.Count()}";
 
 				// Calculate column widths based on field names and all item-values
-				int cw = header.Length;
+				int cw = nameCountHeader.Length;
 				foreach (var e in list)
 				{
 					string flatValue = SanitizeForTextOutput(e.ToString().flat());
@@ -3453,7 +3364,7 @@ DEINITIALIZATION PHASE
 				}
 
 				// Build the header row
-				str = header.PadRight(cw + 1).PadLeft(cw + 2);
+				str = nameCountHeader.PadRight(cw + 1).PadLeft(cw + 2);
 
 				// Separator line
 				str += '\n' + new string('-', cw + 2) + '\n';
@@ -3500,7 +3411,7 @@ DEINITIALIZATION PHASE
 			// If no members found, show a message
 			if (members.Count == 0)
 			{
-				return $"# {name}:\nNo fields or properties found for type {typeof(T).Name}. Try using toString: true";
+				return $"{nameCountHeader}\n No fields or properties found for type {typeof(T).Name}. Try using toString: true";
 			}
 
 			// Helper: get a "display string" for a member value
@@ -3580,6 +3491,15 @@ DEINITIALIZATION PHASE
 				columnWidths[i] += 2; // add some padding
 			}
 
+			int sumCw = 0;
+			for (int i0 = 0; i0 < columnWidths.Length; i0 += 1)
+			{
+				sumCw += columnWidths[i0];
+				if (i0 <= columnWidths.Length - 2)
+					sumCw += 3; // "-+-" or " | "
+			}
+			//Debug.Log($"sum(columnWidth): {sumCw}, columns: {columnWidths.Length} ");
+
 			// 2) Build the header row ("member names")
 			sb.AppendLine(
 				string.Join(" | ",
@@ -3612,16 +3532,16 @@ DEINITIALIZATION PHASE
 					}
 					catch (Exception e)
 					{
-							// Use consistent error formatting
-							string errorMsg = FormatError(e);
+						// Use consistent error formatting
+						string errorMsg = FormatError(e);
 						return errorMsg.PadRight(columnWidths[idx]);
 					}
 				});
-
 				sb.AppendLine(string.Join(" | ", rowValues));
 			}
 
-			return $"# {name}:\n" + sb.ToString();
+			// * {name} Count: {list.Count()}
+			return $"{nameCountHeader.padRight(sumCw)}\n{sb.ToString()}";
 			#endregion
 		}
 
