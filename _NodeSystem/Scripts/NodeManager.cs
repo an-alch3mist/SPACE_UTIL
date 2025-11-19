@@ -80,8 +80,8 @@ C -> 0";
 			LOG.H("TOPO");
 			foreach (var topology in Topology.GetAllTopology(this.MAP_NodeReg))
 			{
-				LOG.AddLog(topology.Region.ToTable(false, "REGION<>"));
-				LOG.AddLog(topology.Sorted.ToTable(false, "Sorted<>"));
+				LOG.AddLog(topology.Region.ToTable(toString: false, name: "REGION<>"));
+				LOG.AddLog(topology.Sorted.ToTable(toString: false, name: "Sorted<>"));
 			}
 			LOG.HEnd("TOPO");
 			// << Gather + TOPO

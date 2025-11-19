@@ -1707,18 +1707,29 @@ DEINITIALIZATION PHASE
 	#endregion
 
 	#region Extension
-	
+
+	/// <summary>
+	/// Search flags for name matching (can be combined with | operator)
+	/// </summary>
+	[Flags]
+	public enum HierarchyFlags
+	{
+		/// <summary>Default: case-insensitive AND search, match anywhere in name</summary>
+		None = 0,
+		/// <summary>Match case-sensitively (default is case-insensitive)</summary>
+		CaseSensitive = 1 << 0,
+		/// <summary>Use OR logic instead of AND (any term matches vs all terms match)</summary>
+		Or = 1 << 1,
+		/// <summary>Only match whole words separated by space/underscore/dash</summary>
+		WholeWord = 1 << 2
+	}
 	public static class ExtensionHierarchyQuery
 	{
-		// gameObject.Q().up<T>().gf<T>() 
-		// gameObject.Q().upCompoGf<T>().value = somthng;
-
-		// gameObject.Q().downNamed("trigger").gf<T>(); // -> this approach of downNamed exclude self, in other words chaining of multiple search cannot be done in just .downNamed .where filtering out is required(a fuzzy search for string is required) so that .where( gameObj => gameObj.Name.fuzzy("cube", sepSpace: false)) 
-		// gameObject.Q().deepDownNamed("trigger").all(); 
 
 		/// <summary>
 		/// Fluent API for querying Unity GameObjects in the hierarchy.
-		/// Usage: gameObject.Q().downNamed("door").deepDown<Rigidbody>().where(go => go.activeSelf).all()
+		/// Usage: gameObject.Q().downNamed("door", "trigger").deepDown<Rigidbody>().where(go => go.activeSelf).all()
+		/// Multi-term search: gameObject.Q().downNamed(false, "cube", "red", "trigger").gf()
 		/// </summary>
 		public class HierarchyQuery
 		{
@@ -1746,9 +1757,14 @@ DEINITIALIZATION PHASE
 
 			/// <summary>
 			/// Finds the first descendant (shallowest depth, BFS) whose name matches.
-			/// <paramref name="sepSpace"/>: if true, matches only words separated by space/underscore/dash; if false, matches anywhere (case-insensitive).
+			/// <paramref name="flags"/>: Combine flags with | operator (e.g. SearchFlags.Or | SearchFlags.WholeWord)
+			/// - Default (None): case-insensitive, AND logic, match anywhere
+			/// - CaseSensitive: Enable case-sensitive matching
+			/// - Or: Use OR logic (any term matches)
+			/// - WholeWord: Only match words separated by space/underscore/dash
+			/// Usage: downNamed("cube", "red") or downNamed(SearchFlags.Or | SearchFlags.WholeWord, "player", "enemy")
 			/// </summary>
-			public HierarchyQuery downNamed(string name, bool sepSpace = false)
+			public HierarchyQuery downNamed(HierarchyFlags flags, params string[] names)
 			{
 				if (root == null) return this;
 
@@ -1764,7 +1780,7 @@ DEINITIALIZATION PHASE
 				{
 					Transform current = queue.Dequeue();
 
-					if (MatchesName(current.gameObject, name, sepSpace))
+					if (MatchesNames(current.gameObject, names, flags))
 					{
 						results.Add(current.gameObject);
 						return this; // Return first match at shallowest depth
@@ -1779,10 +1795,22 @@ DEINITIALIZATION PHASE
 			}
 
 			/// <summary>
-			/// Finds all descendants whose name matches (DFS, all depths).
-			/// <paramref name="sepSpace"/>: if true, matches only words separated by space/underscore/dash; if false, matches anywhere (case-insensitive).
+			/// Convenience overload with default flags (case-insensitive, AND logic, match anywhere)
 			/// </summary>
-			public HierarchyQuery deepDownNamed(string name, bool sepSpace = false)
+			public HierarchyQuery downNamed(params string[] names)
+			{
+				return downNamed(HierarchyFlags.None, names);
+			}
+
+			/// <summary>
+			/// Finds all descendants whose name matches (DFS, all depths).
+			/// <paramref name="flags"/>: Combine flags with | operator (e.g. SearchFlags.Or | SearchFlags.WholeWord)
+			/// - Default (None): case-insensitive, AND logic, match anywhere
+			/// - CaseSensitive: Enable case-sensitive matching
+			/// - Or: Use OR logic (any term matches)
+			/// - WholeWord: Only match words separated by space/underscore/dash
+			/// </summary>
+			public HierarchyQuery deepDownNamed(HierarchyFlags flags, params string[] names)
 			{
 				if (root == null) return this;
 
@@ -1790,9 +1818,17 @@ DEINITIALIZATION PHASE
 				results.Clear();
 
 				// DFS to find all matches
-				SearchDescendantsRecursive(root.transform, name, sepSpace, results);
+				SearchDescendantsRecursive(root.transform, names, flags, results);
 
 				return this;
+			}
+
+			/// <summary>
+			/// Convenience overload with default flags (case-insensitive, AND logic, match anywhere)
+			/// </summary>
+			public HierarchyQuery deepDownNamed(params string[] names)
+			{
+				return deepDownNamed(HierarchyFlags.None, names);
 			}
 
 			/// <summary>
@@ -1848,8 +1884,9 @@ DEINITIALIZATION PHASE
 
 			/// <summary>
 			/// Finds the first ancestor (immediate parent) whose name matches.
+			/// <paramref name="flags"/>: Combine flags with | operator (e.g. SearchFlags.Or | SearchFlags.WholeWord)
 			/// </summary>
-			public HierarchyQuery upNamed(string name, bool sepSpace = false)
+			public HierarchyQuery upNamed(HierarchyFlags flags, params string[] names)
 			{
 				if (root == null) return this;
 
@@ -1857,16 +1894,25 @@ DEINITIALIZATION PHASE
 				results.Clear();
 
 				Transform current = root.transform.parent;
-				if (current != null && MatchesName(current.gameObject, name, sepSpace))
+				if (current != null && MatchesNames(current.gameObject, names, flags))
 					results.Add(current.gameObject);
 
 				return this;
 			}
 
 			/// <summary>
-			/// Finds all ancestors whose name matches (walks up entire hierarchy).
+			/// Convenience overload with default flags
 			/// </summary>
-			public HierarchyQuery deepUpNamed(string name, bool sepSpace = false)
+			public HierarchyQuery upNamed(params string[] names)
+			{
+				return upNamed(HierarchyFlags.None, names);
+			}
+
+			/// <summary>
+			/// Finds all ancestors whose name matches (walks up entire hierarchy).
+			/// <paramref name="flags"/>: Combine flags with | operator (e.g. SearchFlags.Or | SearchFlags.WholeWord)
+			/// </summary>
+			public HierarchyQuery deepUpNamed(HierarchyFlags flags, params string[] names)
 			{
 				if (root == null) return this;
 
@@ -1876,12 +1922,20 @@ DEINITIALIZATION PHASE
 				Transform current = root.transform.parent;
 				while (current != null)
 				{
-					if (MatchesName(current.gameObject, name, sepSpace))
+					if (MatchesNames(current.gameObject, names, flags))
 						results.Add(current.gameObject);
 					current = current.parent;
 				}
 
 				return this;
+			}
+
+			/// <summary>
+			/// Convenience overload with default flags
+			/// </summary>
+			public HierarchyQuery deepUpNamed(params string[] names)
+			{
+				return deepUpNamed(HierarchyFlags.None, names);
 			}
 
 			/// <summary>
@@ -1924,14 +1978,12 @@ DEINITIALIZATION PHASE
 
 			#endregion
 
-			#region Direct Component Retrieval - Decendents/Ancestors
+			#region Direct Component Retrieval - Descendants/Ancestors
 
 			/// <summary>
 			/// Finds the first descendant component T at shallowest depth (BFS).
 			/// Equivalent to: down<T>().gf<T>()
 			/// </summary>
-			/// <typeparam name="T"></typeparam>
-			/// <returns>T</returns>
 			public T downCompoGf<T>() where T : Component
 			{
 				return down<T>().gf<T>();
@@ -1941,8 +1993,6 @@ DEINITIALIZATION PHASE
 			/// Finds all descendant components T (DFS).
 			/// Equivalent to: deepDown<T>().all<T>()
 			/// </summary>
-			/// <typeparam name="T"></typeparam>
-			/// <returns>T</returns>
 			public List<T> deepDownCompoAll<T>() where T : Component
 			{
 				return deepDown<T>().all<T>();
@@ -1952,8 +2002,6 @@ DEINITIALIZATION PHASE
 			/// Finds the first ancestor component T.
 			/// Equivalent to: up<T>().gf<T>()
 			/// </summary>
-			/// <typeparam name="T"></typeparam>
-			/// <returns>T</returns>
 			public T upCompoGf<T>() where T : Component
 			{
 				return up<T>().gf<T>();
@@ -1963,8 +2011,6 @@ DEINITIALIZATION PHASE
 			/// Finds all ancestor components T.
 			/// Equivalent to: deepUp<T>().all<T>()
 			/// </summary>
-			/// <typeparam name="T"></typeparam>
-			/// <returns>T</returns>
 			public List<T> deepUpCompoAll<T>() where T : Component
 			{
 				return deepUp<T>().all<T>();
@@ -2004,7 +2050,7 @@ DEINITIALIZATION PHASE
 
 			#endregion
 
-			#region Terminators  GameObject/Component Extraction
+			#region Terminators - GameObject/Component Extraction
 
 			/// <summary>
 			/// Returns the first result GameObject.
@@ -2092,7 +2138,7 @@ DEINITIALIZATION PHASE
 
 			#endregion
 
-			#region ad Terminators
+			#region Additional Terminators
 
 			/// <summary>
 			/// Returns the count of results.
@@ -2147,39 +2193,84 @@ DEINITIALIZATION PHASE
 
 			#region Helper Methods
 
-			private static bool MatchesName(GameObject go, string name, bool sepSpace)
+			/// <summary>
+			/// Checks if a GameObject's name matches the search criteria.
+			/// Supports multiple search terms with AND/OR logic and various matching modes.
+			/// </summary>
+			private static bool MatchesNames(GameObject go, string[] searchTerms, HierarchyFlags flags)
 			{
-				if (go == null || string.IsNullOrEmpty(name))
+				if (go == null || searchTerms == null || searchTerms.Length == 0)
 					return false;
 
-				string goName = go.name;
-				string searchName = name.ToLower();
+				bool caseSensitive = (flags & HierarchyFlags.CaseSensitive) != 0;
+				bool useOrLogic = (flags & HierarchyFlags.Or) != 0;
+				bool wholeWord = (flags & HierarchyFlags.WholeWord) != 0;
 
-				if (sepSpace)
+				string goName = caseSensitive ? go.name : go.name.ToLower();
+
+				// AND logic: ALL terms must match
+				if (!useOrLogic)
 				{
-					// Match only words separated by space/underscore/dash
-					string pattern = @"(^|[\s_-])" + Regex.Escape(searchName) + @"([\s_-]|$)";
-					return Regex.IsMatch(goName, pattern, RegexOptions.IgnoreCase);
+					foreach (string term in searchTerms)
+					{
+						if (string.IsNullOrEmpty(term))
+							continue;
+
+						string searchTerm = caseSensitive ? term : term.ToLower();
+
+						if (!MatchesSingleTerm(goName, searchTerm, wholeWord, caseSensitive))
+							return false; // This term didn't match
+					}
+					return true; // All terms matched
 				}
+				// OR logic: ANY term must match
 				else
 				{
-					// Match anywhere (case-insensitive)
-					return goName.ToLower().Contains(searchName);
+					foreach (string term in searchTerms)
+					{
+						if (string.IsNullOrEmpty(term))
+							continue;
+
+						string searchTerm = caseSensitive ? term : term.ToLower();
+
+						if (MatchesSingleTerm(goName, searchTerm, wholeWord, caseSensitive))
+							return true; // Found a match
+					}
+					return false; // No terms matched
 				}
 			}
 
-			private static void SearchDescendantsRecursive(Transform current, string name, bool sepSpace, List<GameObject> results)
+			/// <summary>
+			/// Checks if a single search term matches the name
+			/// </summary>
+			private static bool MatchesSingleTerm(string name, string searchTerm, bool wholeWord, bool caseSensitive)
+			{
+				if (wholeWord)
+				{
+					// Match only words separated by space/underscore/dash
+					string pattern = @"(^|[\s_-])" + Regex.Escape(searchTerm) + @"([\s_-]|$)";
+					RegexOptions options = caseSensitive ? RegexOptions.None : RegexOptions.IgnoreCase;
+					return Regex.IsMatch(name, pattern, options);
+				}
+				else
+				{
+					// Match anywhere (substring search)
+					return name.Contains(searchTerm);
+				}
+			}
+
+			private static void SearchDescendantsRecursive(Transform current, string[] names, HierarchyFlags flags, List<GameObject> results)
 			{
 				// Don't check current (it's the root), only children
 				for (int i = 0; i < current.childCount; i++)
 				{
 					Transform child = current.GetChild(i);
 
-					if (MatchesName(child.gameObject, name, sepSpace))
+					if (MatchesNames(child.gameObject, names, flags))
 						results.Add(child.gameObject);
 
 					// Recurse
-					SearchDescendantsRecursive(child, name, sepSpace, results);
+					SearchDescendantsRecursive(child, names, flags, results);
 				}
 			}
 
@@ -2203,7 +2294,12 @@ DEINITIALIZATION PHASE
 
 		/// <summary>
 		/// Entry point for GameObject hierarchy queries.
-		/// Usage: gameObject.Q().downNamed("door").gf()
+		/// Usage: 
+		/// - gameObject.Q().downNamed("door").gf()
+		/// - gameObject.Q().downNamed("cube", "red", "trigger").gf()
+		/// - gameObject.Q().downNamed(SearchFlags.Or, "player", "enemy").all()
+		/// - gameObject.Q().downNamed(SearchFlags.Or | SearchFlags.WholeWord, "main", "camera").gf()
+		/// - gameObject.Q().downNamed(SearchFlags.CaseSensitive | SearchFlags.WholeWord, "Player").gf()
 		/// </summary>
 		public static HierarchyQuery Q(this GameObject gameObject)
 		{
@@ -2233,7 +2329,7 @@ DEINITIALIZATION PHASE
 			Transform current = gameObject.transform;
 
 			// Collect ancestors in reverse order
-			var ancestors = new System.Collections.Generic.Stack<string>();
+			var ancestors = new Stack<string>();
 			while (current != null)
 			{
 				ancestors.Push(current.name);
@@ -2252,6 +2348,7 @@ DEINITIALIZATION PHASE
 
 			return sb.ToString();
 		}
+
 		public static string getFullPath(this Component component)
 		{
 			return component.gameObject.getFullPath();
@@ -2898,7 +2995,8 @@ DEINITIALIZATION PHASE
 		LOG.LoadGameData(str)
 	*/
 	// file LOG.INITIALIZE() not required, since EnsureAllDirectoryExists called at runTIme access(in both LoadGameData<>, SaveGameData)
-	public static class LOG
+	// LOG.AddLog(str), LoadGameData<T>(enum), LoadGameData(enum), SaveGameData(str), 
+	public static partial class LOG
 	{
 		private static string locRootPath => Application.dataPath;
 		private static string locLOGDirectory => Path.Combine(locRootPath, "LOG");
@@ -2958,7 +3056,7 @@ DEINITIALIZATION PHASE
 		public static void HEnd(string header) { AddLog($"# << {header}"); }
 		#endregion
 
-		#region LoadGameData<T>(enum), LoadGameData(enum), SaveGameData(str), ToJson extension
+		#region LoadGameData<T>(enum), LoadGameData(enum), SaveGameData(str)
 		/// <summary>
 		/// Load game data and deserialize to type T
 		/// Returns default T instance if file doesn't exist or parsing fails
@@ -3045,8 +3143,12 @@ DEINITIALIZATION PHASE
 			}
 		}
 		#endregion
+		#endregion
+	}
 
-		#region extension .ToJson(), .ToTable(bool)
+	public static partial class LOG
+	{
+		#region extension .ToJson()
 		/// <summary>
 		/// Convert A Serielizable (object) To JSON (string).
 		/// called as string Json = object.ToJson(true);
@@ -3065,56 +3167,10 @@ DEINITIALIZATION PHASE
 				// throw;
 			}
 		}
-
-
-		// Used As: LOG.SaveLog(LIST.ToTable(name = "LIST<> "))
-		#region ToTable
-		#region ad helper
-		/// <summary>
-		/// Sanitizes a string by converting control characters and non-printable ASCII to readable representations
-		/// </summary>
-		/// <param name="input">The input string to sanitize</param>
-		/// <returns>A sanitized string safe for text file output</returns>
-		private static string SanitizeForTextOutput(string input)
-		{
-			if (string.IsNullOrEmpty(input))
-				return input ?? "null";
-
-			var sb = new StringBuilder();
-
-			foreach (char c in input)
-			{
-				// Handle common control characters with readable names
-				switch (c)
-				{
-					case '\0': sb.Append("(ascii:0-NUL)"); break;
-					case '\a': sb.Append("(ascii:7-BEL)"); break;
-					case '\b': sb.Append("(ascii:8-BS)"); break;
-					case '\t': sb.Append("(ascii:9-TAB)"); break;
-					case '\n': sb.Append("(ascii:10-LF)"); break;
-					case '\v': sb.Append("(ascii:11-VT)"); break;
-					case '\f': sb.Append("(ascii:12-FF)"); break;
-					case '\r': sb.Append("(ascii:13-CR)"); break;
-					case '\x1B': sb.Append("(ascii:27-ESC)"); break;
-					default:
-						// Check if it's a control character or extended ASCII that might cause issues
-						if (char.IsControl(c) || (int)c > 126)
-						{
-							sb.Append($"(ascii:{(int)c})");
-						}
-						else
-						{
-							// Printable ASCII character, keep as-is
-							sb.Append(c);
-						}
-						break;
-				}
-			}
-
-			return sb.ToString();
-		}
 		#endregion
 
+		// Used As: LOG.SaveLog(LIST.ToTable(name = "LIST<> "))
+		#region ToTable_prev
 		/// <summary>
 		/// <paramref name="toString"/>: by default false, if true each row is logged based on simple value.ToString().flat()
 		/// Produces a simple ASCII "table" of all public/instance/private fields of each element in <paramref name="list"/>.
@@ -3122,7 +3178,7 @@ DEINITIALIZATION PHASE
 		/// Now handles control characters and non-printable ASCII safely for text file output.
 		/// </summary>
 		// LIST<> or HASH<> or Q<> or MAP<>
-		public static string ToTable<T>(this IEnumerable<T> list, bool toString = false, string name = "LIST<>")
+		private static string ToTable_prev<T>(this IEnumerable<T> list, bool toString = false, string name = "LIST<>")
 		{
 			if (list == null)
 				return "_list/hash/map/queue is null_";
@@ -3276,12 +3332,304 @@ DEINITIALIZATION PHASE
 			#endregion
 		}
 		#endregion
+	}
 
-		#endregion
+	// new ToTable: (TODO: merge with previous partial LOG)
+	public static partial class LOG
+	{
+		#region ToTable with Properties Support
+
+		/// <summary>
+		/// Helper class to represent either a field or property for unified access
+		/// </summary>
+		private class MemberAccessor
+		{
+			public string Name { get; private set; }
+			public bool IsPrivate { get; private set; }
+			public bool IsStatic { get; private set; }
+			public Type MemberType { get; private set; }
+
+			private FieldInfo fieldInfo;
+			private PropertyInfo propertyInfo;
+
+			public MemberAccessor(FieldInfo field)
+			{
+				fieldInfo = field;
+				Name = field.Name;
+				IsPrivate = field.IsPrivate;
+				IsStatic = field.IsStatic;
+				MemberType = field.FieldType;
+			}
+
+			public MemberAccessor(PropertyInfo property)
+			{
+				propertyInfo = property;
+				Name = property.Name;
+				IsPrivate = property.GetMethod?.IsPrivate ?? true;
+				IsStatic = property.GetMethod?.IsStatic ?? false;
+				MemberType = property.PropertyType;
+			}
+
+			public object GetValue(object obj)
+			{
+				if (fieldInfo != null)
+					return fieldInfo.GetValue(obj);
+				else if (propertyInfo != null && propertyInfo.CanRead)
+					return propertyInfo.GetValue(obj);
+				return null;
+			}
+		}
+
+		/// <summary>
+		/// Sanitizes a string by converting control characters and non-printable ASCII to readable representations
+		/// </summary>
+		private static string SanitizeForTextOutput(string input)
+		{
+			if (string.IsNullOrEmpty(input))
+				return input ?? "null";
+
+			var sb = new StringBuilder();
+
+			foreach (char c in input)
+			{
+				// Handle common control characters with readable names
+				switch (c)
+				{
+					case '\0': sb.Append("(ascii:0-NUL)"); break;
+					case '\a': sb.Append("(ascii:7-BEL)"); break;
+					case '\b': sb.Append("(ascii:8-BS)"); break;
+					case '\t': sb.Append("(ascii:9-TAB)"); break;
+					case '\n': sb.Append("(ascii:10-LF)"); break;
+					case '\v': sb.Append("(ascii:11-VT)"); break;
+					case '\f': sb.Append("(ascii:12-FF)"); break;
+					case '\r': sb.Append("(ascii:13-CR)"); break;
+					case '\x1B': sb.Append("(ascii:27-ESC)"); break;
+					default:
+						if (char.IsControl(c) || (int)c > 126)
+							sb.Append($"(ascii:{(int)c})");
+						else
+							sb.Append(c);
+						break;
+				}
+			}
+
+			return sb.ToString();
+		}
+
+		/// <summary>
+		/// <paramref name="toString"/>: by default false, if true each row is logged based on simple value.ToString().flat()
+		/// <paramref name="includeProperties"/>: by default true, includes public readable properties alongside fields
+		/// Produces a simple ASCII "table" of all public/instance/private fields and properties of each element.
+		/// If a field/property's value is any IEnumerable (but not a string), prints its item-count instead of ToString().
+		/// Handles control characters and non-printable ASCII safely for text file output.
+		/// </summary>
+		public static string ToTable<T>(
+			this IEnumerable<T> list,
+			bool toString = false,
+			bool includeProperties = true,
+			string name = "LIST<>")
+		{
+			if (list == null)
+				return "_list/hash/map/queue is null_";
+
+			var items = list.ToList();
+			if (items.Count == 0)
+				return "_list/hash/map/queue got no elem_";
+
+			// @ - if toString enabled
+			#region toString enabled
+			if (toString == true)
+			{
+				string str = "";
+				string header = $"* {name} Count: {list.Count()}";
+
+				// Calculate column widths based on field names and all item-values
+				int cw = header.Length;
+				foreach (var e in list)
+				{
+					string flatValue = SanitizeForTextOutput(e.ToString().flat());
+					int width = flatValue.Length;
+					cw = Mathf.Max(cw, width);
+				}
+
+				// Build the header row
+				str = header.PadRight(cw + 1).PadLeft(cw + 2);
+
+				// Separator line
+				str += '\n' + new string('-', cw + 2) + '\n';
+
+				// Each Row
+				foreach (var e in list)
+				{
+					string sanitizedValue = SanitizeForTextOutput(e.ToString().flat());
+					str += sanitizedValue.PadRight(cw + 1).PadLeft(cw + 2) + '\n';
+				}
+				return str;
+			}
+			#endregion
+
+			// @ if toString disabled - use reflection
+			#region toString disabled
+			var sb = new StringBuilder();
+			var type = typeof(T);
+
+			// Gather members (fields and optionally properties)
+			var members = new List<MemberAccessor>();
+
+			// Get all fields (public, instance, non-public)
+			var fields = type.GetFields(
+				BindingFlags.Public | BindingFlags.Instance | BindingFlags.NonPublic
+			);
+			foreach (var field in fields)
+				members.Add(new MemberAccessor(field));
+
+			// Get all properties (public, instance) if enabled
+			if (includeProperties)
+			{
+				var properties = type.GetProperties(
+					BindingFlags.Public | BindingFlags.Instance
+				);
+				foreach (var prop in properties)
+				{
+					// Only include readable properties
+					if (prop.CanRead)
+						members.Add(new MemberAccessor(prop));
+				}
+			}
+
+			// If no members found, show a message
+			if (members.Count == 0)
+			{
+				return $"# {name}:\nNo fields or properties found for type {typeof(T).Name}. Try using toString: true";
+			}
+
+			// Helper: get a "display string" for a member value
+			string RenderElemValue(object val)
+			{
+				if (val == null)
+					return "null";
+
+				// If it's a string, treat it as a scalar and sanitize it
+				if (val is string s)
+					return SanitizeForTextOutput(s);
+
+				// If it's any other IEnumerable, count its elements
+				if (val is IEnumerable enumerable && !(val is string))
+				{
+					int count = 0;
+					foreach (var _ in enumerable) count += 1;
+
+					var tVal = val.GetType();
+					string typeName;
+
+					if (tVal.IsArray)
+						typeName = "[]";
+					else if (tVal.IsGenericType)
+						typeName = tVal.GetGenericTypeDefinition().Name.Split('`')[0];
+					else
+						typeName = tVal.Name;
+
+					return $"{typeName}: {count}";
+				}
+
+				// Otherwise, fallback to ToString() and sanitize
+				return SanitizeForTextOutput(val.ToString());
+			}
+
+			// Get prefixed member name
+			string GetPrefixedMemberName(MemberAccessor accessor)
+			{
+				string rawName = accessor.Name;
+				if (accessor.IsPrivate) rawName = "pri~" + rawName;
+				else if (accessor.IsStatic) rawName = "sta~" + rawName;
+				else rawName = "~" + rawName;
+				return rawName;
+			}
+
+			// Helper to format error messages consistently
+			string FormatError(Exception e)
+			{
+				// Keep error message short but consistent between width calc and rendering
+				return "(n/a)";
+			}
+
+			// 1) Calculate column widths based on member names and all item values
+			var columnWidths = new int[members.Count];
+			for (int i = 0; i < members.Count; i += 1)
+			{
+				// base width = member name length
+				columnWidths[i] = GetPrefixedMemberName(members[i]).Length;
+
+				// check each item's value in that member
+				foreach (var item in items)
+				{
+					try
+					{
+						var rawValue = members[i].GetValue(item);
+						string disp = RenderElemValue(rawValue);
+						columnWidths[i] = Math.Max(columnWidths[i], disp.Length);
+					}
+					catch (Exception e)
+					{
+						// Use consistent error formatting
+						string errorMsg = FormatError(e);
+						columnWidths[i] = Math.Max(columnWidths[i], errorMsg.Length);
+					}
+				}
+
+				columnWidths[i] += 2; // add some padding
+			}
+
+			// 2) Build the header row ("member names")
+			sb.AppendLine(
+				string.Join(" | ",
+					members.Select((m, idx) =>
+					{
+						string header = GetPrefixedMemberName(m);
+						return header.PadRight(columnWidths[idx]);
+					})
+			));
+
+			// 3) Separator line
+			for (int i = 0; i < members.Count; i += 1)
+			{
+				sb.Append(new string('-', columnWidths[i]));
+				if (i < members.Count - 1)
+					sb.Append("-+-");
+			}
+			sb.AppendLine();
+
+			// 4) Rows: for each item, render each member's value
+			foreach (var item in items)
+			{
+				var rowValues = members.Select((m, idx) =>
+				{
+					try
+					{
+						object rawValue = m.GetValue(item);
+						string text = RenderElemValue(rawValue);
+						return text.PadRight(columnWidths[idx]);
+					}
+					catch (Exception e)
+					{
+							// Use consistent error formatting
+							string errorMsg = FormatError(e);
+						return errorMsg.PadRight(columnWidths[idx]);
+					}
+				});
+
+				sb.AppendLine(string.Join(" | ", rowValues));
+			}
+
+			return $"# {name}:\n" + sb.ToString();
+			#endregion
+		}
+
 		#endregion
 	}
 	#endregion
 }
+
 
 namespace SPACE_prev
 {
