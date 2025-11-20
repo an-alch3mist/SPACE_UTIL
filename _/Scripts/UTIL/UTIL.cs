@@ -14,6 +14,7 @@ using UnityEngine.UI;
 using UnityEngine.InputSystem;
 using UnityEngine.EventSystems;
 using TMPro;
+using System.Security.Cryptography;
 
 namespace SPACE_UTIL
 {
@@ -3071,6 +3072,8 @@ DEINITIALIZATION PHASE
 		LOG.LoadGameData<T>(json)
 		LOG.LoadGameData(str)
 	*/
+	#region LOG_prev (LoadGameData<T>, LoadGameData(), SaveGameData() without encryption)
+	/*
 	// file LOG.INITIALIZE() not required, since EnsureAllDirectoryExists called at runTIme access(in both LoadGameData<>, SaveGameData)
 	// LOG.AddLog(str), LoadGameData<T>(enum), LoadGameData(enum), SaveGameData(str), 
 	public static partial class LOG
@@ -3222,7 +3225,315 @@ DEINITIALIZATION PHASE
 		#endregion
 		#endregion
 	}
+	*/
+	#endregion
 
+	// LOG Path the EnsureDirExists
+	public static partial class LOG
+	{
+		private static string locRootPath => Application.dataPath;
+		private static string locLOGDirectory => Path.Combine(locRootPath, "LOG");
+		private static string locLOGFile => Path.Combine(locLOGDirectory, "LOG.md");
+		public static string locGameDataDirectory => Path.Combine(locLOGDirectory, "GameData");
+		public static string locGameDataNoEncrDirectory => Path.Combine(locLOGDirectory, "GameDataWithNoEncryption"); // todo: make use of it in editor script
+
+		#region API EnsureAllDirExists(), GetGameDataFilePath()
+		/// <summary>
+		/// Ensures the LOG directory structure exists
+		/// </summary>
+		private static void EnsureAllDirectoryExists()
+		{
+			// LOG/GameData
+			if (!Directory.Exists(locGameDataDirectory))
+			{
+				Directory.CreateDirectory(locGameDataDirectory);
+			}
+
+			// LOG/LOG.md
+			if (!File.Exists(locLOGFile))
+				File.WriteAllText(locLOGFile, "# LOG.md created, perform LOG.SaveLog(str, format) to append text here:\n\n");
+		}
+		/// <summary>
+		/// Gets the full file path for a given GameDataType
+		/// </summary>
+		public static string GetGameDataFilePath(string fileName)
+		{
+			return Path.Combine(locGameDataDirectory, $"{fileName}.json");
+		}
+		#endregion
+	}
+
+	/// <summary>
+	/// AddLog(str, format = "")
+	/// </summary>
+	public static partial class LOG
+	{
+		#region AddLog
+		public static void AddLog(string str, string syntaxType = "")
+		{
+			LOG.EnsureAllDirectoryExists();
+
+			if (syntaxType != "")
+				str = $"```{syntaxType}\n{str}\n```"; // format for markDown
+
+			// string str = string.Join("\n\n", args);
+			//string timestamp = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff");
+			//string logEntry = $"[{timestamp}] {str}";
+			// File logging
+			try
+			{
+				Debug.Log(C.method(null, color: "grey", adMssg: "success wiriting file"));
+				System.IO.File.AppendAllText(locLOGFile, str + Environment.NewLine + Environment.NewLine);
+			}
+			catch (Exception e)
+			{
+				Debug.Log(C.method(null, color: "red", adMssg: "error wrinting to log file"));
+			}
+		}
+
+		public static void H(string header) { AddLog($"# {header} >>\n"); }
+		public static void HEnd(string header) { AddLog($"# << {header}"); }
+		#endregion
+	}
+
+	/// <summary>
+	/// LoadGameData<T>(enum), LoadGameData(enum), SaveGameData(enum)
+	/// (optional) Uses AES-256 with PBKDF2 key derivation for secure, lossless encryption.
+	/// </summary>
+	public static partial class LOG
+	{
+		#region API encr/decr
+
+		#region private API encr/decr
+		// IMPORTANT: Change this to a unique value for your game!
+		// This is NOT the encryption key - it's used to derive the key
+		private const string GAME_SALT = "zero-one"; // ← CHANGE THIS, should be atleast 8 bytes(8 char)
+
+		/// <summary>
+		/// Derives an encryption key from the device ID and game salt.
+		/// Uses PBKDF2 with 10000 iterations for security.
+		/// </summary>
+		private static byte[] DeriveKey()
+		{
+			// Use device ID as password (unique per device)
+			string password = SystemInfo.deviceUniqueIdentifier;
+			byte[] salt = Encoding.UTF8.GetBytes(GAME_SALT);
+
+			// PBKDF2: industry standard for key derivation
+			using (var deriveBytes = new Rfc2898DeriveBytes(password, salt, 10000))
+			{
+				return deriveBytes.GetBytes(32); // 256-bit key for AES-256
+			}
+		}
+
+		/// <summary>
+		/// Encrypts a string using AES-256-CBC.
+		/// Returns Base64-encoded ciphertext (safe for text files).
+		/// </summary>
+		private static string Encrypt(string plainText)
+		{
+			if (string.IsNullOrEmpty(plainText))
+				return plainText;
+
+			byte[] key = DeriveKey();
+
+			using (Aes aes = Aes.Create())
+			{
+				aes.Key = key;
+				aes.GenerateIV(); // Random IV for each encryption
+
+				ICryptoTransform encryptor = aes.CreateEncryptor(aes.Key, aes.IV);
+
+				using (MemoryStream ms = new MemoryStream())
+				{
+					// Prepend IV to ciphertext (needed for decryption)
+					ms.Write(aes.IV, 0, aes.IV.Length);
+
+					using (CryptoStream cs = new CryptoStream(ms, encryptor, CryptoStreamMode.Write))
+					using (StreamWriter sw = new StreamWriter(cs))
+					{
+						sw.Write(plainText);
+					}
+
+					// Convert to Base64 (safe for text files, no data loss)
+					return Convert.ToBase64String(ms.ToArray());
+				}
+			}
+		}
+
+		/// <summary>
+		/// Decrypts AES-256-CBC ciphertext.
+		/// Input must be Base64-encoded.
+		/// </summary>
+		private static string Decrypt(string cipherText)
+		{
+			if (string.IsNullOrEmpty(cipherText))
+				return cipherText;
+
+			byte[] key = DeriveKey();
+			byte[] buffer = Convert.FromBase64String(cipherText);
+
+			using (Aes aes = Aes.Create())
+			{
+				aes.Key = key;
+
+				// Extract IV from beginning of ciphertext
+				byte[] iv = new byte[aes.IV.Length];
+				Array.Copy(buffer, 0, iv, 0, iv.Length);
+				aes.IV = iv;
+
+				ICryptoTransform decryptor = aes.CreateDecryptor(aes.Key, aes.IV);
+
+				using (MemoryStream ms = new MemoryStream(buffer, iv.Length, buffer.Length - iv.Length))
+				using (CryptoStream cs = new CryptoStream(ms, decryptor, CryptoStreamMode.Read))
+				using (StreamReader sr = new StreamReader(cs))
+				{
+					return sr.ReadToEnd();
+				}
+			}
+		}
+		#endregion
+
+		#region public API check encr/decr
+		/// <summary>
+		/// Test encryption/decryption with sample data.
+		/// Usage: LOG.TestEncryption();
+		/// </summary>
+		public static void CheckEncryption()
+		{
+			string original = "Test data: 你好 🎮 \n\t\r Special chars!";
+
+			Debug.Log("=== Encryption Test ===");
+			Debug.Log($"Original: {original}");
+
+			string encrypted = Encrypt(original);
+			Debug.Log($"Encrypted (Base64): {encrypted}");
+
+			string decrypted = Decrypt(encrypted);
+			Debug.Log($"Decrypted: {decrypted}");
+
+			bool success = original == decrypted;
+			Debug.Log($"Test Result: {(success ? "✓ PASS" : "✗ FAIL")}".colorTag(success ? "lime" : "red"));
+		}
+
+		#endregion
+
+		#endregion
+
+		#region LoadGameData<T>(enum), LoadGameData(enum), SaveGameData(enum)
+
+		/// <summary>
+		/// Save game data with optional encryption.
+		/// Usage: LOG.SaveGameData(GameDataType.PlayerProgress, jsonString, encryptRequired: true);
+		/// </summary>
+		// todo: call encryptRequired, from GameStore (since its game specific, note that for a certain GameDataTypeif encr is enabled for load it must be enabled for save too and vice versa)
+		public static void SaveGameData(object dataType, string jsonContent, bool encryptRequired = !true)
+		{
+			EnsureAllDirectoryExists();
+			string filePath = GetGameDataFilePath(dataType.ToString());
+
+			try
+			{
+				string contentToSave = encryptRequired ? Encrypt(jsonContent) : jsonContent;
+				File.WriteAllText(filePath, contentToSave);
+
+				string encStatus = encryptRequired ? "[ENCRYPTED]" : "[PLAIN]";
+				Debug.Log(C.method(null, "lime", $"Saved {encStatus}: {filePath}"));
+			}
+			catch (Exception e)
+			{
+				Debug.Log(C.method(null, "red", $"Error saving {filePath}: {e.Message}"));
+			}
+		}
+
+		/// <summary>
+		/// Load and optionally decrypt game data.
+		/// Returns default(T) if file doesn't exist or decryption fails.
+		/// Usage: PlayerData data = LOG.LoadGameData<PlayerData>(GameDataType.PlayerProgress, encryptRequired: true);
+		/// </summary>
+		public static T LoadGameData<T>(object dataType, bool encryptRequired = !true) where T : new()
+		{
+			string filePath = GetGameDataFilePath(dataType.ToString());
+
+			// Scenario 1: File doesn't exist
+			if (!File.Exists(filePath))
+			{
+				Debug.Log(C.method(null, "red", $"File not found: {filePath}. Returning default instance."));
+				return new T();
+			}
+
+			// Scenario 0: File exists
+			try
+			{
+				string fileContent = File.ReadAllText(filePath);
+				string jsonContent = encryptRequired ? Decrypt(fileContent) : fileContent;
+
+				T data = JsonUtility.FromJson<T>(jsonContent);
+
+				// If parsing failed (returns null or default)
+				if (data == null || EqualityComparer<T>.Default.Equals(data, default(T)))
+				{
+					Debug.Log(C.method(null, "red", $"Failed to parse JSON from: {filePath}. Returning default instance."));
+					return new T();
+				}
+
+				string encStatus = encryptRequired ? "[DECRYPTED]" : "[PLAIN]";
+				Debug.Log(C.method(null, "lime", $"Successfully loaded {encStatus}: {filePath}"));
+				return data;
+			}
+			catch (CryptographicException)
+			{
+				Debug.Log(C.method(null, "red", $"Decryption failed for {filePath} (corrupted/tampered). Returning default instance."));
+				return new T();
+			}
+			catch (Exception e)
+			{
+				Debug.Log(C.method(null, "red", $"Error loading {filePath}: {e.Message}. Returning default instance."));
+				return new T();
+			}
+		}
+
+		/// <summary>
+		/// Load raw content with optional decryption.
+		/// Returns empty string if file doesn't exist or decryption fails.
+		/// </summary>
+		public static string LoadGameData(object dataType, bool encryptRequired = !true)
+		{
+			string filePath = GetGameDataFilePath(dataType.ToString());
+
+			// Scenario 1: File doesn't exist
+			if (!File.Exists(filePath))
+			{
+				Debug.Log(C.method(null, "red", $"File not found: {filePath}. Returning string.Empty."));
+				return string.Empty;
+			}
+
+			// Scenario 0: File exists
+			try
+			{
+				string fileContent = File.ReadAllText(filePath);
+				string result = encryptRequired ? Decrypt(fileContent) : fileContent;
+
+				string encStatus = encryptRequired ? "[DECRYPTED]" : "[PLAIN]";
+				Debug.Log(C.method(null, "lime", $"Successfully loaded {encStatus} content from: {filePath}"));
+				return result;
+			}
+			catch (CryptographicException)
+			{
+				Debug.Log(C.method(null, "red", $"Decryption failed for {filePath} (corrupted/tampered). Returning string.Empty."));
+				return string.Empty;
+			}
+			catch (Exception e)
+			{
+				Debug.Log(C.method(null, "red", $"Error reading {filePath}: {e.Message}. Returning string.Empty."));
+				return string.Empty;
+			}
+		}
+
+		#endregion
+	}
+
+	// .ToJson(), .ToTable()
 	public static partial class LOG
 	{
 		#region extension .ToJson()
@@ -3549,7 +3860,6 @@ DEINITIALIZATION PHASE
 	}
 	#endregion
 }
-
 
 namespace SPACE_prev
 {
