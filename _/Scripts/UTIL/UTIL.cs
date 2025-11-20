@@ -1912,7 +1912,7 @@ DEINITIALIZATION PHASE
 			#region Query Methods - Ancestors
 
 			/// <summary>
-			/// Finds the first ancestor (immediate parent) whose name matches.
+			/// Finds the first ancestor (~~immediate parent~~, closest anscestor) whose name matches.
 			/// <paramref name="flags"/>: Combine flags with | operator (e.g. SearchFlags.Or | SearchFlags.WholeWord)
 			/// </summary>
 			public HierarchyQuery upNamed(HierarchyFlags flags, params string[] names)
@@ -1975,7 +1975,7 @@ DEINITIALIZATION PHASE
 			}
 
 			/// <summary>
-			/// Finds the first ancestor (immediate parent) with component T.
+			/// Finds the first ancestor (~~immediate parent~~, closest anscestor) with component T.
 			/// </summary>
 			public HierarchyQuery up<T>() where T : Component
 			{
