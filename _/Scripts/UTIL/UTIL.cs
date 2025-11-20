@@ -3065,170 +3065,9 @@ DEINITIALIZATION PHASE
 	#endregion
 
 	#region LOG
-	/*
-		Used as: 
-		LOG.AddLog(str)
-		LOG.SaveGameData(str)
-		LOG.LoadGameData<T>(json)
-		LOG.LoadGameData(str)
-	*/
-	#region LOG_prev (LoadGameData<T>, LoadGameData(), SaveGameData() without encryption)
-	/*
-	// file LOG.INITIALIZE() not required, since EnsureAllDirectoryExists called at runTIme access(in both LoadGameData<>, SaveGameData)
-	// LOG.AddLog(str), LoadGameData<T>(enum), LoadGameData(enum), SaveGameData(str), 
-	public static partial class LOG
-	{
-		private static string locRootPath => Application.dataPath;
-		private static string locLOGDirectory => Path.Combine(locRootPath, "LOG");
-		private static string locLOGFile => Path.Combine(locLOGDirectory, "LOG.md");
-		private static string locGameDataDirectory => Path.Combine(locLOGDirectory, "GameData");
-
-		#region private API
-		/// <summary>
-		/// Ensures the LOG directory structure exists
-		/// </summary>
-		private static void EnsureAllDirectoryExists()
-		{
-			// LOG/GameData
-			if (!Directory.Exists(locGameDataDirectory))
-			{
-				Directory.CreateDirectory(locGameDataDirectory);
-			}
-
-			// LOG/LOG.md
-			if (!File.Exists(locLOGFile))
-				File.WriteAllText(locLOGFile, "# LOG.md created, perform LOG.SaveLog(str, format) to append text here:\n\n");
-		}
-		/// <summary>
-		/// Gets the full file path for a given GameDataType
-		/// </summary>
-		public static string GetGameDataFilePath(string fileName)
-		{
-			return Path.Combine(locGameDataDirectory, $"{fileName}.json");
-		}
-		#endregion
-
-		#region public API
-		#region AddLog
-		public static void AddLog(string str, string syntaxType = "")
-		{
-			LOG.EnsureAllDirectoryExists();
-
-			if (syntaxType != "")
-				str = $"```{syntaxType}\n{str}\n```"; // format for markDown
-
-			// string str = string.Join("\n\n", args);
-			//string timestamp = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff");
-			//string logEntry = $"[{timestamp}] {str}";
-			// File logging
-			try
-			{
-				Debug.Log(C.method(null, color: "grey", adMssg: "success wiriting file"));
-				System.IO.File.AppendAllText(locLOGFile, str + Environment.NewLine + Environment.NewLine);
-			}
-			catch (Exception e)
-			{
-				Debug.Log(C.method(null, color: "red", adMssg: "error wrinting to log file"));
-			}
-		}
-
-		public static void H(string header) { AddLog($"# {header} >>\n"); }
-		public static void HEnd(string header) { AddLog($"# << {header}"); }
-		#endregion
-
-		#region LoadGameData<T>(enum), LoadGameData(enum), SaveGameData(str)
-		/// <summary>
-		/// Load game data and deserialize to type T
-		/// Returns default T instance if file doesn't exist or parsing fails
-		/// </summary>
-		public static T LoadGameData<T>(object dataType) where T : new()
-		{
-			string filePath = GetGameDataFilePath(dataType.ToString());
-
-			// Scenario 1: File doesn't exist
-			if (!File.Exists(filePath))
-			{
-				Debug.Log(C.method(null, "red", adMssg: $"File not found: {filePath}. Returning default instance."));
-				return new T();
-			}
-
-			// Scenario 0: File exists
-			try
-			{
-				string jsonContent = File.ReadAllText(filePath);
-
-				// Try to parse JSON
-				T data = JsonUtility.FromJson<T>(jsonContent);
-
-				// If parsing failed (returns null or default)
-				if (data == null || EqualityComparer<T>.Default.Equals(data, default(T)))
-				{
-					Debug.Log(C.method(null, "red", adMssg: $"Failed to parse JSON from: {filePath}. Returning default instance."));
-					return new T();
-				}
-				Debug.Log(C.method(null, "lime", adMssg: $"Successfully Loaded JSON from: {filePath}"));
-				return data;
-			}
-			catch (Exception e)
-			{
-				Debug.Log(C.method(null, "red", adMssg: $"Error loading {filePath}: {e.Message}. Returning default instance."));
-				return new T();
-			}
-		}
-
-		/// <summary>
-		/// Load game data as raw JSON string
-		/// Returns empty string if file doesn't exist
-		/// </summary>
-		public static string LoadGameData(object dataType)
-		{
-			string filePath = GetGameDataFilePath(dataType.ToString());
-
-			if (!File.Exists(filePath))
-			{
-				Debug.Log(C.method(null, "red", adMssg: $"File not found: {filePath}. Returning string.Empty."));
-				return string.Empty;
-			}
-
-			try
-			{
-				string content = File.ReadAllText(filePath);
-				Debug.Log(C.method(null, "lime", adMssg: $"Successfully loaded raw content from: {filePath}"));
-				return content;
-			}
-			catch (Exception e)
-			{
-				Debug.Log(C.method(null, "red", adMssg: $"Error reading {filePath}: {e.Message}"));
-				return string.Empty;
-			}
-		}
-
-		/// <summary>
-		/// Save game data from JSON string
-		/// Creates file if it doesn't exist, overwrites if it does
-		/// </summary>
-		public static void SaveGameData(object dataType, string jsonContent)
-		{
-			EnsureAllDirectoryExists();
-			string filePath = GetGameDataFilePath(dataType.ToString());
-
-			try
-			{
-				File.WriteAllText(filePath, jsonContent);
-				Debug.Log(C.method(null, "lime", $"success saving @ {filePath}")); // Debug.Log($"[LOG.SaveGameData()] Successfully saved: {filePath}");
-			}
-			catch (Exception e)
-			{
-				Debug.Log(C.method(null, "red", $"error saving @ {filePath}")); // Debug.Log($"[LOG.SaveGameData()] Error saving {filePath}: {e.Message}".colorTag("red"));
-			}
-		}
-		#endregion
-		#endregion
-	}
-	*/
-	#endregion
-
-	// LOG Path the EnsureDirExists
+	/// <summary>
+	/// EnsureDirExists, GetFilePath()
+	/// </summary>
 	public static partial class LOG
 	{
 		private static string locRootPath => Application.dataPath;
@@ -3533,7 +3372,9 @@ DEINITIALIZATION PHASE
 		#endregion
 	}
 
-	// .ToJson(), .ToTable()
+	/// <summary>
+	/// .ToJson(), .ToTable()
+	/// </summary>
 	public static partial class LOG
 	{
 		#region extension .ToJson()
@@ -3858,6 +3699,169 @@ DEINITIALIZATION PHASE
 
 		#endregion
 	}
+
+	#region /* LOG_prev
+	/*
+		Used as: 
+		LOG.AddLog(str)
+		LOG.SaveGameData(str)
+		LOG.LoadGameData<T>(json)
+		LOG.LoadGameData(str)
+	*/
+	/*
+	// file LOG.INITIALIZE() not required, since EnsureAllDirectoryExists called at runTIme access(in both LoadGameData<>, SaveGameData)
+	// LOG.AddLog(str), LoadGameData<T>(enum), LoadGameData(enum), SaveGameData(str), 
+	public static partial class LOG
+	{
+		private static string locRootPath => Application.dataPath;
+		private static string locLOGDirectory => Path.Combine(locRootPath, "LOG");
+		private static string locLOGFile => Path.Combine(locLOGDirectory, "LOG.md");
+		private static string locGameDataDirectory => Path.Combine(locLOGDirectory, "GameData");
+
+		#region private API
+		/// <summary>
+		/// Ensures the LOG directory structure exists
+		/// </summary>
+		private static void EnsureAllDirectoryExists()
+		{
+			// LOG/GameData
+			if (!Directory.Exists(locGameDataDirectory))
+			{
+				Directory.CreateDirectory(locGameDataDirectory);
+			}
+
+			// LOG/LOG.md
+			if (!File.Exists(locLOGFile))
+				File.WriteAllText(locLOGFile, "# LOG.md created, perform LOG.SaveLog(str, format) to append text here:\n\n");
+		}
+		/// <summary>
+		/// Gets the full file path for a given GameDataType
+		/// </summary>
+		public static string GetGameDataFilePath(string fileName)
+		{
+			return Path.Combine(locGameDataDirectory, $"{fileName}.json");
+		}
+		#endregion
+
+		#region public API
+		#region AddLog
+		public static void AddLog(string str, string syntaxType = "")
+		{
+			LOG.EnsureAllDirectoryExists();
+
+			if (syntaxType != "")
+				str = $"```{syntaxType}\n{str}\n```"; // format for markDown
+
+			// string str = string.Join("\n\n", args);
+			//string timestamp = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff");
+			//string logEntry = $"[{timestamp}] {str}";
+			// File logging
+			try
+			{
+				Debug.Log(C.method(null, color: "grey", adMssg: "success wiriting file"));
+				System.IO.File.AppendAllText(locLOGFile, str + Environment.NewLine + Environment.NewLine);
+			}
+			catch (Exception e)
+			{
+				Debug.Log(C.method(null, color: "red", adMssg: "error wrinting to log file"));
+			}
+		}
+
+		public static void H(string header) { AddLog($"# {header} >>\n"); }
+		public static void HEnd(string header) { AddLog($"# << {header}"); }
+		#endregion
+
+		#region LoadGameData<T>(enum), LoadGameData(enum), SaveGameData(str)
+		/// <summary>
+		/// Load game data and deserialize to type T
+		/// Returns default T instance if file doesn't exist or parsing fails
+		/// </summary>
+		public static T LoadGameData<T>(object dataType) where T : new()
+		{
+			string filePath = GetGameDataFilePath(dataType.ToString());
+
+			// Scenario 1: File doesn't exist
+			if (!File.Exists(filePath))
+			{
+				Debug.Log(C.method(null, "red", adMssg: $"File not found: {filePath}. Returning default instance."));
+				return new T();
+			}
+
+			// Scenario 0: File exists
+			try
+			{
+				string jsonContent = File.ReadAllText(filePath);
+
+				// Try to parse JSON
+				T data = JsonUtility.FromJson<T>(jsonContent);
+
+				// If parsing failed (returns null or default)
+				if (data == null || EqualityComparer<T>.Default.Equals(data, default(T)))
+				{
+					Debug.Log(C.method(null, "red", adMssg: $"Failed to parse JSON from: {filePath}. Returning default instance."));
+					return new T();
+				}
+				Debug.Log(C.method(null, "lime", adMssg: $"Successfully Loaded JSON from: {filePath}"));
+				return data;
+			}
+			catch (Exception e)
+			{
+				Debug.Log(C.method(null, "red", adMssg: $"Error loading {filePath}: {e.Message}. Returning default instance."));
+				return new T();
+			}
+		}
+
+		/// <summary>
+		/// Load game data as raw JSON string
+		/// Returns empty string if file doesn't exist
+		/// </summary>
+		public static string LoadGameData(object dataType)
+		{
+			string filePath = GetGameDataFilePath(dataType.ToString());
+
+			if (!File.Exists(filePath))
+			{
+				Debug.Log(C.method(null, "red", adMssg: $"File not found: {filePath}. Returning string.Empty."));
+				return string.Empty;
+			}
+
+			try
+			{
+				string content = File.ReadAllText(filePath);
+				Debug.Log(C.method(null, "lime", adMssg: $"Successfully loaded raw content from: {filePath}"));
+				return content;
+			}
+			catch (Exception e)
+			{
+				Debug.Log(C.method(null, "red", adMssg: $"Error reading {filePath}: {e.Message}"));
+				return string.Empty;
+			}
+		}
+
+		/// <summary>
+		/// Save game data from JSON string
+		/// Creates file if it doesn't exist, overwrites if it does
+		/// </summary>
+		public static void SaveGameData(object dataType, string jsonContent)
+		{
+			EnsureAllDirectoryExists();
+			string filePath = GetGameDataFilePath(dataType.ToString());
+
+			try
+			{
+				File.WriteAllText(filePath, jsonContent);
+				Debug.Log(C.method(null, "lime", $"success saving @ {filePath}")); // Debug.Log($"[LOG.SaveGameData()] Successfully saved: {filePath}");
+			}
+			catch (Exception e)
+			{
+				Debug.Log(C.method(null, "red", $"error saving @ {filePath}")); // Debug.Log($"[LOG.SaveGameData()] Error saving {filePath}: {e.Message}".colorTag("red"));
+			}
+		}
+		#endregion
+		#endregion
+	}
+	*/
+	#endregion
 	#endregion
 }
 
