@@ -132,7 +132,7 @@ C -> 0";
 			// node.INP, node.OUT
 			IN.split(@"\n").forEach(line =>
 			{
-				var ID = line.split(@" \-\> "); // split pattern
+				var ID = line.split(@" \-\> ").ToArray(); // split pattern
 				Node node_a = MAP_NodeReg.Values.find(node => node.name == ID[0]),
 					 node_b = MAP_NodeReg.Values.find(node => node.name == ID[1]);
 				node_a.OUT.Add(node_b);

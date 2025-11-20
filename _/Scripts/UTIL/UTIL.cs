@@ -1070,69 +1070,6 @@ namespace SPACE_UTIL
 			string clean = raw_str.Replace("\r", "");
 			return clean.Trim();
 		}
-		public static string esc(string str)
-		{
-			return Regex.Escape(str);
-		}
-		// << ad essential
-
-		/// <summary>
-		/// Splits <paramref name="str"/> on the regex <paramref name="re"/>
-		/// Example: "A -> B\n\nC".split(@"\n\n", "gm") ⇒ ["A -> B", "C"]
-		/// </summary>
-		/// regular expression explicit match approach
-		public static string[] split(this string str, string re, string flags = "gx")
-		{
-			if (str == null) return null;
-
-			// Always include ExplicitCapture by default for split
-			return Regex.Split(str.clean(), re, strToFlags(flags));
-		}
-
-		/// <summary>
-		/// Returns all substrings of <paramref name="str"/> that match the regex <paramref name="re"/>.
-		/// Example: "A -> B, X -> Y".match(@"\w\s*->\s*\w", "gm") ⇒ [ "A -> B", "X -> Y" ]
-		/// </summary>
-		public static string[] match(this string str, string re, string flags = "gm")
-		{
-			if (str == null)
-				return null;
-
-			// Always include global, multiline capture by default for split
-			var matches = Regex.Matches(str.clean(), re, strToFlags(flags));
-			if (matches.Count == 0) return Array.Empty<string>();
-
-			return matches
-				.Cast<Match>()
-				.Select(m => m.Value)
-				.ToArray();
-		}
-		/// <summary>
-		/// Returns weather there is a pattern somewhere in <paramref name="str"/> that match the regex <paramref name="re"/> entirely.
-		/// Eg: 'A'.match(@"^[a-g]$", "gi") ⇒ true,
-		/// Eg: "TMP text field".match(@"text", "gi") ⇒ true,
-		/// </summary>
-		public static bool fmatch(this char _char, string re, string flags = "g")
-		{
-			return Regex.IsMatch(_char.ToString(), re, strToFlags(flags));
-		}
-		public static bool fmatch(this string str, string re, string flags = "g")
-		{
-			return Regex.IsMatch(str, re, strToFlags(flags));
-		}
-		/// <summary>
-		/// Replaces all occurrences of the regex pattern <paramref name="re"/> with <paramref name="replace_with"/>
-		/// Example: "Hello world123 test456".replace(@"\d+", "X", "gm") ⇒ "Hello worldX testX"
-		/// </summary>
-		public static string replace(this string str, string re, string replace_with, string flags = "gm")
-		{
-			if (str == null)
-				return null;
-
-			// default flags: "gm"
-			return Regex.Replace(str.clean(), re, replace_with, strToFlags(flags));
-		}
-
 		/// <summary>
 		/// shows the raw string in a single line with \r\n \t appeanded as chars, ad: \f, \v
 		/// </summary>
@@ -1146,13 +1083,16 @@ namespace SPACE_UTIL
 					.Replace("\v", "\\v");
 			return name + singleLine;
 		}
-		public static string repeat(this char _char, int count = 100) { return new string(_char, count); }
-		public static string join(this IEnumerable<string> STRING, string separator = ", ")
+		public static string esc(string str)
 		{
-			return string.Join(separator, STRING);
+			return Regex.Escape(str);
 		}
-
-		#region pad
+		public static string repeat(this char chr, int count = 100)
+		{ return new string(chr, count); }
+		public static string join(this IEnumerable<string> STR, string sep = ", ")
+		{
+			return string.Join(sep, STR);
+		}
 		/// <summary>
 		/// Centers a string with optional spacing, padding with the specified character.
 		/// Example: "hello".padCenter(17, '=', addSpacing: true) → "===== hello ====="
@@ -1179,11 +1119,6 @@ namespace SPACE_UTIL
 
 			return new string(paddingChar, leftPadding) + str + new string(paddingChar, rightPadding);
 		}
-
-		/// <summary>
-		/// Right-aligns a string with optional spacing, padding on the left with the specified character.
-		/// Example: "hello".padLeft(15, '=', addSpacing: true) → "========== hello"
-		/// </summary>
 		public static string padLeft(this string str, int totalWidth, char paddingChar = ' ', bool addSpacing = false)
 		{
 			if (str == null)
@@ -1203,11 +1138,6 @@ namespace SPACE_UTIL
 			int totalPadding = totalWidth - str.Length;
 			return new string(paddingChar, totalPadding) + str;
 		}
-
-		/// <summary>
-		/// Left-aligns a string with optional spacing, padding on the right with the specified character.
-		/// Example: "hello".padRight(15, '=', addSpacing: true) → "hello =========="
-		/// </summary>
 		public static string padRight(this string str, int totalWidth, char paddingChar = ' ', bool addSpacing = false)
 		{
 			if (str == null)
@@ -1227,8 +1157,63 @@ namespace SPACE_UTIL
 			int totalPadding = totalWidth - str.Length;
 			return str + new string(paddingChar, totalPadding);
 		}
-		#endregion
+		// << ad essential
 
+		/// <summary>
+		/// Splits <paramref name="str"/> on the regex <paramref name="re"/>
+		/// Example: "A -> B\n\nC".split(@"\n\n", "gm") ⇒ ["A -> B", "C"]
+		/// </summary>
+		/// regular expression explicit match approach
+		public static IEnumerable<string> split(this string str, string re, string flags = "gx")
+		{
+			if (str == null) return null;
+
+			// Always include ExplicitCapture by default for split
+			return Regex.Split(str.clean(), re, strToFlags(flags));
+		}
+		/// <summary>
+		/// Returns all substrings of <paramref name="str"/> that match the regex <paramref name="re"/>.
+		/// Example: "A -> B, X -> Y".match(@"\w\s*->\s*\w", "gm") ⇒ [ "A -> B", "X -> Y" ]
+		/// </summary>
+		public static IEnumerable<string> match(this string str, string re, string flags = "gm")
+		{
+			if (str == null)
+				return null;
+
+			// Always include global, multiline capture by default for split
+			var matches = Regex.Matches(str.clean(), re, strToFlags(flags));
+			if (matches.Count == 0) return Array.Empty<string>();
+
+			return matches
+				.Cast<Match>()
+				.Select(m => m.Value);
+		}
+		/// <summary>
+		/// Returns weather there is a pattern somewhere in <paramref name="str"/> that match the regex <paramref name="re"/> entirely.
+		/// Eg: 'A'.match(@"^[a-g]$", "gi") ⇒ true,
+		/// Eg: "TMP text field".match(@"text", "gi") ⇒ true,
+		/// </summary>
+		public static bool anyMatch(this string str, string re, string flags = "gm")
+		{
+			return Regex.IsMatch(str, re, strToFlags(flags));
+			// return str.match(re, flags).Count() > 0;
+		}
+		public static bool anyMatch(this char chr, string re, string flags = "gm")
+		{
+			return chr.ToString().anyMatch(re, flags);
+		}
+		/// <summary>
+		/// Replaces all occurrences of the regex pattern <paramref name="re"/> with <paramref name="insert"/>
+		/// Example: "Hello world123 test456".replace(@"\d+", "X", "gm") ⇒ "Hello worldX testX"
+		/// </summary>
+		public static string replace(this string str, string re, string insert, string flags = "gm")
+		{
+			if (str == null)
+				return null;
+
+			// default flags: "gm"
+			return Regex.Replace(str.clean(), re, insert, strToFlags(flags));
+		}
 		#endregion
 
 		#region string extension for Debug.Log
@@ -1517,40 +1502,6 @@ DEINITIALIZATION PHASE
 		}
 		#endregion
 
-	}
-	public enum ColorType
-	{
-		// --- Whitish / Light Colors ---
-		white,
-		silver,
-		lightblue,
-		aqua,      // (same as cyan)
-		cyan,      // (same as aqua)
-
-		// --- Cool / Blue-Green Colors ---
-		darkblue,
-		navy,
-		teal,
-		blue,
-
-		// warning
-		yellow,
-
-		// --- Greenish / Yellowish Colors ---
-		lime,
-		olive,
-		green,
-
-		// exit case
-		orange,
-
-		// --- Warm / Reddish / Orange Colors ---
-		brown,
-		maroon,
-		red,
-		purple,
-		fuchsia,   // (same as magenta)
-		magenta    // (same as fuchsia)
 	}
 
 	public static class U
@@ -1972,8 +1923,15 @@ DEINITIALIZATION PHASE
 				results.Clear();
 
 				Transform current = root.transform.parent;
-				if (current != null && MatchesNames(current.gameObject, names, flags))
-					results.Add(current.gameObject);
+				while (current != null)
+				{
+					if (MatchesNames(current.gameObject, names, flags))
+					{
+						results.Add(current.gameObject);
+						break;
+					}
+					current = current.parent;
+				}
 
 				return this;
 			}
@@ -2027,8 +1985,15 @@ DEINITIALIZATION PHASE
 				results.Clear();
 
 				Transform current = root.transform.parent;
-				if (current != null && current.GetComponent<T>() != null)
-					results.Add(current.gameObject);
+				while (current != null)
+				{
+					if (current.GetComponent<T>() != null)
+					{
+						results.Add(current.gameObject);
+						break;
+					}
+					current = current.parent;
+				}
 
 				return this;
 			}
@@ -2321,7 +2286,7 @@ DEINITIALIZATION PHASE
 			/// <summary>
 			/// Checks if a single search term matches the name
 			/// </summary>
-			private static bool MatchesSingleTerm(string name, string searchTerm, bool wholeWord, bool caseSensitive)
+			private static bool MatchesSingleTerm(string name, string searchTerm, bool wholeWord = false, bool caseSensitive = false)
 			{
 				if (wholeWord)
 				{
@@ -2383,7 +2348,6 @@ DEINITIALIZATION PHASE
 		{
 			return new HierarchyQuery(gameObject);
 		}
-
 		/// <summary>
 		/// Entry point for Component hierarchy queries.
 		/// Usage: component.Q().deepDown<Rigidbody>().all()
@@ -2426,7 +2390,6 @@ DEINITIALIZATION PHASE
 
 			return sb.ToString();
 		}
-
 		public static string getFullPath(this Component component)
 		{
 			return component.gameObject.getFullPath();
@@ -2804,7 +2767,7 @@ DEINITIALIZATION PHASE
 			string fullName = actionType.ToString();
 
 			// Split by double underscore to get actionMap and action name
-			string[] parts = fullName.split(@"__");
+			string[] parts = fullName.split(@"__").ToArray();
 
 			if (parts.Length != 2)
 			{
