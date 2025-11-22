@@ -2744,7 +2744,7 @@ DEINITIALIZATION PHASE
 					if (param.ToString() == animParam.name)
 					{
 						exists = true;
-						Debug.Log($"found {param} existance in {animator}".colorTag(C.colorStr.navy));
+						Debug.Log($"found {param} existance in {animator}".colorTag(C.colorStr.aqua));
 						break;
 					}
 				// << search
