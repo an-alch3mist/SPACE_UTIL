@@ -1193,12 +1193,12 @@ namespace SPACE_UTIL
 		/// Eg: 'A'.match(@"^[a-g]$", "gi") ⇒ true,
 		/// Eg: "TMP text field".match(@"text", "gi") ⇒ true,
 		/// </summary>
-		public static bool anyMatch(this string str, string re, string flags = "gm")
+		public static bool anyMatch(this string str, string re, string flags = "gmi")
 		{
 			return Regex.IsMatch(str, re, strToFlags(flags));
 			// return str.match(re, flags).Count() > 0;
 		}
-		public static bool anyMatch(this char chr, string re, string flags = "gm")
+		public static bool anyMatch(this char chr, string re, string flags = "gmi")
 		{
 			return chr.ToString().anyMatch(re, flags);
 		}
@@ -2744,7 +2744,7 @@ DEINITIALIZATION PHASE
 					if (param.ToString() == animParam.name)
 					{
 						exists = true;
-						Debug.Log($"found {param} existance in {animator}".colorTag("cyan"));
+						Debug.Log($"found {param} existance in {animator}".colorTag(C.colorStr.navy));
 						break;
 					}
 				// << search
@@ -2757,7 +2757,6 @@ DEINITIALIZATION PHASE
 	public static class ExtensionInputSystem
 	{
 		// no cross dependency with any other UTIL.cs class
-
 		/// <summary>
 		/// Attempts to retrieve an InputAction from an InputActionAsset using enum-style naming. (seperateor: "__")
 		/// Example: GameActionType.character__jump → actionMap: "character", action: "jump"
@@ -3306,7 +3305,7 @@ DEINITIALIZATION PHASE
 			// Scenario 1: File doesn't exist
 			if (!File.Exists(filePath))
 			{
-				Debug.Log(C.method(null, "red", $"File not found: {filePath}. Returning string.Empty."));
+				Debug.Log(C.method(null, "red", $"File not found: {filePath}. Returning string.Empty"));
 				return string.Empty;
 			}
 
