@@ -263,9 +263,9 @@ namespace SPACE_UTIL
 		}
 		#endregion
 
-		#region Legacy API (GT/ST) - Kept for backwards compatibility
-		public T GT(v2 coord) => this[coord];
-		public void ST(v2 coord, T val) => this[coord] = val;
+		#region Legacy API (Get/Set) - Kept for backwards compatibility
+		public T Get(v2 coord) => this[coord];
+		public void Set(v2 coord, T val) => this[coord] = val;
 		#endregion
 
 		#region Jagged Array Access - B[][] (lazy-loaded for compatibility)
@@ -339,12 +339,6 @@ namespace SPACE_UTIL
 				for (int x = 0; x < w; x++)
 					action(x, y, B_flat[ToIndex(x, y)]);
 		}
-
-		/// <summary>
-		/// Check if coordinate is within board bounds
-		/// </summary>
-		public bool InBounds(v2 coord) => coord.inRange((0, 0), (w - 1, h - 1));
-		public bool InBounds(int x, int y) => InBounds(new v2(x, y));
 		#endregion
 
 		#region Clone
