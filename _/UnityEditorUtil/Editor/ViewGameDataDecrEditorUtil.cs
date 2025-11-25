@@ -76,7 +76,7 @@ namespace SPACE_UTIL.EditorUtil
 		private Color encryptedColor = new Color(1f, 0.7f, 0.3f); // Orange
 		private Color plainColor = new Color(0.5f, 0.8f, 1f);     // Light blue
 		private Color corruptedColor = new Color(1f, 0.3f, 0.3f); // Red
-		private Color successColor = new Color(0.3f, 1f, 0.3f);   // Green
+		private Color successColor = new Color(0.4f, 0.8f, 0.3f);   // Green
 		#endregion
 
 		#region Unity Menu
@@ -148,8 +148,8 @@ namespace SPACE_UTIL.EditorUtil
 				ExportAll();
 			}
 			// Test button
-			GUI.backgroundColor = new Color(0.8f, 0.65f, 0.5f);
-			if (GUILayout.Button("EncrCheck", GUILayout.Height(btnHeight), GUILayout.Width(buttonWidth)))
+			GUI.backgroundColor = new Color(0.8f, 0.65f, 0.5f) / 2;
+			if (GUILayout.Button("EncrDecr?", GUILayout.Height(btnHeight), GUILayout.Width(buttonWidth)))
 			{
 				CheckEncryptionWorking();
 			}
