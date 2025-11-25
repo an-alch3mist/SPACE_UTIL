@@ -151,7 +151,7 @@ namespace SPACE_UTIL.EditorUtil
 			GUI.backgroundColor = new Color(0.8f, 0.65f, 0.5f);
 			if (GUILayout.Button("EncrCheck", GUILayout.Height(btnHeight), GUILayout.Width(buttonWidth)))
 			{
-				CheckEncryption();
+				CheckEncryptionWorking();
 			}
 
 			GUI.backgroundColor = Color.white;
@@ -378,23 +378,23 @@ namespace SPACE_UTIL.EditorUtil
 				// First check if it looks like plain JSON
 				string trimmed = rawContent.Trim();
 				bool looksLikeJSON = trimmed.StartsWith("{") || trimmed.StartsWith("[");
+				if (looksLikeJSON)
+				{
+					// Decryption returned empty but looks like JSON - probably plain
+					message = "Plain JSON";
+					return FileStatus.Plain;
+				}
 
 				// Try to decrypt
 				try
 				{
+					// guess the file is encrypted
 					string decrypted = LOG.LoadGameData(fileName, encryptRequired: true);
-
 					if (!string.IsNullOrEmpty(decrypted))
 					{
 						// Successfully decrypted
 						message = "Encrypted (verified)";
 						return FileStatus.Encrypted;
-					}
-					else if (looksLikeJSON)
-					{
-						// Decryption returned empty but looks like JSON - probably plain
-						message = "Plain JSON";
-						return FileStatus.Plain;
 					}
 					else
 					{
@@ -590,7 +590,7 @@ namespace SPACE_UTIL.EditorUtil
 			Repaint();
 		}
 
-		private void CheckEncryption()
+		private void CheckEncryptionWorking()
 		{
 			try
 			{
