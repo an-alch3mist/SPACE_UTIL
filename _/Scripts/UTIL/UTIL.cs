@@ -3059,7 +3059,7 @@ DEINITIALIZATION PHASE
 	}
 
 	/// <summary>
-	/// AddLog(str, format = "")
+	/// AddLog(str)
 	/// </summary>
 	public static partial class LOG
 	{
@@ -3216,7 +3216,6 @@ DEINITIALIZATION PHASE
 		#endregion
 
 		#region LoadGameData<T>(enum), LoadGameData(enum), SaveGameData(enum)
-
 		/// <summary>
 		/// Save game data with optional encryption.
 		/// Usage: LOG.SaveGameData(GameDataType.PlayerProgress, jsonString, encryptRequired: true);
@@ -3333,6 +3332,7 @@ DEINITIALIZATION PHASE
 	/// </summary>
 	public static partial class LOG
 	{
+		// Used As: object.ToJson(pretify: true); // with empty string fall back if error parsing
 		#region extension .ToJson()
 		/// <summary>
 		/// Convert A Serielizable (object) To JSON (string).
@@ -3355,7 +3355,7 @@ DEINITIALIZATION PHASE
 		#endregion
 
 		// Used As: LOG.SaveLog(LIST.ToTable(name = "LIST<> "))
-		#region ToTable with Properties Support
+		#region extension .ToTable()
 
 		/// <summary>
 		/// Helper class to represent either a field or property for unified access
