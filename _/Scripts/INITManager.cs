@@ -43,7 +43,26 @@ namespace SPACE_UTIL
 		private void Update()
 		{
 			this.UpdateFps();
+			//
+			#region exit application
+			if (INPUT.K.HeldDown(KeyCode.LeftShift))
+			{
+				if (INPUT.K.InstantDown(KeyCode.Escape))
+					QuitApplication();
+			}
+			#endregion
 		}
+		
+		#region exit application
+		private void QuitApplication()
+		{
+#if UNITY_EDITOR
+			UnityEditor.EditorApplication.isPlaying = false;
+#else
+    Application.Quit();
+#endif
+		} 
+		#endregion
 
 		int iter = 0;
 		private void UpdateFps()

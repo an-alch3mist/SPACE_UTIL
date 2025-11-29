@@ -1776,6 +1776,46 @@ DEINITIALIZATION PHASE
 				this.hasExecutedQuery = false;
 			}
 
+			#region Direct Component Retrieval - Descendants/Ancestors
+
+			/// <summary>
+			/// Finds the first descendant component T at shallowest depth (BFS).
+			/// Equivalent to: down<T>().gf<T>()
+			/// </summary>
+			public T downCompoGf<T>() where T : Component
+			{
+				return down<T>().gf<T>();
+			}
+
+			/// <summary>
+			/// Finds all descendant components T (DFS).
+			/// Equivalent to: deepDown<T>().all<T>()
+			/// </summary>
+			public List<T> deepDownCompoAll<T>() where T : Component
+			{
+				return deepDown<T>().all<T>();
+			}
+
+			/// <summary>
+			/// Finds the first ancestor component T.
+			/// Equivalent to: up<T>().gf<T>()
+			/// </summary>
+			public T upCompoGf<T>() where T : Component
+			{
+				return up<T>().gf<T>();
+			}
+
+			/// <summary>
+			/// Finds all ancestor components T.
+			/// Equivalent to: deepUp<T>().all<T>()
+			/// </summary>
+			public List<T> deepUpCompoAll<T>() where T : Component
+			{
+				return deepUp<T>().all<T>();
+			}
+
+			#endregion
+
 			#region Query Methods - Descendants
 
 			/// <summary>
@@ -1902,7 +1942,6 @@ DEINITIALIZATION PHASE
 			}
 
 			#endregion
-
 			#region Query Methods - Ancestors
 
 			/// <summary>
@@ -2014,47 +2053,6 @@ DEINITIALIZATION PHASE
 			}
 
 			#endregion
-
-			#region Direct Component Retrieval - Descendants/Ancestors
-
-			/// <summary>
-			/// Finds the first descendant component T at shallowest depth (BFS).
-			/// Equivalent to: down<T>().gf<T>()
-			/// </summary>
-			public T downCompoGf<T>() where T : Component
-			{
-				return down<T>().gf<T>();
-			}
-
-			/// <summary>
-			/// Finds all descendant components T (DFS).
-			/// Equivalent to: deepDown<T>().all<T>()
-			/// </summary>
-			public List<T> deepDownCompoAll<T>() where T : Component
-			{
-				return deepDown<T>().all<T>();
-			}
-
-			/// <summary>
-			/// Finds the first ancestor component T.
-			/// Equivalent to: up<T>().gf<T>()
-			/// </summary>
-			public T upCompoGf<T>() where T : Component
-			{
-				return up<T>().gf<T>();
-			}
-
-			/// <summary>
-			/// Finds all ancestor components T.
-			/// Equivalent to: deepUp<T>().all<T>()
-			/// </summary>
-			public List<T> deepUpCompoAll<T>() where T : Component
-			{
-				return deepUp<T>().all<T>();
-			}
-
-			#endregion
-
 			#region Filter GameObject Method
 
 			/// <summary>
@@ -2086,7 +2084,6 @@ DEINITIALIZATION PHASE
 			}
 
 			#endregion
-
 			#region Terminators - GameObject/Component Extraction
 
 			/// <summary>
@@ -2174,13 +2171,12 @@ DEINITIALIZATION PHASE
 			}
 
 			#endregion
-
 			#region Additional Terminators
 
 			/// <summary>
 			/// Returns the count of results.
 			/// </summary>
-			public int count()
+			public int Count()
 			{
 				if (!hasExecutedQuery)
 				{
@@ -2194,7 +2190,7 @@ DEINITIALIZATION PHASE
 			/// <summary>
 			/// Returns true if any results were found.
 			/// </summary>
-			public bool exists()
+			public bool Exists()
 			{
 				if (!hasExecutedQuery)
 				{
@@ -2209,7 +2205,7 @@ DEINITIALIZATION PHASE
 			/// Returns full hierarchy paths for all results.
 			/// Example: ["Root/Parent/Child", "Root/Parent/Sibling"]
 			/// </summary>
-			public List<string> getFullPath()
+			public List<string> GetFullPath()
 			{
 				if (!hasExecutedQuery)
 				{
@@ -2226,8 +2222,14 @@ DEINITIALIZATION PHASE
 				return paths;
 			}
 
+			public List<Transform> GetFirstGen()
+			{
+				List<Transform> CHILD = new List<Transform>();
+				for (int i0 = 0; i0 < this.root.transform.childCount; i0 += 1)
+					CHILD.Add(this.root.transform.GetChild(i0));
+				return CHILD;
+			}
 			#endregion
-
 			#region Helper Methods
 
 			/// <summary>
