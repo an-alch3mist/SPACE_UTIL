@@ -1167,9 +1167,9 @@ namespace SPACE_UTIL
 		}
 		/// <summary>
 		/// Returns all substrings of <paramref name="str"/> that match the regex <paramref name="re"/>.
-		/// Example: "A -> B, X -> Y".match(@"\w\s*->\s*\w", "gm") ⇒ [ "A -> B", "X -> Y" ]
+		/// Example: "A -> B, X -> Y".match(@"\w\s*->\s*\w", "gmi") ⇒ [ "A -> B", "X -> Y" ]
 		/// </summary>
-		public static IEnumerable<string> match(this string str, string re, string flags = "gm")
+		public static IEnumerable<string> allMatch(this string str, string re, string flags = "gmi")
 		{
 			if (str == null)
 				return null;
@@ -1184,18 +1184,29 @@ namespace SPACE_UTIL
 		}
 		/// <summary>
 		/// Returns weather there is a pattern somewhere in <paramref name="str"/> that match the regex <paramref name="re"/> entirely.
-		/// Eg: 'A'.match(@"^[a-g]$", "gi") ⇒ true,
-		/// Eg: "TMP text field".match(@"text", "gi") ⇒ true,
+		/// Eg: 'A'.match(@"^[a-g]$", "gmi") ⇒ true,
+		/// Eg: "TMP text field".match(@"text", "gmi") ⇒ true,
 		/// </summary>
-		public static bool anyMatch(this string str, string re, string flags = "gmi")
+		public static bool isAnyMatch(this string str, string re, string flags = "gmi")
 		{
 			return Regex.IsMatch(str, re, strToFlags(flags));
 			// return str.match(re, flags).Count() > 0;
 		}
 		public static bool anyMatch(this char chr, string re, string flags = "gmi")
 		{
-			return chr.ToString().anyMatch(re, flags);
+			return chr.ToString().isAnyMatch(re, flags);
 		}
+		/// <summary>
+		/// returns first integer match via str.allMatch(re: @"\d+", flags: "gmi")
+		/// </summary>
+		/// <param name="str"></param>
+		/// <param name="flags"></param>
+		/// <returns></returns>
+		public static int getIntFirstMatch(this string str, string flags = "gmi")
+		{
+			return str.allMatch(@"\d+", flags: flags).ToList()[0].parseInt();
+		}
+		
 		/// <summary>
 		/// Replaces all occurrences of the regex pattern <paramref name="re"/> with <paramref name="insert"/>
 		/// Example: "Hello world123 test456".replace(@"\d+", "X", "gm") ⇒ "Hello worldX testX"
@@ -3028,7 +3039,7 @@ DEINITIALIZATION PHASE
 	/// </summary>
 	public static partial class LOG
 	{
-		private static string locRootPath => Application.dataPath;
+		public static string locRootPath => Application.dataPath; // could be set in INITManager/GameStore Awake().
 		private static string locLOGDirectory => Path.Combine(locRootPath, "LOG");
 		private static string locLOGFile => Path.Combine(locLOGDirectory, "LOG.md");
 		public static string locGameDataDirectory => Path.Combine(locLOGDirectory, "GameData");
@@ -3447,7 +3458,7 @@ DEINITIALIZATION PHASE
 			this IEnumerable<T> list,
 			bool toString = false,
 			bool includeProperties = true,
-			string name = "LIST<>")
+			string name = "LIST<>", char pad = ' ')
 		{
 			if (list == null)
 				return "_list/hash/map/queue is null_";
@@ -3483,7 +3494,7 @@ DEINITIALIZATION PHASE
 				foreach (var e in list)
 				{
 					string sanitizedValue = SanitizeForTextOutput(e.ToString().flat());
-					str += sanitizedValue.PadRight(cw + 1).PadLeft(cw + 2) + '\n';
+					str += sanitizedValue.padRight(cw + 1, pad).padLeft(cw + 2, pad) + '\n';
 				}
 				return str;
 			}
