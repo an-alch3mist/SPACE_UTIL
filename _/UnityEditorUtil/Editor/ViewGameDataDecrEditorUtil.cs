@@ -384,6 +384,13 @@ namespace SPACE_UTIL.EditorUtil
 					message = "Plain JSON";
 					return FileStatus.Plain;
 				}
+				if (trimmed.split(@"[\n ]").Count() > 3)
+				{
+					// Decryption returned empty but looks like Plain txt - probably plain
+					// Debug.Log("space, new line count: " + trimmed.split(@"[\n ]").Count());
+					message = "Plain Txt IN";
+					return FileStatus.Plain;
+				}
 
 				// Try to decrypt
 				try
