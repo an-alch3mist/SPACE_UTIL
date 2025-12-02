@@ -199,7 +199,7 @@ namespace SPACE_UTIL
 	public class Board<T>
 	{
 		public int w, h;
-		public v2 m, M;
+		public v2 m, M; // [NonSerialized] if do not want to reflect in inspector by default or saved in Json.
 
 		// Flat array for serialization (JsonUtility compatible)
 		[SerializeField] private T[] B_flat;
@@ -308,16 +308,202 @@ namespace SPACE_UTIL
 		#endregion
 
 		#region Helper Methods
-		public override string ToString()
+		/// <summary>
+		/// Creates a formatted string representation of the board.
+		/// <paramref name="detailed"/>: If true, shows bordered table with coordinates and padding
+		/// </summary>
+		public string ToString(bool detailed = false)
 		{
-			string str = "";
-			for (int y = h - 1; y >= 0; y -= 1)
+			if (!detailed)
 			{
-				for (int x = 0; x < w; x += 1)
-					str += this[x, y];
-				str += '\n';
+				// Simple version (original behavior)
+				string str = "";
+				for (int y = h - 1; y >= 0; y -= 1)
+				{
+					for (int x = 0; x < w; x += 1)
+						str += this[x, y];
+					str += '\n';
+				}
+				return str;
 			}
-			return str;
+
+			// Detailed version with borders and coordinates
+			var sb = new StringBuilder();
+
+			// Determine cell width based on content
+			int cellWidth = 2; // minimum width
+			for (int y = 0; y < h; y += 1)
+				for (int x = 0; x < w; x += 1)
+				{
+					string content = this[x, y]?.ToString() ?? " ";
+					cellWidth = Math.Max(cellWidth, content.Length);
+				}
+			cellWidth += 2;
+
+			// Calculate coordinate label width (for y-axis)
+			int yLabelWidth = Math.Max(2, (h - 1).ToString().Length);
+
+			// Top border
+			sb.Append(new string(' ', yLabelWidth + 1));
+			sb.Append('┌');
+			for (int x = 0; x < w; x++)
+			{
+				sb.Append(new string('─', cellWidth));
+				sb.Append(x < w - 1 ? '┬' : '┐');
+			}
+			sb.AppendLine();
+
+			// Rows (from top to bottom: y = h-1 down to 0)
+			for (int y = h - 1; y >= 0; y--)
+			{
+				// Row with data
+				sb.Append(y.ToString().PadLeft(yLabelWidth));
+				sb.Append(' ');
+				sb.Append('│');
+
+				for (int x = 0; x < w; x++)
+				{
+					string content = this[x, y]?.ToString() ?? " ";
+					sb.Append(content.padCenter(cellWidth));
+					sb.Append('│');
+				}
+				sb.AppendLine();
+
+				// Separator row (except after last row)
+				if (y > 0)
+				{
+					sb.Append(new string(' ', yLabelWidth + 1));
+					sb.Append('├');
+					for (int x = 0; x < w; x++)
+					{
+						sb.Append(new string('─', cellWidth));
+						sb.Append(x < w - 1 ? '┼' : '┤');
+					}
+					sb.AppendLine();
+				}
+			}
+
+			// Bottom border
+			sb.Append(new string(' ', yLabelWidth + 1));
+			sb.Append('└');
+			for (int x = 0; x < w; x++)
+			{
+				sb.Append(new string('─', cellWidth));
+				sb.Append(x < w - 1 ? '┴' : '┘');
+			}
+			sb.AppendLine();
+
+			// X-axis labels
+			sb.Append(new string(' ', yLabelWidth + 1));
+			sb.Append(' ');
+			for (int x = 0; x < w; x++)
+			{
+				sb.Append(x.ToString().padCenter(cellWidth));
+				sb.Append(' ');
+			}
+			sb.AppendLine();
+
+			// Bottom decorative line
+			sb.Append(new string(' ', yLabelWidth + 1));
+			sb.Append('└');
+			for (int x = 0; x < w; x++)
+			{
+				sb.Append(new string('─', cellWidth));
+				sb.Append(x < w - 1 ? '┴' : '┘');
+			}
+
+			return sb.ToString();
+		}
+
+		/// <summary>
+		/// Creates a compact character representation of the board with coordinates.
+		/// <paramref name="func"/>: Function to convert each cell value to a character
+		/// Example: board.ToString(val => val == TileType.empty ? '.' : '#')
+		/// </summary>
+		public string ToString(System.Func<T, char> func)
+		{
+			if (func == null)
+			{
+				Debug.LogError("ToString(Func<T, char>) called with null function");
+				return ToString(detailed: false);
+			}
+
+			var sb = new StringBuilder();
+
+			// Calculate coordinate label width (for y-axis)
+			int yLabelWidth = Math.Max(2, (h - 1).ToString().Length);
+
+			// Rows (from top to bottom: y = h-1 down to 0)
+			for (int y = h - 1; y >= 0; y--)
+			{
+				// Y-axis label
+				sb.Append(y.ToString().PadLeft(yLabelWidth));
+				sb.Append(' ');
+
+				// Row data
+				for (int x = 0; x < w; x++)
+				{
+					char c = func(this[x, y]);
+					sb.Append(c);
+				}
+				sb.AppendLine();
+			}
+
+			// X-axis labels
+			sb.Append(new string(' ', yLabelWidth + 1));
+			for (int x = 0; x < w; x++)
+			{
+				// Use modulo 10 for compact display
+				sb.Append(x % 10);
+			}
+
+			return sb.ToString();
+		}
+
+		/// <summary>
+		/// Creates a compact character representation with access to coordinates.
+		/// <paramref name="func"/>: Function that takes (coord, value) and returns a character
+		/// Example: board.ToString((coord, val) => coord == start ? 'S' : coord == end ? 'E' : '.')
+		/// </summary>
+		public string ToString(System.Func<v2, T, char> func)
+		{
+			if (func == null)
+			{
+				Debug.LogError("ToString(Func<v2, T, char>) called with null function");
+				return ToString(detailed: false);
+			}
+
+			var sb = new StringBuilder();
+
+			// Calculate coordinate label width (for y-axis)
+			int yLabelWidth = Math.Max(2, (h - 1).ToString().Length);
+
+			// Rows (from top to bottom: y = h-1 down to 0)
+			for (int y = h - 1; y >= 0; y--)
+			{
+				// Y-axis label
+				sb.Append(y.ToString().PadLeft(yLabelWidth));
+				sb.Append(' ');
+
+				// Row data
+				for (int x = 0; x < w; x++)
+				{
+					v2 coord = (x, y);
+					char c = func(coord, this[coord]);
+					sb.Append(c);
+				}
+				sb.AppendLine();
+			}
+
+			// X-axis labels
+			sb.Append(new string(' ', yLabelWidth + 1));
+			for (int x = 0; x < w; x++)
+			{
+				// Use modulo 10 for compact display
+				sb.Append(x % 10);
+			}
+
+			return sb.ToString();
 		}
 
 		/// <summary>
@@ -889,6 +1075,13 @@ namespace SPACE_UTIL
 			return C.inRange(v.x, m.x, M.x) &&
 					C.inRange(v.y, m.y, M.y);
 		}
+		/// <summary>
+		/// start from m, end at M(including M)
+		/// </summary>
+		/// <param name="v"></param>
+		/// <param name="m"></param>
+		/// <param name="M"></param>
+		/// <returns></returns>
 		public static bool inRange(this v2 v, v2 m, v2 M)
 		{
 			return C.inRange(v.x, m.x, M.x) &&
@@ -1206,7 +1399,11 @@ namespace SPACE_UTIL
 		{
 			return str.allMatch(@"\d+", flags: flags).ToList()[0].parseInt();
 		}
-		
+		public static long getLongFirstMatch(this string str, string flags = "gmi")
+		{
+			return long.Parse(str.allMatch(@"\d+", flags: flags).ToList()[0]);
+		}
+
 		/// <summary>
 		/// Replaces all occurrences of the regex pattern <paramref name="re"/> with <paramref name="insert"/>
 		/// Example: "Hello world123 test456".replace(@"\d+", "X", "gm") ⇒ "Hello worldX testX"
@@ -3039,7 +3236,7 @@ DEINITIALIZATION PHASE
 	/// </summary>
 	public static partial class LOG
 	{
-		public static string locRootPath => Application.dataPath; // could be set in INITManager/GameStore Awake().
+		public static string locRootPath => Application.dataPath; // could be set in INITManager/GameStore Awake() to Application.persistantDataPath or Application.dataPath.
 		private static string locLOGDirectory => Path.Combine(locRootPath, "LOG");
 		private static string locLOGFile => Path.Combine(locLOGDirectory, "LOG.md");
 		public static string locGameDataDirectory => Path.Combine(locLOGDirectory, "GameData");
@@ -3077,8 +3274,14 @@ DEINITIALIZATION PHASE
 	public static partial class LOG
 	{
 		#region AddLog
+		#region disable AddLog
+		public static bool isAddLogDisabled = false; 
+		#endregion
 		public static void AddLog(string str, string syntaxType = "")
 		{
+			if (LOG.isAddLogDisabled == true)
+				return;
+
 			LOG.EnsureAllDirectoryExists();
 
 			if (syntaxType != "")
