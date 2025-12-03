@@ -9,12 +9,13 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using System.IO;
 
+using System.Security.Cryptography;
+
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.InputSystem;
 using UnityEngine.EventSystems;
 using TMPro;
-using System.Security.Cryptography;
 
 namespace SPACE_UTIL
 {
@@ -4055,7 +4056,6 @@ DEINITIALIZATION PHASE
 	#endregion
 	#endregion
 }
-
 namespace SPACE_prev
 {
 	// for DRAW prev legacy -> now its SPACE_DrawSystem(with chainable creation during runtime(with id blocking))
@@ -4099,4 +4099,3 @@ namespace SPACE_prev
 	}
 	#endregion
 }
-
