@@ -910,12 +910,15 @@ namespace SPACE_UTIL
 	{
 		public static void Init()
 		{
-			PrefabHolder = new GameObject("PrefabHolder").transform;
+			string name = "prefabHolder";
+			if (GameObject.Find(name) != null)
+				GameObject.Destroy(GameObject.Find(name));
+			prefabHolder = new GameObject(name).transform;
 		}
-		public static Transform PrefabHolder;
+		public static Transform prefabHolder;
 
 		#region CONSTANT
-		public static float e = 1f / 100;
+		public static double e = 1e-2;
 		public static float pi = Mathf.PI;
 		#region colorStr
 		public static class colorStr
@@ -4096,3 +4099,4 @@ namespace SPACE_prev
 	}
 	#endregion
 }
+

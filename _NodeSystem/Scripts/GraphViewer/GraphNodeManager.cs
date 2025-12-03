@@ -87,7 +87,7 @@ namespace SPACE_GRAPH_VIEW
 		// can't be static: depends on [SerielizeField]
 		public void CreateGraphNodeId(int id, string name)
 		{
-			GameObject GNode_Obj = GameObject.Instantiate(this.pfGraphNode, C.PrefabHolder);
+			GameObject GNode_Obj = GameObject.Instantiate(this.pfGraphNode, C.prefabHolder);
 
 			// random possition within initial_dist_from_worldCenter radius
 			GNode_Obj.transform.position =
