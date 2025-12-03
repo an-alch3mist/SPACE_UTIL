@@ -308,40 +308,55 @@ namespace SPACE_UTIL
 		#endregion
 
 		#region Helper Methods
+		#region ToString()
 		/// <summary>
-		/// Creates a formatted string representation of the board.
-		/// <paramref name="detailed"/>: If true, shows bordered table with coordinates and padding
+		/// Creates a detailed bordered table with custom value extraction.
+		/// NOW CORRECTLY ACCOUNTS FOR X-AXIS COORDINATE WIDTH
 		/// </summary>
-		public string ToString(bool detailed = false)
+		public string ToString<T1>(bool detailed = false, System.Func<T, T1> valFuncToStr = null)
 		{
-			if (!detailed)
+			// simple version >>
+			if (detailed == false)
 			{
-				// Simple version (original behavior)
 				string str = "";
 				for (int y = h - 1; y >= 0; y -= 1)
 				{
 					for (int x = 0; x < w; x += 1)
-						str += this[x, y];
+					{
+						if (valFuncToStr != null)
+							str += valFuncToStr(this[x, y]).ToString();
+						else
+							str += this[x, y];
+					}
 					str += '\n';
 				}
 				return str;
 			}
+			// << simple version
 
-			// Detailed version with borders and coordinates
+			if (valFuncToStr == null)
+			{
+				Debug.Log("ToString(bool, Func<T, string>) called with null function".colorTag("red"));
+				return "error";
+			}
+
+			// Detailed version with borders and custom function
 			var sb = new StringBuilder();
 
-			// Determine cell width based on content
-			int cellWidth = 2; // minimum width
-			for (int y = 0; y < h; y += 1)
-				for (int x = 0; x < w; x += 1)
+			// Calculate coordinate label widths
+			int yLabelWidth = Math.Max(2, (h - 1).ToString().Length);
+			int xCoordWidth = Math.Max(1, (w - 1).ToString().Length); // ← NEW: Width of x-coordinates
+
+			// Determine cell width based on BOTH content AND x-coordinate labels
+			int cellWidth = xCoordWidth; // ← Start with coordinate width as minimum
+			for (int y = 0; y < h; y++)
+			{
+				for (int x = 0; x < w; x++)
 				{
-					string content = this[x, y]?.ToString() ?? " ";
+					string content = valFuncToStr(this[x, y]).ToString();
 					cellWidth = Math.Max(cellWidth, content.Length);
 				}
-			cellWidth += 2;
-
-			// Calculate coordinate label width (for y-axis)
-			int yLabelWidth = Math.Max(2, (h - 1).ToString().Length);
+			}
 
 			// Top border
 			sb.Append(new string(' ', yLabelWidth + 1));
@@ -363,7 +378,7 @@ namespace SPACE_UTIL
 
 				for (int x = 0; x < w; x++)
 				{
-					string content = this[x, y]?.ToString() ?? " ";
+					string content = valFuncToStr(this[x, y]).ToString();
 					sb.Append(content.padCenter(cellWidth));
 					sb.Append('│');
 				}
@@ -393,12 +408,13 @@ namespace SPACE_UTIL
 			}
 			sb.AppendLine();
 
-			// X-axis labels
+			// X-axis labels - NOW PROPERLY CENTERED IN CELLS
 			sb.Append(new string(' ', yLabelWidth + 1));
 			sb.Append(' ');
 			for (int x = 0; x < w; x++)
 			{
-				sb.Append(x.ToString().padCenter(cellWidth));
+				string xLabel = x.ToString();
+				sb.Append(xLabel.padCenter(cellWidth)); // ← FIX: Center x-coord in cell
 				sb.Append(' ');
 			}
 			sb.AppendLine();
@@ -417,15 +433,15 @@ namespace SPACE_UTIL
 
 		/// <summary>
 		/// Creates a compact character representation of the board with coordinates.
-		/// <paramref name="func"/>: Function to convert each cell value to a character
+		/// <paramref name="valFuncToChar"/>: Function to convert each cell value to a character
 		/// Example: board.ToString(val => val == TileType.empty ? '.' : '#')
 		/// </summary>
-		public string ToString(System.Func<T, char> func)
+		public string ToString(System.Func<T, char> valFuncToChar)
 		{
-			if (func == null)
+			if (valFuncToChar == null)
 			{
-				Debug.LogError("ToString(Func<T, char>) called with null function");
-				return ToString(detailed: false);
+				Debug.Log("ToString(Func<T, char>) called with null function".colorTag("red"));
+				return "error";
 			}
 
 			var sb = new StringBuilder();
@@ -443,7 +459,7 @@ namespace SPACE_UTIL
 				// Row data
 				for (int x = 0; x < w; x++)
 				{
-					char c = func(this[x, y]);
+					char c = valFuncToChar(this[x, y]);
 					sb.Append(c);
 				}
 				sb.AppendLine();
@@ -459,18 +475,17 @@ namespace SPACE_UTIL
 
 			return sb.ToString();
 		}
-
 		/// <summary>
 		/// Creates a compact character representation with access to coordinates.
-		/// <paramref name="func"/>: Function that takes (coord, value) and returns a character
+		/// <paramref name="valFuncToChar"/>: Function that takes (coord, value) and returns a character
 		/// Example: board.ToString((coord, val) => coord == start ? 'S' : coord == end ? 'E' : '.')
 		/// </summary>
-		public string ToString(System.Func<v2, T, char> func)
+		public string ToString(System.Func<v2, T, char> valFuncToChar)
 		{
-			if (func == null)
+			if (valFuncToChar == null)
 			{
-				Debug.LogError("ToString(Func<v2, T, char>) called with null function");
-				return ToString(detailed: false);
+				Debug.Log("ToString(Func<v2, T, char>) called with null function".colorTag("red"));
+				return "";
 			}
 
 			var sb = new StringBuilder();
@@ -489,7 +504,7 @@ namespace SPACE_UTIL
 				for (int x = 0; x < w; x++)
 				{
 					v2 coord = (x, y);
-					char c = func(coord, this[coord]);
+					char c = valFuncToChar(coord, this[coord]);
 					sb.Append(c);
 				}
 				sb.AppendLine();
@@ -505,6 +520,7 @@ namespace SPACE_UTIL
 
 			return sb.ToString();
 		}
+		#endregion
 
 		/// <summary>
 		/// Apply a function to modify a cell value in-place
@@ -1920,7 +1936,7 @@ DEINITIALIZATION PHASE
 	{
 		public static void reset() { ITER_1D = new List<int>() { 0 }; }
 
-		private static List<int> ITER_1D;
+		public static List<int> ITER_1D;
 		public static void create() { ITER_1D.Add(0); }
 		public static void done() { if (ITER_1D.Count != 0) ITER_1D.RemoveAt(ITER_1D.Count - 1); }
 		public static bool iter_inc(double limit = 1e4)
@@ -3664,11 +3680,11 @@ DEINITIALIZATION PHASE
 			string name = "LIST<>", char pad = ' ')
 		{
 			if (list == null)
-				return "_list/hash/map/queue is null_";
+				return $"* {name}: _list/hash/map/queue is null_";
 
 			var items = list.ToList();
 			if (items.Count == 0)
-				return "_list/hash/map/queue got no elem_";
+				return $"* {name}: _list/hash/map/queue got no elem_";
 
 			string nameCountHeader = $"* {name} Count: {list.Count()}";
 
