@@ -1916,7 +1916,7 @@ DEINITIALIZATION PHASE
 		#endregion
 
 		// Extension
-		#region minMax(func, bool), find(func), findIndex(func), forEach(func), map()
+		#region minMax(func, bool), find(func), findIndex(func), forEach(func), map(func), getAt, getAtLast
 		public static T minMax<T>(this T[] T_1D, Func<T, T, float> cmp_func)
 		{
 			T min = T_1D[0];
@@ -1987,6 +1987,13 @@ DEINITIALIZATION PHASE
 		}
 		#endregion
 
+		/// <summary>
+		/// get an elem with index relative to last, 0 for last, 1 for 1th from last etc
+		/// </summary>
+		/// <typeparam name="T"></typeparam>
+		/// <param name="collection"></param>
+		/// <param name="index_from_last"></param>
+		/// <returns></returns>
 		public static T getAtLast<T>(this IEnumerable<T> collection, int index_from_last)
 		{
 			if (collection == null) throw new ArgumentNullException(nameof(collection)); // nameof(collection) = "collection"
@@ -1999,7 +2006,7 @@ DEINITIALIZATION PHASE
 
 		/// <summary>
 		/// Index accessor for IEnumerable (like JavaScript arrays).
-		/// Usage: items.at(1) instead of items.ToList()[1]
+		/// Usage: items.getAt(1) instead of items.ToList()[1]
 		/// </summary>
 		public static T getAt<T>(this IEnumerable<T> source, int index)
 		{
@@ -2012,7 +2019,7 @@ DEINITIALIZATION PHASE
 			return source.ElementAt(index);
 		}
 
-		/*
+		/* why not get<T>
 		/// <summary>
 		/// Makes IEnumerable act like an array with [] indexing.
 		/// Usage: IN.split("\n")[0] instead of IN.split("\n").ToList()[0]
