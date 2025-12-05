@@ -376,7 +376,7 @@ C -> 0";
 					int index = (lastOutIndex + i0) % OUT.Count;
 					Node succ = OUT.ElementAt(index);
 
-					if (succ.Q.gl(0).dist - (futureHeadDist % 1f) >= CN.minSpacing)
+					if (succ.Q.getFromLast(0).dist - (futureHeadDist % 1f) >= CN.minSpacing)
 					{
 						// remove item from this node, move to successor node
 						Item head = Q[0]; Q.RemoveAt(0);
@@ -427,7 +427,7 @@ C -> 0";
 					if (this.Q.Count == 0)
 						CanAccept = true;
 					else
-						CanAccept = CN.minSpacingExist(this.Q.gl(0), predHead);
+						CanAccept = CN.minSpacingExist(this.Q.getFromLast(0), predHead);
 					// << CanAccept
 					if(CanAccept == true)
 					{

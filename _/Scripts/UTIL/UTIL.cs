@@ -1987,7 +1987,7 @@ DEINITIALIZATION PHASE
 		}
 		#endregion
 
-		public static T gl<T>(this IEnumerable<T> collection, int index_from_last)
+		public static T getFromLast<T>(this IEnumerable<T> collection, int index_from_last)
 		{
 			if (collection == null) throw new ArgumentNullException(nameof(collection)); // nameof(collection) = "collection"
 
@@ -2001,7 +2001,7 @@ DEINITIALIZATION PHASE
 		/// Index accessor for IEnumerable (like JavaScript arrays).
 		/// Usage: items.at(1) instead of items.ToList()[1]
 		/// </summary>
-		public static T get<T>(this IEnumerable<T> source, int index)
+		public static T getAt<T>(this IEnumerable<T> source, int index)
 		{
 			if (index < 0)
 			{
@@ -2011,6 +2011,19 @@ DEINITIALIZATION PHASE
 			}
 			return source.ElementAt(index);
 		}
+
+		/*
+		/// <summary>
+		/// Makes IEnumerable act like an array with [] indexing.
+		/// Usage: IN.split("\n")[0] instead of IN.split("\n").ToList()[0]
+		/// WARNING: Creates a list internally - use sparingly!
+		/// </summary>
+		public static T get<T>(this IEnumerable<T> source, int index)
+		{
+			var list = source as IList<T> ?? source.ToList();
+			return list[index];
+		}
+		*/
 
 		/// <summary>
 		/// Groups elements by a selector function and returns a dictionary with unique keys and lists of all matching elements
