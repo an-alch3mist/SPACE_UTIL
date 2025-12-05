@@ -62,7 +62,7 @@ namespace SPACE_UTIL
 		/// </summary>
 		/// <param name="includeDiagonal"></param>
 		/// <returns></returns>
-		public static List<v2> getDIR(bool includeDiagonal = false)
+		public static List<v2> getDIR(bool includeDiagonal = false, bool randomOrder = false)
 		{
 			List<v2> DIR = new List<v2>();
 
@@ -75,17 +75,30 @@ namespace SPACE_UTIL
 			DIR.Add((0, -1));
 			if (includeDiagonal == true) DIR.Add((+1, -1));
 
+			if(randomOrder)
+			{
+				for(int iter = 0; iter < DIR.Count; iter += 1)
+				{
+					int indexA = UnityEngine.Random.Range(0, DIR.Count);
+					int indexB = UnityEngine.Random.Range(0, DIR.Count);
+					// swap >>
+					v2 temp = DIR[indexA];
+					DIR[indexA] = DIR[indexB];
+					DIR[indexB] = temp;
+					// << swap
+				}
+			}
 			return DIR;
 		}
 
 		/// <summary>
-		/// get dir based on <paramref name="dir_str"/> name,
+		/// get dir based on <paramref name="dirStr"/> name,
 		/// example: "r" = (+1, 0), "ru" or "ur" = (+1, +1) 
 		/// </summary>
-		public static v2 getdir(string dir_str = "r")
+		public static v2 getdir(string dirStr = "r")
 		{
 			v2 dir = (0, 0);
-			foreach (char _char in dir_str)
+			foreach (char _char in dirStr)
 			{
 				if (_char == 'r') dir += (+1, 0);
 				if (_char == 'u') dir += (0, +1);
@@ -907,7 +920,7 @@ namespace SPACE_UTIL
 	}
 
 	// TODO Random Int Generator based on Seed
-	public static class C
+	public static partial class C
 	{
 		public static void Init()
 		{
@@ -1725,6 +1738,85 @@ DEINITIALIZATION PHASE
 		#endregion
 
 	}
+	// loop
+	public static partial class C
+	{
+		private static Dictionary<string, int> MAP_safeCounters = new Dictionary<string, int>();
+
+		/// <summary>
+		/// Safe loop guard with automatic iteration tracking.
+		/// Usage: while (C.Safe(1000, "myLoop")) { ... }
+		/// Returns false when limit exceeded.
+		/// </summary>
+		public static bool Safe(double limit = 1e3, string id = "loop",
+			[System.Runtime.CompilerServices.CallerMemberName] string caller = "",
+			[System.Runtime.CompilerServices.CallerLineNumber] int line = 0)
+		{
+			string key = $"{caller}:{line}:{id}";
+
+			if (!MAP_safeCounters.ContainsKey(key))
+				MAP_safeCounters[key] = 0;
+
+			MAP_safeCounters[key]++;
+
+			if (MAP_safeCounters[key] > limit)
+			{
+				Debug.LogError($"[C.Safe] Loop '{id}' at {caller}():{line} exceeded {limit} iterations".colorTag("red"));
+				MAP_safeCounters.Remove(key);
+				return false;
+			}
+
+			return true;
+		}
+
+		/// <summary>
+		/// Reset a specific safe loop counter.
+		/// Usage: C.SafeReset("myLoop");
+		/// </summary>
+		public static void SafeReset(string id = "loop",
+			[System.Runtime.CompilerServices.CallerMemberName] string caller = "",
+			[System.Runtime.CompilerServices.CallerLineNumber] int line = 0)
+		{
+			string key = $"{caller}:{line}:{id}";
+			MAP_safeCounters.Remove(key);
+		}
+
+		/// <summary>
+		/// Clear ALL safe loop counters (useful for level transitions, restarts).
+		/// Usage: C.SafeClear();
+		/// </summary>
+		public static void SafeClearAll()
+		{
+			int count = MAP_safeCounters.Count;
+			MAP_safeCounters.Clear();
+			Debug.Log($"[C.SafeClear] Cleared {count} safe loop counter(s)".colorTag("cyan"));
+		}
+
+		/// <summary>
+		/// Get diagnostic info about active safe loop counters.
+		/// Usage: Debug.Log(C.SafeInfo());
+		/// </summary>
+		public static string SafeInfo()
+		{
+			if (MAP_safeCounters.Count == 0)
+				return "[C.Safe] No active loop counters";
+
+			var sb = new StringBuilder();
+			sb.AppendLine($"[C.Safe] Active loop counters: {MAP_safeCounters.Count}");
+
+			foreach (var kvp in MAP_safeCounters.OrderByDescending(x => x.Value))
+			{
+				string[] parts = kvp.Key.Split(':');
+				string method = parts.Length > 0 ? parts[0] : "?";
+				string line = parts.Length > 1 ? parts[1] : "?";
+				string id = parts.Length > 2 ? parts[2] : "?";
+
+				sb.AppendLine($"  {method}():{line} '{id}' = {kvp.Value} iterations");
+			}
+
+			return sb.ToString();
+		}
+	}
 
 	public static class U
 	{
@@ -1903,6 +1995,21 @@ DEINITIALIZATION PHASE
 				Debug.LogError($"in {nameof(collection)} gl{index_from_last} > count: {collection.Count()}");
 
 			return collection.ElementAt(collection.Count() - 1 - index_from_last);
+		}
+
+		/// <summary>
+		/// Index accessor for IEnumerable (like JavaScript arrays).
+		/// Usage: items.at(1) instead of items.ToList()[1]
+		/// </summary>
+		public static T get<T>(this IEnumerable<T> source, int index)
+		{
+			if (index < 0)
+			{
+				// Negative indexing like Python/JS: -1 = last item
+				var list = source as IList<T> ?? source.ToList();
+				return list[list.Count + index];
+			}
+			return source.ElementAt(index);
 		}
 
 		/// <summary>
@@ -3290,6 +3397,7 @@ DEINITIALIZATION PHASE
 
 	/// <summary>
 	/// AddLog(str)
+	/// TimeStart, End for diagnostics
 	/// </summary>
 	public static partial class LOG
 	{
@@ -3324,6 +3432,86 @@ DEINITIALIZATION PHASE
 
 		public static void H(string header) { AddLog($"# {header} >>\n"); }
 		public static void HEnd(string header) { AddLog($"# << {header}"); }
+		#endregion
+
+		#region TimeStart(), TimeEnd()
+		private static Dictionary<string, System.Diagnostics.Stopwatch> _timers =
+			new Dictionary<string, System.Diagnostics.Stopwatch>();
+
+		/// <summary>
+		/// Start a named timer (like console.time() in JavaScript).
+		/// Usage: LOG.TimeStart("parsing");
+		/// </summary>
+		public static void TimeStart(string label = "timer")
+		{
+			if (_timers.ContainsKey(label))
+			{
+				Debug.Log($"[LOG.TimeStart] Timer '{label}' already running. Restarting.".colorTag("yellow"));
+				_timers[label].Restart();
+			}
+			else
+			{
+				var sw = new System.Diagnostics.Stopwatch();
+				sw.Start();
+				_timers[label] = sw;
+			}
+		}
+
+		/// <summary>
+		/// Stop and log a named timer (like console.timeEnd() in JavaScript).
+		/// Usage: LOG.TimeEnd("parsing"); // Logs: "[LOG] parsing: 123.45ms"
+		/// </summary>
+		public static void TimeEnd(string label = "timer")
+		{
+			if (!_timers.ContainsKey(label))
+			{
+				Debug.Log($"[LOG.TimeEnd] Timer '{label}' not found. Did you call TimeStart()?".colorTag("red"));
+				return;
+			}
+
+			var sw = _timers[label];
+			sw.Stop();
+
+			// Format time intelligently
+			string timeStr;
+			if (sw.ElapsedMilliseconds < 1)
+				timeStr = $"{sw.Elapsed.TotalMilliseconds:F3}ms ({sw.ElapsedTicks} ticks)";
+			else if (sw.ElapsedMilliseconds < 1000)
+				timeStr = $"{sw.ElapsedMilliseconds}ms";
+			else
+				timeStr = $"{sw.Elapsed.TotalSeconds:F2}s";
+
+			Debug.Log($"[LOG] {label}: {timeStr}".colorTag("yellow"));
+
+			// Also write to LOG.md
+			AddLog($"⏱️ **{label}**: {timeStr}");
+
+			_timers.Remove(label);
+		}
+
+		/// <summary>
+		/// Get elapsed time without stopping timer.
+		/// Usage: float ms = LOG.TimeGet("myTimer");
+		/// </summary>
+		public static double TimeGet(string label = "timer")
+		{
+			if (!_timers.ContainsKey(label))
+			{
+				Debug.LogError($"[LOG.TimeGet] Timer '{label}' not found".colorTag("red"));
+				return -1;
+			}
+			return _timers[label].Elapsed.TotalMilliseconds;
+		}
+
+		/// <summary>
+		/// Clear all timers (useful for scene transitions).
+		/// </summary>
+		public static void TimeClear()
+		{
+			int count = _timers.Count;
+			_timers.Clear();
+			Debug.Log($"[LOG.TimeClear] Cleared {count} timer(s)".colorTag("grey"));
+		} 
 		#endregion
 	}
 
