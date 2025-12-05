@@ -1987,7 +1987,7 @@ DEINITIALIZATION PHASE
 		}
 		#endregion
 
-		public static T getFromLast<T>(this IEnumerable<T> collection, int index_from_last)
+		public static T getAtLast<T>(this IEnumerable<T> collection, int index_from_last)
 		{
 			if (collection == null) throw new ArgumentNullException(nameof(collection)); // nameof(collection) = "collection"
 
