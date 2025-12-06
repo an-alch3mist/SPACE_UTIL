@@ -1229,21 +1229,16 @@ namespace SPACE_UTIL
 		}
 		public static int parseInt(this string str)
 		{
-			try
-			{
-				return int.Parse(str);
-			}
-			catch (Exception e)
-			{
-				Debug.LogError($"{str} not in integer format");
-				return (int)1e8;
-			}
+			return str.getIntFirstMatch();
 		}
-		public static int parseInt(this char _char)
+		public static long parseLong(this string str)
 		{
-			return C.parseInt(_char.ToString());
+			return str.getLongFirstMatch();
 		}
-
+		public static string join<T>(this IEnumerable<T> list, char separator)
+		{
+			return string.Join(separator.ToString(), list);
+		}
 		// ad essential >>
 		static RegexOptions strToFlags(string flags)
 		{
@@ -1430,11 +1425,11 @@ namespace SPACE_UTIL
 		/// <returns></returns>
 		public static int getIntFirstMatch(this string str, string flags = "gmi")
 		{
-			return str.allMatch(@"\d+", flags: flags).ToList()[0].parseInt();
+			return int.Parse(str.allMatch(@"([+-])?\d+", flags: flags).getAt(0));
 		}
 		public static long getLongFirstMatch(this string str, string flags = "gmi")
 		{
-			return long.Parse(str.allMatch(@"\d+", flags: flags).ToList()[0]);
+			return long.Parse(str.allMatch(@"([+-])?\d+", flags: flags).getAt(0));
 		}
 
 		/// <summary>
@@ -1738,14 +1733,14 @@ DEINITIALIZATION PHASE
 		#endregion
 
 	}
-	// loop
+	// loop, example: while (C.Safe(1e3, "loopA"))
 	public static partial class C
 	{
 		private static Dictionary<string, int> MAP_safeCounters = new Dictionary<string, int>();
 
 		/// <summary>
 		/// Safe loop guard with automatic iteration tracking.
-		/// Usage: while (C.Safe(1000, "myLoop")) { ... }
+		/// Usage: while (C.Safe(1e3, "myLoop")) { ... }
 		/// Returns false when limit exceeded.
 		/// </summary>
 		public static bool Safe(double limit = 1e3, string id = "loop",
@@ -1813,10 +1808,10 @@ DEINITIALIZATION PHASE
 
 				sb.AppendLine($"  {method}():{line} '{id}' = {kvp.Value} iterations");
 			}
-
 			return sb.ToString();
 		}
 	}
+	// TODO, C.Ease along with tween
 
 	public static class U
 	{
@@ -2012,11 +2007,12 @@ DEINITIALIZATION PHASE
 		{
 			if (index < 0)
 			{
-				// Negative indexing like Python/JS: -1 = last item
 				var list = source as IList<T> ?? source.ToList();
-				return list[list.Count + index];
+				index += list.Count;
+				if (index < 0) throw new IndexOutOfRangeException();
+				return list[index];
 			}
-			return source.ElementAt(index);
+			return source.ElementAtOrDefault(index);
 		}
 
 		/* why not get<T>
