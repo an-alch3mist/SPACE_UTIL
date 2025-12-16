@@ -1883,7 +1883,7 @@ DEINITIALIZATION PHASE
 
 			if (MAP_safeCounters[key] > limit)
 			{
-				Debug.Log($"[C.Safe] Loop '{id}' at {caller}():{line} exceeded {limit} iterations".colorTag("orange"));
+				Debug.Log($"[C.Safe] Loop '{id}' at {caller}() line:{line} exceeded {limit} iterations".colorTag("orange"));
 				MAP_safeCounters.Remove(key);
 				return false;
 			}
@@ -1911,7 +1911,7 @@ DEINITIALIZATION PHASE
 		{
 			int count = MAP_safeCounters.Count;
 			MAP_safeCounters.Clear();
-			Debug.Log($"[C.SafeClear] Cleared {count} safe loop counter(s)".colorTag("cyan"));
+			Debug.Log($"[C.SafeClear] Cleared {count} safe loop counter(s)".colorTag("lime"));
 		}
 
 		/// <summary>
