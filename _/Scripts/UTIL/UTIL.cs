@@ -34,16 +34,13 @@ namespace SPACE_UTIL
 			return $"({x}, {y})";
 			//return base.ToString();
 		}
-
+		#region arithmatic operator
 		public static v2 operator +(v2 a, v2 b) { return new v2(a.x + b.x, a.y + b.y); }
 		public static v2 operator -(v2 a, v2 b) { return new v2(a.x - b.x, a.y - b.y); }
 		public static v2 operator *(v2 a, v2 b) { return new v2(a.x * b.x, a.y * b.y); }
 		public static v2 operator *(v2 v, int m) { return new v2(v.x * m, v.y * m); }
 		public static v2 operator *(int m, v2 v) { return new v2(v.x * m, v.y * m); }
-		public static float dot(v2 a, v2 b) { return a.x * b.x + a.y * b.y; }
-		public static float area(v2 a, v2 b) { return a.x * b.y - a.y * b.x; }
 
-		#region compare
 		public static bool operator ==(v2 a, v2 b) { return a.x == b.x && a.y == b.y; }
 		public static bool operator !=(v2 a, v2 b) { return a.x != b.x || a.y != b.y; }
 
@@ -53,8 +50,10 @@ namespace SPACE_UTIL
 		public static bool operator <=(v2 a, v2 b) => a.x <= b.x && a.y <= b.y;
 		#endregion
 
+		#region ad implicit conversion
 		// Allow implicit conversion from tuple
-		public static implicit operator v2((int, int) tuple) => new v2(tuple.Item1, tuple.Item2);
+		public static implicit operator v2((int, int) tuple) => new v2(tuple.Item1, tuple.Item2); 
+		#endregion
 
 		#region getDIR(bool)
 		/// <summary>
@@ -95,7 +94,7 @@ namespace SPACE_UTIL
 		/// get dir based on <paramref name="dirStr"/> name,
 		/// example: "r" = (+1, 0), "ru" or "ur" = (+1, +1) 
 		/// </summary>
-		public static v2 getdir(string dirStr = "r")
+		public static v2 getdirFromName(string dirStr = "r")
 		{
 			v2 dir = (0, 0);
 			foreach (char _char in dirStr)
@@ -107,9 +106,15 @@ namespace SPACE_UTIL
 			}
 			return dir;
 		}
+
+		// constant
+		public static v2 right = (+1, 0),
+							up = (0, +1),
+						  left = (-1, 0),
+						  down = (0, -1);
 		#endregion
 
-		#region ad vec3, vec2 conversion
+		#region ad: v3, vec3, vec2 conversion
 		public static char axisY = 'y';
 		public static implicit operator v2(Vector3 vec3)
 		{
@@ -137,7 +142,7 @@ namespace SPACE_UTIL
 	}
 	#endregion
 
-	#region Board
+	#region Board 2D via v2
 	#region Board_prev
 	/*
 		- depends on v2
@@ -608,6 +613,126 @@ namespace SPACE_UTIL
 	}
 	#endregion
 
+	#region v3
+	// creation of v3:
+	// v3 a = new v3(0, 0, 0)
+	// v3 b = (1, 2, 1)
+	[System.Serializable]
+	public struct v3
+	{
+		public int x, y, z;
+
+		public v3(int x, int y, int z) { this.x = x; this.y = y; this.z = z; }
+		public override string ToString()
+		{
+			return $"({x}, {y}, {z})";
+			//return base.ToString();
+		}
+		#region arithmatic operator
+		public static v3 operator +(v3 a, v3 b) { return new v3(a.x + b.x, a.y + b.y, a.z + b.z); }
+		public static v3 operator -(v3 a, v3 b) { return new v3(a.x - b.x, a.y - b.y, a.z - b.z); }
+		public static v3 operator *(v3 a, v3 b) { return new v3(a.x * b.x, a.y * b.y, a.z * b.z); }
+		public static v3 operator *(v3 v, int m) { return new v3(v.x * m, v.y * m, v.z * m); }
+		public static v3 operator *(int m, v3 v) { return v * m; }
+
+		public static bool operator ==(v3 a, v3 b) { return a.x == b.x && a.y == b.y && a.z == b.z; }
+		public static bool operator !=(v3 a, v3 b) { return a.x != b.x || a.y != b.y || a.z != b.z; }
+
+		public static bool operator >(v3 a, v3 b) => a.x > b.x && a.y > b.y && a.z > b.z;
+		public static bool operator <(v3 a, v3 b) => a.x < b.x && a.y < b.y && a.z < b.z;
+		public static bool operator >=(v3 a, v3 b) => a.x >= b.x && a.y >= b.y && a.z >= b.z;
+		public static bool operator <=(v3 a, v3 b) => a.x <= b.x && a.y <= b.y && a.z <= b.z;
+		#endregion
+
+		#region ad implicit conversion
+		// Allow implicit conversion from tuple
+		public static implicit operator v3((int, int, int) tuple) => new v3(tuple.Item1, tuple.Item2, tuple.Item3);
+		#endregion
+
+		#region getDIR(bool)
+		/// <summary>
+		/// get List of v3 in all 4 direction, with (optional) if diagonal required.
+		/// </summary>
+		/// <param name="includeDiagonal"></param>
+		/// <returns></returns>
+		public static List<v3> getDIR(bool includeDiagonal = false, bool randomOrder = false)
+		{
+			List<v3> DIR = new List<v3>();
+			// TODO
+			return DIR;
+		}
+
+		/// <summary>
+		/// get dir based on <paramref name="dirStr"/> name,
+		/// example: "r" = (+1, 0, 0), "ru" or "ur" = (+1, +1, 0) or "fr" = (+1, 0, +1) 
+		/// </summary>
+		public static v3 getdirFromName(string dirStr = "r")
+		{
+			v3 dir = (0, 0, 0);
+			foreach (char _char in dirStr)
+			{
+				if (_char == 'r') dir += (+1, 0, 0);
+				if (_char == 'u') dir += (0, +1, 0);
+				if (_char == 'l') dir += (-1, 0, 0);
+				if (_char == 'd') dir += (0, -1, 0);
+				if (_char == 'f') dir += (0, 0, +1);
+				if (_char == 'b') dir += (0, 0, -1);
+			}
+			return dir;
+		}
+
+		// constant
+		public static v3 right = (+1, 0, 0),
+							up = (0, +1, 0),
+						  left = (-1, 0, 0),
+						  down = (0, -1, 0),
+						   fwd = (0, 0, +1),
+						  back = (0, 0, -1);
+		#endregion
+
+		#region ad: v2, vec3, vec2 conversion (requires casting to form extension)
+		public static implicit operator v3(v2 _v2) { return new v3(_v2.x, _v2.y, 0); }
+		public static implicit operator v3(Vector3 vec3) { return new v3(C.round(vec3.x), C.round(vec3.y), C.round(vec3.z)); }
+		public static implicit operator v3(Vector2 vec2) { return new v3(C.round(vec2.x), C.round(vec2.y), 0); }
+		public static implicit operator v2(v3 @this) { return new v2(@this.x, @this.y); }
+		public static implicit operator Vector3(v3 @this) { return new Vector3(@this.x, @this.y, @this.z); }
+		public static implicit operator Vector2(v3 @this) { return new Vector2(@this.x, @this.y); }
+		#endregion
+	}
+
+	public static class Extension_v2_v3
+	{
+		#region dot, area -> v2
+		public static float dot(this v2 a, v2 b) { return a.x * b.x + a.y * b.y; }
+		public static float area(this v2 a, v2 b) { return a.x * b.y - a.y * b.x; }
+		#endregion
+
+		#region dot, cross -> v3
+		/// <summary>
+		/// 
+		/// </summary>
+		/// <param name="a"></param>
+		/// <param name="b"></param>
+		/// <returns>projection of a on b</returns>
+		public static float dot(this v3 a, v3 b) { return a.x * b.x + a.y * b.y + a.z * b.z; }
+		/// <summary>
+		/// </summary>
+		/// <param name="a"></param>
+		/// <param name="b"></param>
+		/// <returns>the normal vector, using left-hand rule</returns>
+		public static Vector3 cross(this v3 a, v3 b) { return Vector3.Cross(a, b); }
+		#endregion
+
+		#region magnitude, sqrMagnitude
+		// main logic
+		public static float sqrMag(this v3 v){return v.x.pow(2) + v.y.pow(2) + v.z.pow(2);}
+		public static float mag(this v3 v){return v.sqrMag().pow(0.5f);} // depend on sqrMag
+		public static float mag(this v2 v){ return ((v3)v).mag(); }
+		public static float sqrMag(this v2 v){ return ((v3)v).sqrMag(); }
+		#endregion
+	}
+	#endregion
+
 	#region MonoInterfaceFinder For Modular Interface MonoBehaviour Approach
 	public static class MonoInterfaceFinder
 	{
@@ -682,6 +807,7 @@ namespace SPACE_UTIL
 
 	public static class Z
 	{
+		// vec3, float >>
 		#region dot
 		public static float dot(Vector3 a, Vector3 b)
 		{
@@ -747,6 +873,7 @@ namespace SPACE_UTIL
 			return Vector3.one;
 		}
 		#endregion
+		// << vec3, float
 	}
 
 	public class INPUT
@@ -1756,7 +1883,7 @@ DEINITIALIZATION PHASE
 
 			if (MAP_safeCounters[key] > limit)
 			{
-				Debug.LogError($"[C.Safe] Loop '{id}' at {caller}():{line} exceeded {limit} iterations".colorTag("red"));
+				Debug.LogError($"[C.Safe] Loop '{id}' at {caller}():{line} exceeded {limit} iterations".colorTag("orange"));
 				MAP_safeCounters.Remove(key);
 				return false;
 			}
@@ -1912,21 +2039,82 @@ DEINITIALIZATION PHASE
 
 		// Extension
 		#region minMax(func, bool), find(func), findIndex(func), forEach(func), map(func), getAt, getAtLast
-		public static T minMax<T>(this T[] T_1D, Func<T, T, float> cmp_func)
+		/// <summary>
+		/// to get min: (a) => float; the a with least float is returned
+		/// </summary>
+		/// <typeparam name="T"></typeparam>
+		/// <param name="list"></param>
+		/// <param name="cmpFunc"></param>
+		/// <param name="splice"></param>
+		/// <returns></returns>
+		public static T minMaxA<T>(this List<T> list, Func<T, float> cmpFunc, bool splice = false)
 		{
-			T min = T_1D[0];
-			for (int i0 = 1; i0 < T_1D.Length; i0 += 1)
-				if (cmp_func(T_1D[i0], min) < 0f) // if ( b - a ) < 0f, than a < b, so swap
-					min = T_1D[i0];
-			return min;
-		}
-		public static T minMax<T>(this List<T> T_1D, Func<T, T, float> cmp_func, bool splice = false)
-		{
-			T min = minMax(T_1D.ToArray(), cmp_func);
+			if (list.Count < 1)
+			{
+				Debug.Log("minMaxA require atleast Count Of 1".colorTag("red"));
+				throw new ArgumentException();
+			}
+			int minIndex = 0;
+			for (int i0 = 0; i0 < list.Count; i0 += 1)
+				if (cmpFunc(list[i0]) < cmpFunc(list[minIndex]))
+					minIndex = i0;
+			var min = list[minIndex];
 			if (splice)
-				T_1D.Remove(min);
+				list.RemoveAt(minIndex);
 			return min;
+			/*
+			int minIndex = 0;
+			for (int i0 = 1; i0 < T_1D.Count; i0 += 1)
+				if (cmp_func(T_1D[i0], T_1D[minIndex]) < 0f) // if ( b - a ) < 0f, than a < b, so swap
+					minIndex = i0;
+
+			return min;
+			*/
 		}
+		/// <summary>
+		/// to get min (a, b) => float; (the pair with least float is returned)
+		/// </summary>
+		/// <typeparam name="T"></typeparam>
+		/// <param name="list"></param>
+		/// <param name="cmpFunc"></param>
+		/// <param name="splice"></param>
+		/// <returns></returns>
+		public static List<T> minMaxAB<T>(this List<T> list, Func<T, T, float> cmpFunc, bool splice = false)
+		{
+			if (list.Count < 2)
+			{
+				Debug.Log("minMaxAB require atleast 2 elements to compare");
+				throw new ArgumentNullException();
+			}
+
+			int[] minIndexPair = new int[] { 0, 1 };
+			for (int i0 = 0; i0 <= list.Count - 2; i0 += 1)
+				for (int i1 = i0 + 1; i1 <= list.Count - 1; i1 += 1)
+				{
+					if (cmpFunc(list[i0], list[i1]) < cmpFunc(list[minIndexPair[0]], list[minIndexPair[1]])) // smaller connection than before
+					{
+						minIndexPair[0] = i0;
+						minIndexPair[1] = i1;
+					}
+				}
+			var minAB = new List<T>() { list[minIndexPair[0]], list[minIndexPair[1]] }; ;
+			if (splice)
+			{
+				if (minIndexPair[1] > minIndexPair[0])
+				{
+					list.RemoveAt(minIndexPair[1]);
+					list.RemoveAt(minIndexPair[0]);
+
+				}
+				else
+				{
+					list.RemoveAt(minIndexPair[0]);
+					list.RemoveAt(minIndexPair[1]);
+				}
+			}
+			return minAB;
+		}
+
 		public static T find<T>(this IEnumerable<T> collection, Func<T, bool> predicate)
 		{
 			if (collection == null) throw new ArgumentNullException(nameof(collection));
@@ -1987,16 +2175,16 @@ DEINITIALIZATION PHASE
 		/// </summary>
 		/// <typeparam name="T"></typeparam>
 		/// <param name="collection"></param>
-		/// <param name="index_from_last"></param>
+		/// <param name="indexFromLast"></param>
 		/// <returns></returns>
-		public static T getAtLast<T>(this IEnumerable<T> collection, int index_from_last)
+		public static T getAtLast<T>(this IEnumerable<T> collection, int indexFromLast)
 		{
 			if (collection == null) throw new ArgumentNullException(nameof(collection)); // nameof(collection) = "collection"
 
-			if (index_from_last < 0 || index_from_last >= collection.Count())
-				Debug.LogError($"in {nameof(collection)} gl{index_from_last} > count: {collection.Count()}");
+			if (indexFromLast < 0 || indexFromLast >= collection.Count())
+				Debug.LogError($"in {nameof(collection)} gl{indexFromLast} > count: {collection.Count()}");
 
-			return collection.ElementAt(collection.Count() - 1 - index_from_last);
+			return collection.ElementAt(collection.Count() - 1 - indexFromLast);
 		}
 
 		/// <summary>
@@ -3091,12 +3279,12 @@ DEINITIALIZATION PHASE
 					if (param.ToString() == animParam.name)
 					{
 						exists = true;
-						Debug.Log($"found {param} existance in {animator}".colorTag(C.colorStr.aqua));
+						Debug.Log($"found {param}: existance in {animator}".colorTag(C.colorStr.aqua));
 						break;
 					}
 				// << search
 				if (exists == false)
-					Debug.Log($"not found {param} existance in {animator}".colorTag("red"));
+					Debug.Log($"not found {param}: existance in {animator}".colorTag("red"));
 			}
 		}
 	}
@@ -4260,6 +4448,7 @@ DEINITIALIZATION PHASE
 	#endregion
 	#endregion
 }
+
 namespace SPACE_prev
 {
 	// for DRAW prev legacy -> now its SPACE_DrawSystem(with chainable creation during runtime(with id blocking))
