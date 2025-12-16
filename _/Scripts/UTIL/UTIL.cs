@@ -1883,7 +1883,7 @@ DEINITIALIZATION PHASE
 
 			if (MAP_safeCounters[key] > limit)
 			{
-				Debug.LogError($"[C.Safe] Loop '{id}' at {caller}():{line} exceeded {limit} iterations".colorTag("orange"));
+				Debug.Log($"[C.Safe] Loop '{id}' at {caller}():{line} exceeded {limit} iterations".colorTag("orange"));
 				MAP_safeCounters.Remove(key);
 				return false;
 			}
@@ -2079,7 +2079,7 @@ DEINITIALIZATION PHASE
 		/// <param name="cmpFunc"></param>
 		/// <param name="splice"></param>
 		/// <returns></returns>
-		public static List<T> minMaxAB<T>(this List<T> list, Func<T, T, float> cmpFunc, bool splice = false)
+		public static List<T> minMaxAB<T>(this List<T> list, Func<T, T, double> cmpFunc, bool splice = false)
 		{
 			if (list.Count < 2)
 			{
