@@ -15,7 +15,7 @@ namespace SPACE_DrawSystem
 	/// <summary>
 	/// Line.create("myLine").setA(a).setB(b); // ← Cleaner for persistent lines
 	/// </summary>
-	// Line line = new Line().init("myLine").setA(a).setB(b);
+	/// alt approach: Line line = new Line().init("myLine").setA(a).setB(b);
 
 	// built to work when compile and re-run is made without the use of Awake() from any method 
 	public class Line
@@ -135,7 +135,7 @@ namespace SPACE_DrawSystem
 		/// <param name="color">line color, could be set later via .setCol(Color)</param>
 		/// <param name="e">thickness of line, could be set later via .setE(float)</param>
 		/// <returns></returns>
-		public static Line create(object id, Color? color = null, float e = 1f / 50)
+		public static Line create(object id, Color? color = null, double e = 1f / 50)
 		{
 			if (Line.MAP_IdLine == null)
 			{
@@ -164,7 +164,7 @@ namespace SPACE_DrawSystem
 
 		// (private for now) when called as: this.line.init(name: "hoverLine") .setA(ray.origin).setB(ray.origin + ray.direction * rayDist); // still creating multiple gameObject Instance
 		// private constructor, to make Line.create(id) as standard
-		private Line init(string name = "line", Color? color = null, float e = 1f / 50)
+		private Line init(string name = "line", Color? color = null, double e = 1f / 50)
 		{
 			this.id = name;
 			if (this.lineObj == null)  // occurs first call of a certain line
@@ -176,7 +176,7 @@ namespace SPACE_DrawSystem
 				this.lineObj.transform.SetParent(DRAW.DrawHolder);
 
 				this.lr = this.lineObj.AddComponent<LineRenderer>();
-				this.SetupLineRenderer(e, color ?? Color.red);
+				this.SetupLineRenderer((float)e, color ?? Color.red);
 				this.UpdatePositions();
 			}
 			return this;

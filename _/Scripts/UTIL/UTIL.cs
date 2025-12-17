@@ -1362,7 +1362,7 @@ namespace SPACE_UTIL
 		{
 			return str.getLongFirstMatch();
 		}
-		public static string join<T>(this IEnumerable<T> list, char separator)
+		public static string join<T>(this IEnumerable<T> list, string separator)
 		{
 			return string.Join(separator.ToString(), list);
 		}
@@ -1870,7 +1870,7 @@ DEINITIALIZATION PHASE
 		/// Usage: while (C.Safe(1e3, "myLoop")) { ... }
 		/// Returns false when limit exceeded.
 		/// </summary>
-		public static bool Safe(double limit = 1e3, string id = "loop",
+		public static bool Safe(double limit = 1e3, string id = "myLoop",
 			[System.Runtime.CompilerServices.CallerMemberName] string caller = "",
 			[System.Runtime.CompilerServices.CallerLineNumber] int line = 0)
 		{
@@ -1883,7 +1883,7 @@ DEINITIALIZATION PHASE
 
 			if (MAP_safeCounters[key] > limit)
 			{
-				Debug.Log($"[C.Safe] Loop '{id}' at {caller}() line:{line} exceeded {limit} iterations".colorTag("orange"));
+				Debug.Log($"[C.Safe] Loop id: \"{id}\" at {caller}() line:{line} exceeded {limit} iterations.".colorTag("orange"));
 				MAP_safeCounters.Remove(key);
 				return false;
 			}
@@ -1895,7 +1895,7 @@ DEINITIALIZATION PHASE
 		/// Reset a specific safe loop counter.
 		/// Usage: C.SafeReset("myLoop");
 		/// </summary>
-		public static void SafeReset(string id = "loop",
+		public static void SafeReset(string id = "myLoop",
 			[System.Runtime.CompilerServices.CallerMemberName] string caller = "",
 			[System.Runtime.CompilerServices.CallerLineNumber] int line = 0)
 		{
@@ -2241,6 +2241,99 @@ DEINITIALIZATION PHASE
 			}
 			return result;
 		}
+		#endregion
+
+		#region sort(func)
+		// Add this to your ExtensionAd or U class in UTIL.cs
+		/// <summary>
+		/// Sorts an IEnumerable using a comparison function (like JavaScript's Array.sort).
+		/// Returns IEnumerable<T> for chainability - does not modify the original collection.
+		/// 
+		/// Usage:
+		/// var sorted = EDGE.sort((a, b) => a.Length - b.Length).ToList();
+		/// var sorted = NODES.sort((a, b) => a.pos.mag() - b.pos.mag()).refine(n => n.regionId == 1);
+		/// 
+		/// Comparison function should return:
+		/// - Negative: a comes before b
+		/// - Zero: order unchanged
+		/// - Positive: b comes before a
+		/// </summary>
+		public static IEnumerable<T> sort<T>(this IEnumerable<T> source, Func<T, T, double> compareFunc)
+		{
+			if (source == null) throw new ArgumentNullException(nameof(source));
+			if (compareFunc == null) throw new ArgumentNullException(nameof(compareFunc));
+
+			var list = source.ToList();
+
+			// Convert comparison function to IComparer
+			list.Sort((a, b) =>
+			{
+				double result = compareFunc(a, b);
+				if (result < 0) return -1;
+				if (result > 0) return 1;
+				return 0;
+			});
+
+			return list;
+		}
+
+		/// <summary>
+		/// In-place sort for List<T> (modifies the original list).
+		/// Usage: myList.sortInPlace((a, b) => a.value - b.value);
+		/// </summary>
+		public static List<T> sortOriginal<T>(this List<T> list, Func<T, T, double> compareFunc)
+		{
+			if (list == null) throw new ArgumentNullException(nameof(list));
+			if (compareFunc == null) throw new ArgumentNullException(nameof(compareFunc));
+
+			list.Sort((a, b) =>
+			{
+				double result = compareFunc(a, b);
+				if (result < 0) return -1;
+				if (result > 0) return 1;
+				return 0;
+			});
+
+			return list; // Return for chaining
+		}
+
+		// USAGE EXAMPLES:
+
+		// Example 1: Sort and continue chaining
+		// var result = EDGE
+		//     .sort((a, b) => a.Length - b.Length)
+		//     .refine(edge => edge.Length > 2)
+		//     .ToList();
+
+		// Example 2: Sort nodes and take first 10
+		// var topNodes = nodes
+		//     .sort((a, b) => a.pos.mag() - b.pos.mag())
+		//     .Take(10)
+		//     .ToList();
+
+		// Example 3: Sort by multiple criteria with chaining
+		// var sorted = nodes
+		//     .sort((a, b) => 
+		//     {
+		//         if (a.regionId != b.regionId) return a.regionId - b.regionId;
+		//         return a.pos.mag() - b.pos.mag();
+		//     })
+		//     .map(n => n.pos)
+		//     .ToList();
+
+		// Example 4: Dictionary values can be sorted
+		// var sortedPairs = myDict
+		//     .sort((a, b) => a.Value - b.Value)
+		//     .ToList();
+
+		// Example 5: Arrays work too
+		// Node[] nodeArray = GetNodes();
+		// var sorted = nodeArray
+		//     .sort((a, b) => b.priority - a.priority)
+		//     .ToArray(); // Back to array
+
+		// Example 6: In-place sort (mutates the original list)
+		// myList.sortInPlace((a, b) => b.priority - a.priority);
 		#endregion
 	}
 
@@ -4281,6 +4374,157 @@ DEINITIALIZATION PHASE
 			#endregion
 		}
 
+		#endregion
+
+		#region .ToTable2D()
+		/// <summary>
+		/// Overload with element-level access for more control.
+		/// 
+		/// Usage:
+		/// LOG.AddLog(EDGE.ToTable2D( 
+		///     (edge, i) => $"[{i}] {edge[0].pos} → {edge[1].pos} (dist: {(edge[1].pos - edge[0].pos).mag():F2})"
+		/// ));
+		/// </summary>
+		public static string ToTable2D<TOuter, TInner>(
+			this IEnumerable<TOuter> collection,
+			Func<TOuter, int, string> renderRowWithIndex,
+			string name = "LIST 2D")
+			where TOuter : IEnumerable<TInner>
+		{
+			if (collection == null)
+				return $"* {name}: _null_";
+
+			var list = collection.ToList();
+			if (list.Count == 0)
+				return $"* {name}: _empty_";
+
+			var sb = new StringBuilder();
+			sb.AppendLine($"* {name} Count: {list.Count}");
+			sb.AppendLine();
+
+			int idxWidth = Math.Max(3, list.Count.ToString().Length);
+			int contentWidth = 100;
+
+			// Header
+			sb.AppendLine($"{"Idx".PadRight(idxWidth)} | Content");
+			sb.AppendLine($"{new string('-', idxWidth)}-+-{new string('-', contentWidth)}");
+
+			// Rows
+			for (int i = 0; i < list.Count; i++)
+			{
+				TOuter row = list[i];
+				string content = row == null ? "null" : renderRowWithIndex(row, i);
+
+				if (content.Length > contentWidth)
+					content = content.Substring(0, contentWidth - 3) + "...";
+
+				sb.AppendLine($"{i.ToString().PadRight(idxWidth)} | {content}");
+			}
+
+			return sb.ToString();
+		}
+
+		// ===== USAGE EXAMPLES FOR YOUR SPECIFIC CASE =====
+
+		/*
+		void Logic()
+		{
+			Debug.Log(C.method(this, "lime"));
+
+			List<Node[]> EDGE = new List<Node[]>();
+			for (int i0 = 0; i0 <= NODE.Count - 2; i0 += 1)
+				for (int i1 = i0 + 1; i1 <= NODE.Count - 1; i1 += 1)
+					EDGE.Add(new Node[] { NODE[i0], NODE[i1] });
+
+			EDGE.sortInPlace((a, b) => (a[0].pos - a[1].pos).sqrMag() - (b[0].pos - b[1].pos).sqrMag());
+
+			// SOLUTION 1: Simple - shows positions
+			LOG.AddLog(EDGE.ToTable("EDGE", 
+				edge => $"{edge[0].pos} → {edge[1].pos}"));
+
+			// SOLUTION 2: With distance calculation
+			LOG.AddLog(EDGE.ToTable("EDGE", 
+				edge => {
+					float dist = (edge[1].pos - edge[0].pos).mag();
+					return $"{edge[0].pos} → {edge[1].pos} (dist: {dist:F2})";
+				}));
+
+			// SOLUTION 3: With regions
+			LOG.AddLog(EDGE.ToTable("EDGE", 
+				edge => $"R{edge[0].regionId}:{edge[0].pos} → R{edge[1].regionId}:{edge[1].pos}"));
+
+			// SOLUTION 4: Multi-line for clarity (if edges have 3+ nodes)
+			LOG.AddLog(EDGE.ToTable("EDGE", 
+				edge => string.Join(" → ", edge.Select(n => $"{n.pos}"))));
+		}
+
+		// ===== OTHER COMMON SCENARIOS =====
+
+		// Scenario 1: List<List<int>>
+		List<List<int>> matrix = new List<List<int>>();
+		LOG.AddLog(matrix.ToTable("Matrix", 
+			row => string.Join(", ", row)));
+
+		// Scenario 2: List<Queue<string>>
+		List<Queue<string>> queues = new List<Queue<string>>();
+		LOG.AddLog(queues.ToTable("Queues", 
+			q => $"[{q.Count}]: {string.Join(", ", q)}"));
+
+		// Scenario 3: Array of Lists
+		List<int>[] arrayOfLists = new List<int>[5];
+		LOG.AddLog(arrayOfLists.ToTable("Array<List>", 
+			list => list == null ? "null" : $"[{list.Count}] items"));
+
+		// Scenario 4: Dictionary<string, List<Node>>
+		Dictionary<string, List<Node>> groups = new Dictionary<string, List<Node>>();
+		LOG.AddLog(groups.Values.ToTable("Node Groups", 
+			nodes => $"[{nodes.Count}] nodes in regions: {string.Join(",", nodes.Select(n => n.regionId).Distinct())}"));
+
+		// Scenario 5: With index for debugging
+		LOG.AddLog(EDGE.ToTable("EDGE", 
+			(edge, i) => {
+				float dist = (edge[1].pos - edge[0].pos).mag();
+				return $"[{i}] {edge[0].pos} → {edge[1].pos} (dist: {dist:F2})";
+			}));
+
+		// Scenario 6: Complex nested structure
+		List<Node[][]> nestedEdges = new List<Node[][]>(); // Array of edge-pairs
+		LOG.AddLog(nestedEdges.ToTable("Nested Edges", 
+			pairs => $"[{pairs.Length}] pairs: " + 
+					 string.Join(" | ", pairs.Select(edge => $"{edge[0].pos}→{edge[1].pos}"))));
+		*/
+
+		// ===== RECOMMENDED PATTERN FOR YOUR CODE =====
+
+		/*
+		void Logic()
+		{
+			Debug.Log(C.method(this, "lime"));
+
+			// Build edges
+			List<Node[]> EDGE = new List<Node[]>();
+			for (int i0 = 0; i0 <= NODE.Count - 2; i0 += 1)
+				for (int i1 = i0 + 1; i1 <= NODE.Count - 1; i1 += 1)
+					EDGE.Add(new Node[] { NODE[i0], NODE[i1] });
+
+			// Log before sorting
+			LOG.H("Edge Generation");
+			LOG.AddLog($"Generated {EDGE.Count} edges from {NODE.Count} nodes");
+			LOG.AddLog(EDGE.Take(10).ToList().ToTable("First 10 Edges (unsorted)", 
+				edge => $"{edge[0].pos} → {edge[1].pos}"));
+
+			// Sort
+			EDGE.sortInPlace((a, b) => (a[0].pos - a[1].pos).sqrMag() - (b[0].pos - b[1].pos).sqrMag());
+
+			// Log after sorting
+			LOG.AddLog(EDGE.Take(10).ToList().ToTable("First 10 Edges (sorted by distance)", 
+				edge => {
+					float dist = (edge[1].pos - edge[0].pos).mag();
+					return $"{edge[0].pos} → {edge[1].pos} (dist: {dist:F2})";
+				}));
+			LOG.HEnd("Edge Generation");
+		}
+		*/
 		#endregion
 	}
 
