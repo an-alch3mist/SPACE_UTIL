@@ -3952,7 +3952,7 @@ DEINITIALIZATION PHASE
 				string contentToSave = encryptRequired ? Encrypt(jsonContent) : jsonContent;
 				File.WriteAllText(filePath, contentToSave);
 
-				string encStatus = encryptRequired ? "[ENCRYPTED]" : "[PLAIN]";
+				string encStatus = encryptRequired ? "[encrypted]" : "[no encryption]";
 				Debug.Log(C.method(null, "lime", $"Saved {encStatus}: {filePath}"));
 			}
 			catch (Exception e)
@@ -3992,7 +3992,7 @@ DEINITIALIZATION PHASE
 					return new T();
 				}
 
-				string encStatus = encryptRequired ? "[DECRYPTED]" : "[PLAIN]";
+				string encStatus = encryptRequired ? "[decrypted]" : "[no decryption]";
 				Debug.Log(C.method(null, "lime", $"Successfully loaded {encStatus}: {filePath}"));
 				return data;
 			}
