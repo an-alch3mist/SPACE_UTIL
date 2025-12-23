@@ -1,6 +1,8 @@
 This is the **Ultimate Master Specification**. It incorporates **List Comprehensions**, **Custom Sorting Keys (Python style)**, **String Manipulation**, and the **Complete Extended Test Suite** (merging the Algorithm tests with the Feature tests).
 
 Save this content as `PythonGameEnginePrompt.md`. You can feed this file directly to Claude 3.5 Sonnet, GPT-4o, or Gemini 1.5 Pro to generate the entire engine.
+# inline prompt: Now Generate all required files for Unity3D 2020.3+ (.NET 2.0 limitations apply you cannot `yield return value/null inside try-catch clause of an IEnumerator`) after analysing the [pasted prompt] and  use `UTIL.cs` if you ever required.
+
 
 # The Ultimate Unity "Python-Like" Game Engine Specification
 
@@ -357,8 +359,8 @@ while len(open_list) > 0:
 
 ## 6. Execution Instructions for the AI
 
-1. **Generate ALL C# Files:** `Token.cs`, `Lexer.cs`, `AST.cs`, `Parser.cs`, `PythonInterpreter.cs`, `CoroutineRunner.cs`, `GameBuiltinMethods.cs`, `ConsoleManager.cs`, `DemoScripts.cs`.
+1. **Generate ALL C# Files(as seperate `*.cs` make sure there is seperation and summary into region for public API, private API, unity life cycle(only if its monoBehaviour inherited), ENUMS, EVENTS and many more):** `Token.cs`, `Lexer.cs`, `AST.cs`, `Parser.cs`, `PythonInterpreter.cs`, `CoroutineRunner.cs`, `GameBuiltinMethods.cs`, `ConsoleManager.cs`, `DemoScripts.cs`.
 2. **Strict Error Reporting:** In `PythonInterpreter.cs`, ensure every `Stmt` execution updates a `currentLine` variable. When `RuntimeError` is thrown, include this line number.
 3. **Variable Reset:** Ensure `ScriptRunner.Stop()` or error handling calls `Interpreter.Reset()` to wipe `Globals` and `Scopes`.
 
-**Generate the code now.**
+**Generate the code now (covering all edge cases, and .Net 2.0 limitation that i mentioned at the begining) all in seperate files as required**
