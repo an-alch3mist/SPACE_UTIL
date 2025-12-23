@@ -3454,8 +3454,6 @@ DEINITIALIZATION PHASE
 	#region R
 	/// <summary>
 	/// Unified resource cache with generic syntax: R.get<T>(enum)
-	/// Example: GameObject prefab = R.get<GameObject>(ResourceType.prefab__bullet__cannon);
-	/// Example: AudioClip clip = R.get<AudioClip>(ResourceType.audio__sfx__shoot);
 	/// All resources use "__" separator which converts to "/" for folder structure
 	/// </summary>
 	public static class R
@@ -3656,11 +3654,25 @@ DEINITIALIZATION PHASE
 
 	#region LOG
 	/// <summary>
-	/// EnsureDirExists, GetFilePath()
+	/// EnsureDirExists(), GetFilePath()
 	/// </summary>
 	public static partial class LOG
 	{
-		public static string locRootPath => Application.dataPath; // could be set in INITManager/GameStore Awake() to Application.persistantDataPath or Application.dataPath.
+		public static string locRootPath // could be set in INITManager/GameStore Awake() to Application.persistantDataPath or Application.dataPath.
+		{
+			get
+			{
+				// windows and linux, I as a gameDev got access, remaining platForm shall access persistantDataPath.
+				if (Application.isEditor &&
+					(Application.platform == RuntimePlatform.WindowsEditor ||
+					 Application.platform == RuntimePlatform.LinuxEditor))
+				{
+					return Application.dataPath;
+				}
+
+				return Application.persistentDataPath;
+			}
+		}
 		private static string locLOGDirectory => Path.Combine(locRootPath, "LOG");
 		private static string locLOGFile => Path.Combine(locLOGDirectory, "LOG.md");
 		public static string locGameDataDirectory => Path.Combine(locLOGDirectory, "GameData");
