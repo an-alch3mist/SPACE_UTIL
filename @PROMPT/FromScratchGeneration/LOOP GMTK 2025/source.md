@@ -8,3 +8,4 @@ prompt:
 	- does nested function call as arguement works ? // eg: _A(_A(1) + _A(_A(2) + _A(4)))
 	- does nested loops works ? 
 	- does recursion works and it has limits ?
+	include complex test suite along and improvise addition to existing prompt where required.
