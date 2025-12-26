@@ -6,7 +6,7 @@ using UnityEngine.SceneManagement;
 
 using SPACE_UTIL;
 
-namespace SPACE_GAME_Template
+namespace SPACE_GAME__Template
 {
 	[DefaultExecutionOrder(-50)] // just after UnityEngine.InputSystem Init()
 	public class GameStore : MonoBehaviour

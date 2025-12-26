@@ -406,9 +406,8 @@ MonoBehaviour:
       m_Calls: []
   m_text: 'fps: 75/max'
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 80e715872616ff44c952fe4082b6c158, type: 2}
-  m_sharedMaterial: {fileID: -8703961727278624761, guid: 80e715872616ff44c952fe4082b6c158,
-    type: 2}
+  m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+  m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -522,10 +521,10 @@ MonoBehaviour:
   m_GameObject: {fileID: 710653776}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: f1c29460db553ea47a9353b231fac246, type: 3}
+  m_Script: {fileID: 11500000, guid: f12afadcb457b5042af12fbc537b0a62, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _IA: {fileID: -944628639613478452, guid: c50968be5e3a9944892a4d070faf778e, type: 3}
+  _IA: {fileID: -944628639613478452, guid: 1fde1b8d05a78854b9ff2e30bc818328, type: 3}
 --- !u!1 &1256492607
 GameObject:
   m_ObjectHideFlags: 0
@@ -765,7 +764,7 @@ MonoBehaviour:
 
     3. Ref TMFps (for
     fps status purpose)'
-  MainCam: {fileID: 0}
+  MainCam: {fileID: 76982630}
   CanvasRectTransform: {fileID: 1256492611}
   TMFps: {fileID: 295628430}
 --- !u!1 &1730580800

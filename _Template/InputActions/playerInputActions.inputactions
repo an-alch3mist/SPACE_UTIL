@@ -1,0 +1,54 @@
+{
+    "name": "playerInputActions",
+    "maps": [
+        {
+            "name": "character",
+            "id": "86af6515-9971-43e2-bbc8-045a6713d05c",
+            "actions": [
+                {
+                    "name": "interact",
+                    "type": "Button",
+                    "id": "e8b6cd44-83a8-4771-b97d-6a93df142913",
+                    "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
+                    "name": "jump",
+                    "type": "Button",
+                    "id": "c5ab3853-d2da-46d5-9e87-cb9873675ff9",
+                    "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                }
+            ],
+            "bindings": [
+                {
+                    "name": "",
+                    "id": "8d2f244b-21fb-4313-8811-957b2e0384f7",
+                    "path": "<Keyboard>/e",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "interact",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "117a7520-9df7-49f0-85d4-9b8ef620562b",
+                    "path": "<Keyboard>/space",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "jump",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                }
+            ]
+        }
+    ],
+    "controlSchemes": []
+}
