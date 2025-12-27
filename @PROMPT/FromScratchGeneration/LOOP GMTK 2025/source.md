@@ -14,3 +14,4 @@ prompt:
 ### gen(latest: 2025-dec-27 13:18): https://claude.ai/share/7910bd45-cfb9-4036-8891-779470367535
 ### workflow prompt(gemini 3.5 pro): https://gemini.google.com/app/e042bc0371301487  ` via (seek.gpt.deep.research.0@gmail.com)`
 ### gen(latest: 2025-dec-27 14:18): https://claude.ai/share/d7420899-e500-4996-b8e3-30627a3b0bf1
+### gen(latest: 2025-dec-27 15:08): https://claude.ai/share/124f4940-4c34-46f1-90ff-a622bc819fff
