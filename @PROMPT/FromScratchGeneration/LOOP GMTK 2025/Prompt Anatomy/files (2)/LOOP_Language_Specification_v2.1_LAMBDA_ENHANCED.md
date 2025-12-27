@@ -1,3 +1,31 @@
+# prompt-inline:
+
+refer the [paste prompt], generate each .cs files required in spearate make sure the test suite includes all possible edge cases(about loops, recursion, nested functions, operators and lamda time budget dependednt gameInbuilt, just inpbuit, string operations, conditions inside for, while loops, and many more),
+
+# also once you done(only after every files generation complete) with that provide the following,
+
+# Act as a Senior Lead Developer and Prompt Engineer.
+## I am building the "LOOP Language" project (a Unity C# Python Interpreter) based on a detailed specification. The project has generated over 15 distinct C# files (Lexer.cs, Parser.cs, AST.cs, PythonInterpreter.cs, etc.), and the codebase is growing large.
+## I cannot upload all these files into a new chat session every time I want to add a feature because it will hit token limits or degrade reasoning quality.
+## I need you to teach me a `Stateless Maintenance Workflow` (i heard the xml Prompt works best for Claude 4.5 in Future) so I can work with you indefinitely on this project without re-uploading everything(sincse the all `*.cs` may surpass the 200k token upload limit ? ).
+## Please provide the following 3 deliverables(in a single file):
+1. THE MAP TEMPLATE
+Create a detailed(without leaving any) "Project Map" text file template for this specific project. It should list every file we have generated so far, a 1-sentence summary of its responsibility, and key signatures (like for example, the main `Evaluate()` method or `TokenType` enum names).
+*Goal:* I want to paste this *one* text block at the start of every chat so you understand the architecture without seeing the code.
+2. THE "SCOUT" PROMPT
+Write a standardized prompt I should use when requesting a new feature. This prompt should:
+- Present the "Project Map" to you.
+- State the new feature goal (e.g., "Add a 'teleport()' game command").
+- Explicitly instruct you NOT to generate code yet, but instead to analyze the map and tell me exactly which 2-3 specific files you need to see to implement the feature.
+3. THE WORKFLOW EXAMPLE
+Walk me through a hypothetical example:
+"I want to add a new 'Modulo (%)' operator to the language."
+Show me exactly how our interaction would look using the prompts you just designed (Me sending the Scout Prompt -> You asking for specific files -> Me providing them -> You generating the solution).
+## provide me an example how exactly in future i should make use of it so that in future following is possible:
+
+
+
+
 # LOOP Language Specification v2.1
 
 **Role:** Act as a Principal Unity Architect and Compiler Language Engineer.  
@@ -6,7 +34,7 @@
 
 ---
 
-## 🆕 NEW IN v2.1: Advanced Lambda Features
+## 🆕 NEW IN v2.1:
 
 This version adds comprehensive lambda support including:
 - ✨ Lambda with list comprehensions inside
@@ -14,6 +42,11 @@ This version adds comprehensive lambda support including:
 - ✨ Tuple/list indexing in lambda expressions
 - ✨ Complex nested lambda expressions
 - ✨ Lambda with multiple parameters and conditions
+- also make sure following is impletement along with test(check) suite:
+  - does nested function call as arguement works ? // eg: _A(_A(1) + _A(_A(2) + _A(4)))
+  - does nested loops works ? 
+  - does recursion works and it has limits ?
+  include complex test suite along and improvise addition to existing prompt where required.
 
 ---
 
@@ -27,7 +60,7 @@ This prompt is organized into **clearly marked sections**. Each section has a `[
 
 | **What You Want to Add** | **Go To Section** | **What To Do** |
 |---------------------------|-------------------|----------------|
-| New game function (like `harvest()`) | Section 4.1 - Game Builtins | Add function to `<game_builtins>` list |
+| New game function (like `harvest()`) | Section 4.1 - Game Builtins | Add function to `<game_builtins>` list (guide me through process os that in future if i were need to implement new gameInbuilt and its behavur such as Time Budget dependent(sych as harvest(), do_flip() which are IEnumerator or Time budget independednt such as groundState == Ground.Soil inside python like which is time budget independent rusn insteant or return type which is also instant such as get_pos_x() or say("hello") and many more))|
 | New operator (like `%`, `**`) | Section 2.1.1 - Token Types | Add token to appropriate category |
 | New enum type (like `Ground`, `Items`) | Section 1.2.3 - Enums | Add to `<enum_types>` |
 | New built-in constant (like `North`) | Section 4.3 - Built-in Constants | Add to `<built_in_constants>` |
@@ -55,6 +88,11 @@ This prompt is organized into **clearly marked sections**. Each section has a `[
   7. ✅ Confirm all enums are registered (Section 1.2.3)
   8. ✅ Confirm all built-in constants are registered (Section 4.3)
   9. ✅ Validate lambda expression support (Section 3.5)
+  10. ✅ also make sure following is impletement along with test(check) suite:
+  - does nested function call as arguement works ? // eg: _A(_A(1) + _A(_A(2) + _A(4)))
+  - does nested loops works ? 
+  - does recursion works and it has limits ?
+   include complex test(check) suite along and improvise addition to existing prompt where required.
   
   **All generated code MUST:**
   - Pass the entire test suite
@@ -69,6 +107,7 @@ This prompt is organized into **clearly marked sections**. Each section has a `[
   **If you cannot generate code that passes all tests:**
   - Explain which test case is ambiguous
   - Request clarification before proceeding
+  11. and let me know how to run all the test(check) suite without use for input text UI (1 input UI for console manager to show debug from python-like that just ran thats it), just via script ? PythonInerpreter.Run(string) ? or if you can think of better approach feel free to let me know
 </meta_instruction>
 
 ---
@@ -2195,22 +2234,7 @@ Create **all** C# files as separate artifacts with:
 15. ✅ **LambdaFunction.cs** with closure support
 
 **Target Unity Version:** 2020.3+  
-**Target .NET:** 2.0 Standard
-
----
-
-## APPENDIX: QUICK REFERENCE
-
-### Modification Quick Reference
-
-| **Want to add...** | **Go to section...** |
-|--------------------|---------------------|
-| New game function | Section 4.1 |
-| New enum type | Section 1.2.3 |
-| New built-in constant | Section 4.3 |
-| New lambda pattern | Section 3.5 |
-| New operator | Sections 2.1.1, 3.3, 3.4 |
-| New test case | Section 5 |
+**Target .NET:** 2.0 Standard(do not yield return null/value; inside `try-catch` clause of an `IEnumerator`)
 
 ---
 
